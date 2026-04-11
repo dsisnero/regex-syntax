@@ -1,0 +1,27 @@
+name: regex-syntax
+version: 0.1.0
+
+authors:
+  - Logos Maintainers <logos@maciej.codes>
+
+crystal: '>= 1.19.1'
+
+license: MIT OR Apache-2.0
+
+description: |
+  A robust regular expression parser for Crystal, ported from Rust's regex-syntax crate.
+
+  This crate provides parsing of regular expressions into abstract syntax trees (AST)
+  and high-level intermediate representations (HIR).
+
+repository: https://github.com/maciejhirsz/logos
+
+dependencies:
+  # Will depend on regex-automata for some functionality
+  # regex-automata:
+  #   github: maciejhirsz/logos
+  #   path: ../regex-automata
+
+development_dependencies:
+  spec:
+    github: crystal-lang/crystal-spec

@@ -1,0 +1,11 @@
+# Ameba configuration for regex-syntax library
+Version: "1.7.0-dev"
+
+Excluded:
+  - temp/**/*
+  - vendor/**/*
+
+# add paths that need to be excluded so we track in one place
+# Metrics/CyclomaticComplexity:
+#   Excluded:
+#     -

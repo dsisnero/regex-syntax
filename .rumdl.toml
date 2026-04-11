@@ -1,0 +1,16 @@
+# rumdl configuration file for regex-syntax
+
+# Global configuration options
+[global]
+# List of file/directory patterns to exclude from linting
+exclude = [
+    # Common directories to exclude
+    ".git",
+    ".github",
+    "temp",
+    "vendor",
+    ".crystal-cache",
+]
+
+# Respect .gitignore files when scanning directories (default: true)
+respect-gitignore = true
