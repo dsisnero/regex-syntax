@@ -1,0 +1,159 @@
+# source_test_id	status	crystal_refs	notes
+src/ast/mod.rs::test::ast_size	missing	-	baseline
+src/ast/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
+src/ast/parse.rs::test::maybe_parse_ascii_class	done	spec/parser_spec.cr	matches current ASCII class parse/backtrack coverage
+src/ast/parse.rs::test::parse_alternate	partial	spec/parser_spec.cr:391	representative alternation parsing covered for flat and grouped cases; local AST still coalesces adjacent verbatim literals compared with upstream literal-by-literal AST shape
+src/ast/parse.rs::test::parse_capture_name	done	spec/parser_spec.cr	named capture success, duplicate rejection, and invalid syntax covered
+src/ast/parse.rs::test::parse_comments	partial	spec/parser_spec.cr:391	AstParser now exposes parse_with_comments and captures Rust-style comment text/spans, but local AST still coalesces adjacent verbatim literals instead of matching upstream literal-by-literal AST shape
+src/ast/parse.rs::test::parse_counted_repetition	partial	spec/parser_spec.cr:429	representative exact, at-least, bounded, nongreedy, and invalid descending-range cases covered; full upstream decimal/error-span matrix still missing
+src/ast/parse.rs::test::parse_decimal	missing	-	baseline
+src/ast/parse.rs::test::parse_escape	partial	spec/parser_spec.cr:312	representative meta/special escapes and perl-class escape parsing covered, including Rust-style \\a \\f \\t \\n \\r \\v behavior; full upstream escape matrix and error-kind parity still missing
+src/ast/parse.rs::test::parse_flag	missing	-	baseline
+src/ast/parse.rs::test::parse_flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	flag groups and global flags covered; duplicate/invalid flag diagnostics still missing
+src/ast/parse.rs::test::parse_group	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	captures, named captures, non-captures, and unsupported look-ahead covered; richer error parity still missing
+src/ast/parse.rs::test::parse_hex_brace	partial	spec/parser_spec.cr	positive x/u/U brace forms and representative error cases covered
+src/ast/parse.rs::test::parse_hex_eight	partial	spec/parser_spec.cr	representative positive long form and error cases covered
+src/ast/parse.rs::test::parse_hex_four	partial	spec/parser_spec.cr	representative positive short Unicode form and error cases covered
+src/ast/parse.rs::test::parse_hex_two	partial	spec/parser_spec.cr	representative positive byte hex form and error cases covered
+src/ast/parse.rs::test::parse_holistic	missing	-	baseline
+src/ast/parse.rs::test::parse_ignore_whitespace	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	verbose-mode parsing, whitespace toggles, grouped whitespace, and hex spacing covered
+src/ast/parse.rs::test::parse_nest_limit	done	spec/regex-syntax_spec.cr	nest_limit enforced through public parser
+src/ast/parse.rs::test::parse_newlines	partial	spec/parser_spec.cr:348	public parser handling of literal newlines between tokens covered; full upstream line/column span parity is blocked on the simplified Position/Span model
+src/ast/parse.rs::test::parse_octal	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	octal option and representative parse/parse_escape behavior covered
+src/ast/parse.rs::test::parse_perl_class	partial	spec/parser_spec.cr:312	representative \\d \\D \\s \\w parse coverage present through the public parser; full upstream direct parse_escape matrix still missing
+src/ast/parse.rs::test::parse_primitive_non_escape	partial	spec/parser_spec.cr:312	public parser coverage exists for dot, anchors, and representative verbatim literals; internal parse_primitive-only cases like bare | are not directly exposed in Crystal
+src/ast/parse.rs::test::parse_set_class	missing	-	baseline
+src/ast/parse.rs::test::parse_set_class_open	missing	-	baseline
+src/ast/parse.rs::test::parse_uncounted_repetition	partial	spec/parser_spec.cr:409	representative greedy, nongreedy, alternation-edge, and repetition-missing cases covered; full upstream error-kind/span parity still missing
+src/ast/parse.rs::test::parse_unicode_class	partial	spec/regex-syntax_spec.cr	general category, script, scx, age, gcb, wb, sb, aliases, and errors covered
+src/ast/parse.rs::test::parse_unsupported_backreference	done	spec/parser_spec.cr	\\0 and \\9 rejection covered
+src/ast/parse.rs::test::parse_unsupported_lookaround	done	spec/parser_spec.cr,spec/regex-syntax_spec.cr	look-ahead and look-behind rejection covered
+src/ast/parse.rs::test::regression_454_nest_too_big	missing	-	baseline
+src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	partial	spec/parser_spec.cr	representative verbose-mode trailing-dash acceptance and unclosed error covered
+src/ast/print.rs::test::print_alternation	missing	-	baseline
+src/ast/print.rs::test::print_assertion	missing	-	baseline
+src/ast/print.rs::test::print_class	missing	-	baseline
+src/ast/print.rs::test::print_concat	missing	-	baseline
+src/ast/print.rs::test::print_dot	missing	-	baseline
+src/ast/print.rs::test::print_flags	missing	-	baseline
+src/ast/print.rs::test::print_group	missing	-	baseline
+src/ast/print.rs::test::print_literal	missing	-	baseline
+src/ast/print.rs::test::print_repetition	missing	-	baseline
+src/error.rs::test::regression_464	missing	-	baseline
+src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	missing	-	baseline
+src/hir/literal.rs::test::alternation	missing	-	baseline
+src/hir/literal.rs::test::anything	missing	-	baseline
+src/hir/literal.rs::test::anything_small_limits	missing	-	baseline
+src/hir/literal.rs::test::class	missing	-	baseline
+src/hir/literal.rs::test::concat	missing	-	baseline
+src/hir/literal.rs::test::crazy_repeats	missing	-	baseline
+src/hir/literal.rs::test::empty	missing	-	baseline
+src/hir/literal.rs::test::holmes	missing	-	baseline
+src/hir/literal.rs::test::holmes_alt	missing	-	baseline
+src/hir/literal.rs::test::huge	missing	-	baseline
+src/hir/literal.rs::test::impossible	missing	-	baseline
+src/hir/literal.rs::test::literal	missing	-	baseline
+src/hir/literal.rs::test::look	missing	-	baseline
+src/hir/literal.rs::test::odds_and_ends	missing	-	baseline
+src/hir/literal.rs::test::optimize	missing	-	baseline
+src/hir/literal.rs::test::repetition	missing	-	baseline
+src/hir/mod.rs::test::class_canonicalize_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_canonicalize_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_unicode_disabled	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	missing	-	baseline
+src/hir/mod.rs::test::class_difference_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_difference_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_intersect_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_intersect_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_negate_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_negate_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_range_canonical_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_range_canonical_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_symmetric_difference_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_symmetric_difference_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_union_bytes	missing	-	baseline
+src/hir/mod.rs::test::class_union_unicode	missing	-	baseline
+src/hir/mod.rs::test::look_set_debug	missing	-	baseline
+src/hir/mod.rs::test::look_set_iter	missing	-	baseline
+src/hir/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
+src/hir/print.rs::test::print_alternation	missing	-	baseline
+src/hir/print.rs::test::print_anchor	missing	-	baseline
+src/hir/print.rs::test::print_class	missing	-	baseline
+src/hir/print.rs::test::print_group	missing	-	baseline
+src/hir/print.rs::test::print_literal	missing	-	baseline
+src/hir/print.rs::test::print_repetition	missing	-	baseline
+src/hir/print.rs::test::print_word_boundary	missing	-	baseline
+src/hir/print.rs::test::regression_alternation_concat	missing	-	baseline
+src/hir/print.rs::test::regression_repetition_alternation	missing	-	baseline
+src/hir/print.rs::test::regression_repetition_concat	missing	-	baseline
+src/hir/translate.rs::test::analysis_can_empty	partial	spec/regex-syntax_spec.cr	empty-match analysis covered for representative cases, not full upstream matrix
+src/hir/translate.rs::test::analysis_captures_len	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_all_assertions	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_alternation_literal	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_anchored	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_any_anchored	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_literal	missing	-	baseline
+src/hir/translate.rs::test::analysis_is_utf8	missing	-	baseline
+src/hir/translate.rs::test::analysis_look_set_prefix_any	missing	-	baseline
+src/hir/translate.rs::test::analysis_static_captures_len	missing	-	baseline
+src/hir/translate.rs::test::assertions	partial	spec/regex-syntax_spec.cr	word boundaries, special boundaries, angle boundaries, anchors, and CRLF-aware assertions covered
+src/hir/translate.rs::test::cat_alt	missing	-	baseline
+src/hir/translate.rs::test::cat_class_flattened	missing	-	baseline
+src/hir/translate.rs::test::class_ascii	missing	-	baseline
+src/hir/translate.rs::test::class_ascii_multiple	missing	-	baseline
+src/hir/translate.rs::test::class_bracketed	partial	spec/regex-syntax_spec.cr	bracketed classes, negation, escapes, perl/unicode items, and case-folded singleton cases covered
+src/hir/translate.rs::test::class_bracketed_difference	partial	spec/regex-syntax_spec.cr	main parser and overlapping difference cases covered
+src/hir/translate.rs::test::class_bracketed_intersect	partial	spec/regex-syntax_spec.cr	main parser intersection and unicode-property intersection cases covered
+src/hir/translate.rs::test::class_bracketed_intersect_negate	partial	spec/regex-syntax_spec.cr	bracketed unicode/perl double-negation cases covered
+src/hir/translate.rs::test::class_bracketed_nested	partial	spec/regex-syntax_spec.cr	nested bracketed unicode-property negation and binary-op cases covered
+src/hir/translate.rs::test::class_bracketed_symmetric_difference	partial	spec/regex-syntax_spec.cr	main parser and overlapping symmetric-difference cases covered
+src/hir/translate.rs::test::class_bracketed_union	partial	spec/regex-syntax_spec.cr	union of literals, unicode properties, and mixed bracketed items covered
+src/hir/translate.rs::test::class_perl_ascii	missing	-	baseline
+src/hir/translate.rs::test::class_perl_digit_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_perl_space_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_perl_unicode	missing	-	baseline
+src/hir/translate.rs::test::class_perl_word_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_age	partial	spec/regex-syntax_spec.cr	positive age query and invalid age value covered
+src/hir/translate.rs::test::class_unicode_age_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_any_empty	done	spec/regex-syntax_spec.cr	\\P{any} canonicalized to empty Unicode class
+src/hir/translate.rs::test::class_unicode_gencat	partial	spec/regex-syntax_spec.cr	one-letter, named, gc-op, any/assigned/ascii, negation, and error cases covered
+src/hir/translate.rs::test::class_unicode_gencat_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_script	partial	spec/regex-syntax_spec.cr	script, scx, aliases, ignore-case folding, and invalid value cases covered
+src/hir/translate.rs::test::class_unicode_script_disabled	missing	-	baseline
+src/hir/translate.rs::test::dot	missing	-	baseline
+src/hir/translate.rs::test::empty	missing	-	baseline
+src/hir/translate.rs::test::escape	missing	-	baseline
+src/hir/translate.rs::test::flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	scoped/global flags and translator flag effects covered
+src/hir/translate.rs::test::group	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	captures, named captures, and non-capturing groups covered
+src/hir/translate.rs::test::ignore_whitespace	missing	-	baseline
+src/hir/translate.rs::test::line_anchors	missing	-	baseline
+src/hir/translate.rs::test::literal	missing	-	baseline
+src/hir/translate.rs::test::literal_case_insensitive	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	ASCII and Unicode simple-fold literal/class behavior covered, but full upstream matrix still missing
+src/hir/translate.rs::test::regression_alt_empty_concat	missing	-	baseline
+src/hir/translate.rs::test::regression_empty_alt	missing	-	baseline
+src/hir/translate.rs::test::regression_fuzz_char_decrement1	missing	-	baseline
+src/hir/translate.rs::test::regression_fuzz_difference1	missing	-	baseline
+src/hir/translate.rs::test::regression_fuzz_match	missing	-	baseline
+src/hir/translate.rs::test::regression_singleton_alt	missing	-	baseline
+src/hir/translate.rs::test::repetition	missing	-	baseline
+src/hir/translate.rs::test::smart_alternation	missing	-	baseline
+src/hir/translate.rs::test::smart_concat	missing	-	baseline
+src/hir/translate.rs::test::smart_repetition	missing	-	baseline
+src/lib.rs::test::escape_meta	missing	-	baseline
+src/lib.rs::test::word_byte	missing	-	baseline
+src/lib.rs::test::word_char	missing	-	baseline
+src/lib.rs::test::word_char_disabled_error	missing	-	baseline
+src/lib.rs::test::word_char_disabled_panic	missing	-	baseline
+src/unicode.rs::test::range_contains	missing	-	baseline
+src/unicode.rs::test::regression_466	missing	-	baseline
+src/unicode.rs::test::simple_fold_a	missing	-	baseline
+src/unicode.rs::test::simple_fold_disabled	missing	-	baseline
+src/unicode.rs::test::simple_fold_k	missing	-	baseline
+src/unicode.rs::test::sym_normalize	missing	-	baseline
+src/unicode.rs::test::valid_utf8_symbolic	missing	-	baseline
+src/utf8.rs::test::bmp	missing	-	baseline
+src/utf8.rs::test::codepoints_no_surrogates	missing	-	baseline
+src/utf8.rs::test::reverse	missing	-	baseline
+src/utf8.rs::test::single_codepoint_one_sequence	missing	-	baseline
