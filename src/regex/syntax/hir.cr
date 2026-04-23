@@ -37,7 +37,7 @@ module Regex::Syntax::Hir
     when Repetition
       Repetition.new(case_fold_ascii_node(node.sub), node.min, node.max, greedy: node.greedy?)
     when Capture
-      Capture.new(case_fold_ascii_node(node.sub), node.index)
+      Capture.new(case_fold_ascii_node(node.sub), node.index, node.name)
     when Look, DotNode, Empty
       node
     else
@@ -68,7 +68,7 @@ module Regex::Syntax::Hir
     when Repetition
       Repetition.new(case_fold_unicode_node(node.sub), node.min, node.max, greedy: node.greedy?)
     when Capture
-      Capture.new(case_fold_unicode_node(node.sub), node.index)
+      Capture.new(case_fold_unicode_node(node.sub), node.index, node.name)
     when Look, DotNode, Empty
       node
     else
@@ -96,8 +96,11 @@ module Regex::Syntax::Hir
   private def self.unicode_case_variants(char : Char) : Array(UInt32)
     variants = [] of UInt32
     variants << char.ord.to_u32
-    variants << char.downcase.ord.to_u32
-    variants << char.upcase.ord.to_u32
+    if folded = Regex::Syntax::UnicodeTables::CaseFoldingSimple::CASE_FOLDING_SIMPLE[char]?
+      folded.each do |mapped_char|
+        variants << mapped_char.ord.to_u32
+      end
+    end
     variants.uniq!
     variants
   end
@@ -263,7 +266,12 @@ module Regex::Syntax::Hir
     getter intervals : Array(Range(UInt8, UInt8))
 
     def initialize(negated : Bool = false, @intervals : Array(Range(UInt8, UInt8)) = [] of Range(UInt8, UInt8))
-      @negated = negated
+      if negated && full_byte_domain?(@intervals)
+        @negated = false
+        @intervals = [] of Range(UInt8, UInt8)
+      else
+        @negated = negated
+      end
     end
 
     def complexity : Int32
@@ -276,6 +284,10 @@ module Regex::Syntax::Hir
 
     def can_match_empty? : Bool
       false
+    end
+
+    private def full_byte_domain?(intervals : Array(Range(UInt8, UInt8))) : Bool
+      intervals.size == 1 && intervals[0].begin == 0_u8 && intervals[0].end == 255_u8
     end
   end
 
@@ -285,7 +297,12 @@ module Regex::Syntax::Hir
     getter intervals : Array(Range(UInt32, UInt32))
 
     def initialize(negated : Bool = false, @intervals : Array(Range(UInt32, UInt32)) = [] of Range(UInt32, UInt32))
-      @negated = negated
+      if negated && full_unicode_domain?(@intervals)
+        @negated = false
+        @intervals = [] of Range(UInt32, UInt32)
+      else
+        @negated = negated
+      end
     end
 
     def complexity : Int32
@@ -299,18 +316,34 @@ module Regex::Syntax::Hir
     def can_match_empty? : Bool
       false
     end
+
+    private def full_unicode_domain?(intervals : Array(Range(UInt32, UInt32))) : Bool
+      intervals.size == 1 && intervals[0].begin == 0_u32 && intervals[0].end == 0x10FFFF_u32
+    end
   end
 
   # Look-around assertion
   class Look < Node
     enum Kind
-      Start              # ^
-      End                # $
-      StartText          # \A
-      EndText            # \z
-      EndTextWithNewline # \Z
-      WordBoundary       # \b
-      NonWordBoundary    # \B
+      StartLF              # ^ in multi-line mode
+      EndLF                # $ in multi-line mode
+      StartCRLF            # ^ in multi-line CRLF mode
+      EndCRLF              # $ in multi-line CRLF mode
+      StartText            # \A
+      EndText              # \z
+      EndTextOptionalLF    # $ or \Z outside multi-line mode
+      WordAscii            # \b with unicode disabled
+      WordAsciiNegate      # \B with unicode disabled
+      WordUnicode          # \b with unicode enabled
+      WordUnicodeNegate    # \B with unicode enabled
+      WordStartAscii       # \b{start} or \< with unicode disabled
+      WordEndAscii         # \b{end} or \> with unicode disabled
+      WordStartUnicode     # \b{start} or \< with unicode enabled
+      WordEndUnicode       # \b{end} or \> with unicode enabled
+      WordStartHalfAscii   # \b{start-half} with unicode disabled
+      WordEndHalfAscii     # \b{end-half} with unicode disabled
+      WordStartHalfUnicode # \b{start-half} with unicode enabled
+      WordEndHalfUnicode   # \b{end-half} with unicode enabled
     end
 
     getter kind : Kind
@@ -366,8 +399,9 @@ module Regex::Syntax::Hir
   class Capture < Node
     getter sub : Node
     getter index : Int32
+    getter name : String?
 
-    def initialize(@sub : Node, @index : Int32)
+    def initialize(@sub : Node, @index : Int32, @name : String? = nil)
     end
 
     def complexity : Int32

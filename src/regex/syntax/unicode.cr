@@ -2,177 +2,287 @@ require "./hir"
 require "./unicode_tables"
 
 module Regex::Syntax::Unicode
-  # Look up Unicode property class by name
+  AGE_ORDER = [
+    {"V1_1", UnicodeTables::Age::V1_1},
+    {"V2_0", UnicodeTables::Age::V2_0},
+    {"V2_1", UnicodeTables::Age::V2_1},
+    {"V3_0", UnicodeTables::Age::V3_0},
+    {"V3_1", UnicodeTables::Age::V3_1},
+    {"V3_2", UnicodeTables::Age::V3_2},
+    {"V4_0", UnicodeTables::Age::V4_0},
+    {"V4_1", UnicodeTables::Age::V4_1},
+    {"V5_0", UnicodeTables::Age::V5_0},
+    {"V5_1", UnicodeTables::Age::V5_1},
+    {"V5_2", UnicodeTables::Age::V5_2},
+    {"V6_0", UnicodeTables::Age::V6_0},
+    {"V6_1", UnicodeTables::Age::V6_1},
+    {"V6_2", UnicodeTables::Age::V6_2},
+    {"V6_3", UnicodeTables::Age::V6_3},
+    {"V7_0", UnicodeTables::Age::V7_0},
+    {"V8_0", UnicodeTables::Age::V8_0},
+    {"V9_0", UnicodeTables::Age::V9_0},
+    {"V10_0", UnicodeTables::Age::V10_0},
+    {"V11_0", UnicodeTables::Age::V11_0},
+    {"V12_0", UnicodeTables::Age::V12_0},
+    {"V12_1", UnicodeTables::Age::V12_1},
+    {"V13_0", UnicodeTables::Age::V13_0},
+    {"V14_0", UnicodeTables::Age::V14_0},
+    {"V15_0", UnicodeTables::Age::V15_0},
+    {"V15_1", UnicodeTables::Age::V15_1},
+    {"V16_0", UnicodeTables::Age::V16_0},
+  ]
+
   def self.property_class(name : String, negated : Bool) : Hir::UnicodeClass
-    # Normalize property name: case-insensitive, underscore/hyphen equivalence
-    normalized = name.downcase.gsub(/[_-]/, "")
-
-    # Try to look up in generated Unicode tables
-    if ranges = UnicodeTables.lookup_property_ranges(normalized)
-      return Hir::UnicodeClass.new(negated, ranges)
+    if index = name.index("!=")
+      property_name = name[...index]
+      property_value = name[(index + 2)..]
+      return query_property_class(property_name, property_value, negated: !negated)
     end
 
-    # Fall back to hardcoded properties for backward compatibility
-    # (these should eventually be moved to the generated tables)
-    case normalized
-    when "whitespace"
-      # White_Space property (fallback implementation)
-      intervals = whitespace_ranges
-    when "greek"
-      intervals = greek_ranges
-    when "cyrillic"
-      intervals = cyrillic_ranges
-    when "latin"
-      intervals = latin_ranges
-    when "han"
-      intervals = han_ranges
+    if index = name.index(':')
+      property_name = name[...index]
+      property_value = name[(index + 1)..]
+      return query_property_class(property_name, property_value, negated: negated)
+    end
+
+    if index = name.index('=')
+      property_name = name[...index]
+      property_value = name[(index + 1)..]
+      return query_property_class(property_name, property_value, negated: negated)
+    end
+
+    Hir::UnicodeClass.new(negated, binary_property_ranges(name))
+  end
+
+  private def self.query_property_class(property_name : String, property_value : String, negated : Bool) : Hir::UnicodeClass
+    canonical_property_name = canonical_property_name(property_name) || raise ParseError.new("invalid Unicode property: #{property_name}")
+    ranges = query_property_ranges(canonical_property_name, property_name, property_value)
+    Hir::UnicodeClass.new(negated, ranges)
+  end
+
+  private def self.query_property_ranges(canonical_property_name : String, property_name : String, property_value : String) : Array(Range(UInt32, UInt32))
+    canonical_value = query_property_value(canonical_property_name, property_value)
+
+    case canonical_property_name
+    when "General_Category"
+      general_category_ranges(canonical_value)
+    when "Script"
+      script_ranges(canonical_value)
+    when "Age"
+      age_ranges(canonical_value)
+    when "Script_Extensions"
+      script_extension_ranges(canonical_value)
+    when "Grapheme_Cluster_Break"
+      grapheme_cluster_break_ranges(canonical_value)
+    when "Word_Break"
+      word_break_ranges(canonical_value)
+    when "Sentence_Break"
+      sentence_break_ranges(canonical_value)
     else
-      # Unknown property - return empty class (matches nothing)
-      intervals = [] of Range(UInt32, UInt32)
+      raise ParseError.new("invalid Unicode property: #{property_name}")
+    end
+  end
+
+  private def self.binary_property_ranges(name : String) : Array(Range(UInt32, UInt32))
+    normalized = normalize_symbolic_name(name)
+
+    if ranges = UnicodeTables.lookup_property_ranges(normalized)
+      return ranges
     end
 
-    Hir::UnicodeClass.new(negated, intervals)
+    unless {"cf", "sc", "lc"}.includes?(normalized)
+      if canonical_name = canonical_property_name_from_normalized(normalized)
+        return property_ranges_for_canonical_binary(canonical_name) || raise ParseError.new("invalid Unicode property: #{name}")
+      end
+    end
+
+    if canonical_name = canonical_general_category_from_normalized(normalized)
+      return general_category_ranges(canonical_name)
+    end
+
+    if canonical_name = canonical_script_from_normalized(normalized)
+      return script_ranges(canonical_name)
+    end
+
+    raise ParseError.new("invalid Unicode property: #{name}")
   end
 
-  private def self.greek_ranges : Array(Range(UInt32, UInt32))
-    [
-      0x0370_u32..0x0373_u32, # Greek and Coptic
-      0x0375_u32..0x0377_u32,
-      0x037A_u32..0x037D_u32,
-      0x037F_u32..0x037F_u32,
-      0x0384_u32..0x0384_u32,
-      0x0386_u32..0x0386_u32,
-      0x0388_u32..0x038A_u32,
-      0x038C_u32..0x038C_u32,
-      0x038E_u32..0x03A1_u32,
-      0x03A3_u32..0x03E1_u32,
-      0x03F0_u32..0x03FF_u32,
-      0x1D26_u32..0x1D2A_u32,
-      0x1D5D_u32..0x1D61_u32,
-      0x1D66_u32..0x1D6A_u32,
-      0x1DBF_u32..0x1DBF_u32,
-      0x1F00_u32..0x1F15_u32,
-      0x1F18_u32..0x1F1D_u32,
-      0x1F20_u32..0x1F45_u32,
-      0x1F48_u32..0x1F4D_u32,
-      0x1F50_u32..0x1F57_u32,
-      0x1F59_u32..0x1F59_u32,
-      0x1F5B_u32..0x1F5B_u32,
-      0x1F5D_u32..0x1F5D_u32,
-      0x1F5F_u32..0x1F7D_u32,
-      0x1F80_u32..0x1FB4_u32,
-      0x1FB6_u32..0x1FC4_u32,
-      0x1FC6_u32..0x1FD3_u32,
-      0x1FD6_u32..0x1FDB_u32,
-      0x1FDD_u32..0x1FEF_u32,
-      0x1FF2_u32..0x1FF4_u32,
-      0x1FF6_u32..0x1FFE_u32,
-      0x2126_u32..0x2126_u32,
-      0xAB65_u32..0xAB65_u32,
-      0x10140_u32..0x1018E_u32,
-      0x101A0_u32..0x101A0_u32,
-      0x1D200_u32..0x1D245_u32,
-    ]
+  private def self.property_ranges_for_canonical_binary(canonical_name : String) : Array(Range(UInt32, UInt32))?
+    UnicodeTables.lookup_property_ranges(normalize_symbolic_name(canonical_name))
   end
 
-  private def self.cyrillic_ranges : Array(Range(UInt32, UInt32))
-    [
-      0x0400_u32..0x0484_u32,
-      0x0487_u32..0x052F_u32,
-      0x1C80_u32..0x1C88_u32,
-      0x1D2B_u32..0x1D2B_u32,
-      0x1D78_u32..0x1D78_u32,
-      0x2DE0_u32..0x2DFF_u32,
-      0xA640_u32..0xA69F_u32,
-      0xFE2E_u32..0xFE2F_u32,
-      0x1E030_u32..0x1E06D_u32,
-      0x1E08F_u32..0x1E08F_u32,
-    ]
+  private def self.canonical_property_name(name : String) : String?
+    canonical_property_name_from_normalized(normalize_symbolic_name(name))
   end
 
-  private def self.latin_ranges : Array(Range(UInt32, UInt32))
-    [
-      0x0041_u32..0x005A_u32,
-      0x0061_u32..0x007A_u32,
-      0x00AA_u32..0x00AA_u32,
-      0x00BA_u32..0x00BA_u32,
-      0x00C0_u32..0x00D6_u32,
-      0x00D8_u32..0x00F6_u32,
-      0x00F8_u32..0x02B8_u32,
-      0x02E0_u32..0x02E4_u32,
-      0x1D00_u32..0x1D25_u32,
-      0x1D2C_u32..0x1D5C_u32,
-      0x1D62_u32..0x1D65_u32,
-      0x1D6B_u32..0x1D77_u32,
-      0x1D79_u32..0x1DBE_u32,
-      0x1E00_u32..0x1EFF_u32,
-      0x2071_u32..0x2071_u32,
-      0x207F_u32..0x207F_u32,
-      0x2090_u32..0x209C_u32,
-      0x212A_u32..0x212B_u32,
-      0x2132_u32..0x2132_u32,
-      0x214E_u32..0x214E_u32,
-      0x2160_u32..0x2188_u32,
-      0x2C60_u32..0x2C7F_u32,
-      0xA722_u32..0xA787_u32,
-      0xA78B_u32..0xA7CD_u32,
-      0xA7D0_u32..0xA7D1_u32,
-      0xA7D3_u32..0xA7D3_u32,
-      0xA7D5_u32..0xA7DC_u32,
-      0xA7F2_u32..0xA7FF_u32,
-      0xAB30_u32..0xAB5A_u32,
-      0xAB5C_u32..0xAB64_u32,
-      0xAB66_u32..0xAB69_u32,
-      0xFB00_u32..0xFB06_u32,
-      0xFF21_u32..0xFF3A_u32,
-      0xFF41_u32..0xFF5A_u32,
-      0x10780_u32..0x10785_u32,
-      0x10787_u32..0x107B0_u32,
-      0x107B2_u32..0x107BA_u32,
-      0x1DF00_u32..0x1DF1E_u32,
-      0x1DF25_u32..0x1DF2A_u32,
-    ]
+  private def self.canonical_property_name_from_normalized(normalized_name : String) : String?
+    UnicodeTables::PropertyNames::BY_NAME[normalized_name]?
   end
 
-  private def self.han_ranges : Array(Range(UInt32, UInt32))
-    [
-      0x2E80_u32..0x2E99_u32,
-      0x2E9B_u32..0x2EF3_u32,
-      0x2F00_u32..0x2FD5_u32,
-      0x3005_u32..0x3005_u32,
-      0x3007_u32..0x3007_u32,
-      0x3021_u32..0x3029_u32,
-      0x3038_u32..0x303B_u32,
-      0x3400_u32..0x4DBF_u32,
-      0x4E00_u32..0x9FFF_u32,
-      0xF900_u32..0xFA6D_u32,
-      0xFA70_u32..0xFAD9_u32,
-      0x16FE2_u32..0x16FE3_u32,
-      0x16FF0_u32..0x16FF1_u32,
-      0x20000_u32..0x2A6DF_u32,
-      0x2A700_u32..0x2B739_u32,
-      0x2B740_u32..0x2B81D_u32,
-      0x2B820_u32..0x2CEA1_u32,
-      0x2CEB0_u32..0x2EBE0_u32,
-      0x2EBF0_u32..0x2EE5D_u32,
-      0x2F800_u32..0x2FA1D_u32,
-      0x30000_u32..0x3134A_u32,
-      0x31350_u32..0x323AF_u32,
-    ]
+  private def self.canonical_property_value(canonical_property_name : String, value : String) : String?
+    canonical_property_value_from_normalized(canonical_property_name, normalize_symbolic_name(value))
   end
 
-  private def self.whitespace_ranges : Array(Range(UInt32, UInt32))
-    [
-      0x0009_u32..0x000D_u32, # \t, \n, \v, \f, \r
-      0x0020_u32..0x0020_u32, # space
-      0x0085_u32..0x0085_u32, # NEL
-      0x00A0_u32..0x00A0_u32, # NBSP
-      0x1680_u32..0x1680_u32, # Ogham space mark
-      0x2000_u32..0x200A_u32, # en quad..hair space
-      0x2028_u32..0x2029_u32, # line/paragraph separator
-      0x202F_u32..0x202F_u32, # narrow NBSP
-      0x205F_u32..0x205F_u32, # medium mathematical space
-      0x3000_u32..0x3000_u32, # ideographic space
-    ]
+  private def self.canonical_property_value_from_normalized(canonical_property_name : String, normalized_value : String) : String?
+    UnicodeTables::PropertyValues::BY_PROPERTY[canonical_property_name]?.try(&.[normalized_value]?)
+  end
+
+  private def self.canonical_general_category(value : String) : String?
+    canonical_general_category_from_normalized(normalize_symbolic_name(value))
+  end
+
+  private def self.canonical_general_category_from_normalized(normalized_value : String) : String?
+    case normalized_value
+    when "any"
+      "Any"
+    when "assigned"
+      "Assigned"
+    when "ascii"
+      "ASCII"
+    else
+      canonical_property_value_from_normalized("General_Category", normalized_value)
+    end
+  end
+
+  private def self.canonical_script(value : String) : String?
+    canonical_script_from_normalized(normalize_symbolic_name(value))
+  end
+
+  private def self.canonical_script_from_normalized(normalized_value : String) : String?
+    canonical_property_value_from_normalized("Script", normalized_value)
+  end
+
+  private def self.query_property_value(canonical_property_name : String, property_value : String) : String
+    case canonical_property_name
+    when "General_Category"
+      canonical_general_category(property_value)
+    when "Script"
+      canonical_script(property_value)
+    else
+      canonical_property_value(canonical_property_name, property_value)
+    end || raise ParseError.new("invalid Unicode property value: #{property_value}")
+  end
+
+  private def self.general_category_ranges(canonical_name : String) : Array(Range(UInt32, UInt32))
+    case canonical_name
+    when "ASCII"
+      [0x0000_u32..0x007F_u32]
+    when "Any"
+      [0x0000_u32..0x10FFFF_u32]
+    when "Assigned"
+      invert_intervals(UnicodeTables::GeneralCategory::BY_NAME["unassigned"])
+    else
+      UnicodeTables::GeneralCategory::BY_NAME[normalize_symbolic_name(canonical_name)]? || raise ParseError.new("invalid Unicode property value: #{canonical_name}")
+    end
+  end
+
+  private def self.script_ranges(canonical_name : String) : Array(Range(UInt32, UInt32))
+    UnicodeTables::Script::BY_NAME[normalize_symbolic_name(canonical_name)]? || raise ParseError.new("invalid Unicode property value: #{canonical_name}")
+  end
+
+  private def self.script_extension_ranges(canonical_name : String) : Array(Range(UInt32, UInt32))
+    UnicodeTables::ScriptExtension::BY_NAME[normalize_symbolic_name(canonical_name)]? || raise ParseError.new("invalid Unicode property value: #{canonical_name}")
+  end
+
+  private def self.age_ranges(canonical_name : String) : Array(Range(UInt32, UInt32))
+    intervals = [] of Range(UInt32, UInt32)
+    found = false
+
+    AGE_ORDER.each do |version, ranges|
+      intervals.concat(ranges)
+      if version == canonical_name
+        found = true
+        break
+      end
+    end
+
+    raise ParseError.new("invalid Unicode property value: #{canonical_name}") unless found
+
+    canonicalize_intervals(intervals)
+  end
+
+  private def self.grapheme_cluster_break_ranges(canonical_name : String) : Array(Range(UInt32, UInt32))
+    UnicodeTables::GraphemeClusterBreak::BY_NAME[normalize_symbolic_name(canonical_name)]? || raise ParseError.new("invalid Unicode property value: #{canonical_name}")
+  end
+
+  private def self.word_break_ranges(canonical_name : String) : Array(Range(UInt32, UInt32))
+    UnicodeTables::WordBreak::BY_NAME[normalize_symbolic_name(canonical_name)]? || raise ParseError.new("invalid Unicode property value: #{canonical_name}")
+  end
+
+  private def self.sentence_break_ranges(canonical_name : String) : Array(Range(UInt32, UInt32))
+    UnicodeTables::SentenceBreak::BY_NAME[normalize_symbolic_name(canonical_name)]? || raise ParseError.new("invalid Unicode property value: #{canonical_name}")
+  end
+
+  private def self.normalize_symbolic_name(name : String) : String
+    chars = name.chars
+    start = 0
+    starts_with_is = false
+
+    if chars.size >= 2
+      starts_with_is = ascii_i?(chars[0]) && ascii_s?(chars[1])
+      start = 2 if starts_with_is
+    end
+
+    normalized = String.build do |io|
+      chars.each_with_index do |char, index|
+        next if index < start
+        next if char == ' ' || char == '_' || char == '-'
+        next unless char.ascii?
+
+        io << ascii_lowercase(char)
+      end
+    end
+
+    starts_with_is && normalized == "c" ? "isc" : normalized
+  end
+
+  private def self.ascii_i?(char : Char) : Bool
+    char == 'i' || char == 'I'
+  end
+
+  private def self.ascii_s?(char : Char) : Bool
+    char == 's' || char == 'S'
+  end
+
+  private def self.ascii_lowercase(char : Char) : Char
+    char >= 'A' && char <= 'Z' ? (char.ord + 32).chr : char
+  end
+
+  private def self.invert_intervals(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+    result = [] of Range(UInt32, UInt32)
+    next_start = 0_u32
+    canonical = canonicalize_intervals(intervals)
+
+    canonical.each do |range|
+      if next_start < range.begin
+        result << (next_start..(range.begin - 1).to_u32)
+      end
+      next_start = range.end == 0x10FFFF_u32 ? 0x10FFFF_u32 : (range.end + 1).to_u32
+    end
+
+    if canonical.last.end < 0x10FFFF_u32
+      result << (next_start..0x10FFFF_u32)
+    end
+
+    result
+  end
+
+  private def self.canonicalize_intervals(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+    return [] of Range(UInt32, UInt32) if intervals.empty?
+
+    sorted = intervals.sort_by(&.begin)
+    merged = [] of Range(UInt32, UInt32)
+    current = sorted.first
+
+    sorted[1..].each do |range|
+      if range.begin <= current.end + 1
+        current = current.begin..Math.max(current.end, range.end)
+      else
+        merged << current
+        current = range
+      end
+    end
+    merged << current
+    merged
   end
 end
