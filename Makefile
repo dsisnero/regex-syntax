@@ -10,10 +10,10 @@ format:
 	crystal tool format --check src spec
 
 lint:
-	ameba src spec
+	./bin/ameba src spec
 
 test:
 	crystal spec
 
 clean:
-	rm -rf ./temp
+	rm -rf ./temp/*

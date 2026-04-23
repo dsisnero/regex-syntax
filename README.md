@@ -1,7 +1,7 @@
 # regex-syntax
 
 `regex-syntax` is the Crystal port of Rust's `regex-syntax` crate used by Logos.
-It parses regex patterns into a typed HIR (high-level intermediate representation)
+It parses regex patterns into AST and then lowers them into typed HIR
 that is consumed by `regex-automata`.
 
 ## Installation

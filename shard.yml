@@ -23,5 +23,5 @@ dependencies:
   #   path: ../regex-automata
 
 development_dependencies:
-  spec:
-    github: crystal-lang/crystal-spec
+  ameba:
+    github: crystal-ameba/ameba

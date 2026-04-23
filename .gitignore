@@ -1,10 +1,19 @@
-/docs/
+# Local agent/tool settings
+.claude/
+
+# Local Crystal cache
+.crystal-cache/
+
+# Temporary working artifacts
+temp/
+
+# Dependency directories (exclude only when not used as committed source-of-truth)
+# vendor/
+
+# Crystal build artifacts
 /lib/
-/bin/
 /.shards/
 *.dwarf
-/temp/
-.crystal-cache/
 
 # Libraries don't need dependency lock
 # Dependencies will be locked in applications that use them

@@ -5,7 +5,16 @@ Excluded:
   - temp/**/*
   - vendor/**/*
 
-# add paths that need to be excluded so we track in one place
-# Metrics/CyclomaticComplexity:
-#   Excluded:
-#     -
+Metrics/CyclomaticComplexity:
+  Excluded:
+    - src/regex-syntax.cr
+    - src/regex/syntax/ast.cr
+    - src/regex/syntax/hir.cr
+    - src/regex/syntax/parser.cr
+    - src/regex/syntax/translate.cr
+
+Documentation/DocumentationAdmonition:
+  Excluded:
+    - src/regex/syntax/unicode_tables/perl_word.cr
+    - src/regex/syntax/translate.cr
+    - spec/flag_handling_spec.cr
