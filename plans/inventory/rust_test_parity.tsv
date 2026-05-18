@@ -6,24 +6,24 @@ src/ast/parse.rs::test::parse_alternate	partial	spec/parser_spec.cr:391	represen
 src/ast/parse.rs::test::parse_capture_name	done	spec/parser_spec.cr	named capture success, duplicate rejection, and invalid syntax covered
 src/ast/parse.rs::test::parse_comments	partial	spec/parser_spec.cr:391	AstParser now exposes parse_with_comments and captures Rust-style comment text/spans, but local AST still coalesces adjacent verbatim literals instead of matching upstream literal-by-literal AST shape
 src/ast/parse.rs::test::parse_counted_repetition	partial	spec/parser_spec.cr:429	representative exact, at-least, bounded, nongreedy, and invalid descending-range cases covered; full upstream decimal/error-span matrix still missing
-src/ast/parse.rs::test::parse_decimal	missing	-	baseline
+src/ast/parse.rs::test::parse_decimal	partial	spec/parser_spec.cr	decimal parsing is now covered indirectly through counted repetition for representative success, empty, leading-zero, and overflow cases; direct internal parse_decimal span parity is still missing
 src/ast/parse.rs::test::parse_escape	partial	spec/parser_spec.cr:312	representative meta/special escapes and perl-class escape parsing covered, including Rust-style \\a \\f \\t \\n \\r \\v behavior; full upstream escape matrix and error-kind parity still missing
-src/ast/parse.rs::test::parse_flag	missing	-	baseline
-src/ast/parse.rs::test::parse_flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	flag groups and global flags covered; duplicate/invalid flag diagnostics still missing
+src/ast/parse.rs::test::parse_flag	partial	spec/flag_handling_spec.cr	individual flag acceptance is covered through scoped/public group parsing for i,m,s,U,u,R,x and representative unrecognized-flag failures; direct internal parse_flag span parity is still missing
+src/ast/parse.rs::test::parse_flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	global flags, scoped flags, negation placement, duplicate flags, repeated negation, dangling negation, unexpected EOF, and unrecognized flag cases covered; structured error-kind/span parity is still missing
 src/ast/parse.rs::test::parse_group	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	captures, named captures, non-captures, and unsupported look-ahead covered; richer error parity still missing
 src/ast/parse.rs::test::parse_hex_brace	partial	spec/parser_spec.cr	positive x/u/U brace forms and representative error cases covered
 src/ast/parse.rs::test::parse_hex_eight	partial	spec/parser_spec.cr	representative positive long form and error cases covered
 src/ast/parse.rs::test::parse_hex_four	partial	spec/parser_spec.cr	representative positive short Unicode form and error cases covered
 src/ast/parse.rs::test::parse_hex_two	partial	spec/parser_spec.cr	representative positive byte hex form and error cases covered
-src/ast/parse.rs::test::parse_holistic	missing	-	baseline
-src/ast/parse.rs::test::parse_ignore_whitespace	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	verbose-mode parsing, whitespace toggles, grouped whitespace, and hex spacing covered
+src/ast/parse.rs::test::parse_holistic	partial	spec/parser_spec.cr:360	public parser coverage now includes literal `]` and the escaped metacharacter matrix from the Rust holistic test; full AST span/kind parity still differs because verbatim literal runs are coalesced locally
+src/ast/parse.rs::test::parse_ignore_whitespace	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	verbose-mode parsing, whitespace toggles, grouped whitespace, escaped-space handling, and hex spacing covered
 src/ast/parse.rs::test::parse_nest_limit	done	spec/regex-syntax_spec.cr	nest_limit enforced through public parser
 src/ast/parse.rs::test::parse_newlines	partial	spec/parser_spec.cr:348	public parser handling of literal newlines between tokens covered; full upstream line/column span parity is blocked on the simplified Position/Span model
 src/ast/parse.rs::test::parse_octal	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	octal option and representative parse/parse_escape behavior covered
 src/ast/parse.rs::test::parse_perl_class	partial	spec/parser_spec.cr:312	representative \\d \\D \\s \\w parse coverage present through the public parser; full upstream direct parse_escape matrix still missing
 src/ast/parse.rs::test::parse_primitive_non_escape	partial	spec/parser_spec.cr:312	public parser coverage exists for dot, anchors, and representative verbatim literals; internal parse_primitive-only cases like bare | are not directly exposed in Crystal
-src/ast/parse.rs::test::parse_set_class	missing	-	baseline
-src/ast/parse.rs::test::parse_set_class_open	missing	-	baseline
+src/ast/parse.rs::test::parse_set_class	partial	spec/parser_spec.cr:43,spec/parser_spec.cr:76,spec/parser_spec.cr:91,spec/parser_spec.cr:105,spec/parser_spec.cr:195,spec/parser_spec.cr:225	public parser coverage now includes ASCII/unicode/perl items, binary ops, leading `]`/`-` opening cases, escaped `[` and `]`, invalid class escapes, descending ranges, and verbose-mode comment regression handling; full upstream AST-shape/span parity is still missing
+src/ast/parse.rs::test::parse_set_class_open	partial	spec/parser_spec.cr:195,spec/parser_spec.cr:225	public parser coverage exercises the Rust opening-edge behavior for leading `]`, leading `-`, negated leading `]`, escaped `[`, and the verbose-mode `(?x)[-#]` regression; the internal helper itself is not exposed in Crystal
 src/ast/parse.rs::test::parse_uncounted_repetition	partial	spec/parser_spec.cr:409	representative greedy, nongreedy, alternation-edge, and repetition-missing cases covered; full upstream error-kind/span parity still missing
 src/ast/parse.rs::test::parse_unicode_class	partial	spec/regex-syntax_spec.cr	general category, script, scx, age, gcb, wb, sb, aliases, and errors covered
 src/ast/parse.rs::test::parse_unsupported_backreference	done	spec/parser_spec.cr	\\0 and \\9 rejection covered
@@ -41,40 +41,40 @@ src/ast/print.rs::test::print_literal	missing	-	baseline
 src/ast/print.rs::test::print_repetition	missing	-	baseline
 src/error.rs::test::regression_464	missing	-	baseline
 src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	missing	-	baseline
-src/hir/literal.rs::test::alternation	missing	-	baseline
-src/hir/literal.rs::test::anything	missing	-	baseline
-src/hir/literal.rs::test::anything_small_limits	missing	-	baseline
-src/hir/literal.rs::test::class	missing	-	baseline
-src/hir/literal.rs::test::concat	missing	-	baseline
-src/hir/literal.rs::test::crazy_repeats	missing	-	baseline
-src/hir/literal.rs::test::empty	missing	-	baseline
-src/hir/literal.rs::test::holmes	missing	-	baseline
-src/hir/literal.rs::test::holmes_alt	missing	-	baseline
-src/hir/literal.rs::test::huge	missing	-	baseline
-src/hir/literal.rs::test::impossible	missing	-	baseline
-src/hir/literal.rs::test::literal	missing	-	baseline
-src/hir/literal.rs::test::look	missing	-	baseline
-src/hir/literal.rs::test::odds_and_ends	missing	-	baseline
-src/hir/literal.rs::test::optimize	missing	-	baseline
-src/hir/literal.rs::test::repetition	missing	-	baseline
-src/hir/mod.rs::test::class_canonicalize_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_canonicalize_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_case_fold_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_case_fold_unicode	missing	-	baseline
+src/hir/literal.rs::test::alternation	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for exact alternation sequences; larger inexact/limit-driven alternation cases still missing.
+src/hir/literal.rs::test::anything	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for dot and over-limit class becoming infinite; broader anything composition cases still missing.
+src/hir/literal.rs::test::anything_small_limits	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for nested counted repetition under a small total limit and alternation blowing the total limit to infinity.
+src/hir/literal.rs::test::class	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for finite ASCII-digit and literal class expansion.
+src/hir/literal.rs::test::concat	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for exact concatenation through empty groups and class crossings.
+src/hir/literal.rs::test::crazy_repeats	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for huge exact-count empty repetitions, chained exact-count empty repetitions, zero-count repetitions, and bounded long literal repetition under repeat and literal-length limits.
+src/hir/literal.rs::test::empty	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for empty/look-only sequences that yield exact empty literals.
+src/hir/literal.rs::test::holmes	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for the upstream Holmes case-insensitive prefix and suffix minimization literals, including Unicode simple-fold suffix variants with long s.
+src/hir/literal.rs::test::holmes_alt	partial	spec/hir_literal_spec.cr	Direct optimizer coverage added for the upstream case-insensitive Sherlock/Holmes alternation to ensure prefix optimization retains a finite non-empty literal set.
+src/hir/literal.rs::test::huge	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for the upstream huge byte-mode alternation shape, asserting finite prefix count 243 and infinite suffix extraction.
+src/hir/literal.rs::test::impossible	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for empty-intersection classes, impossible concatenations, and empty-class repetition collapsing to exact empty literals.
+src/hir/literal.rs::test::literal	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for exact ASCII, Unicode, and byte-mode literal extraction.
+src/hir/literal.rs::test::look	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for look assertions treated as empty during extraction.
+src/hir/literal.rs::test::odds_and_ends	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for dot-prefix/suffix infinite composition, anchored Sherlock Holmes alternation, and word-boundary plus finite class extraction; larger mixed-pattern cases still missing.
+src/hir/literal.rs::test::optimize	partial	spec/hir_literal_spec.cr	Direct optimizer coverage added for upstream common-prefix/common-suffix collapse, exact-prefix retention for sam/samwise, and poison-literal infinity behavior.
+src/hir/literal.rs::test::repetition	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for ?, ??, +, exact counted, and bounded counted repetition exactness.
+src/hir/mod.rs::test::class_canonicalize_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class canonicalization coverage added via hir class operations block.
+src/hir/mod.rs::test::class_canonicalize_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class canonicalization coverage added via hir class operations block.
+src/hir/mod.rs::test::class_case_fold_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class simple case-fold coverage added via hir class operations block.
+src/hir/mod.rs::test::class_case_fold_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class simple case-fold coverage added via hir class operations block.
 src/hir/mod.rs::test::class_case_fold_unicode_disabled	missing	-	baseline
 src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	missing	-	baseline
-src/hir/mod.rs::test::class_difference_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_difference_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_intersect_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_intersect_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_negate_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_negate_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_range_canonical_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_range_canonical_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_symmetric_difference_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_symmetric_difference_unicode	missing	-	baseline
-src/hir/mod.rs::test::class_union_bytes	missing	-	baseline
-src/hir/mod.rs::test::class_union_unicode	missing	-	baseline
+src/hir/mod.rs::test::class_difference_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class difference coverage added via hir class operations block.
+src/hir/mod.rs::test::class_difference_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class difference coverage added via hir class operations block.
+src/hir/mod.rs::test::class_intersect_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class intersection coverage added via hir class operations block.
+src/hir/mod.rs::test::class_intersect_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class intersection coverage added via hir class operations block.
+src/hir/mod.rs::test::class_negate_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class negation coverage added via hir class operations block.
+src/hir/mod.rs::test::class_negate_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class negation coverage added via hir class operations block.
+src/hir/mod.rs::test::class_range_canonical_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte reversed-range canonicalization coverage added via hir class operations block.
+src/hir/mod.rs::test::class_range_canonical_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode reversed-range canonicalization coverage added via hir class operations block.
+src/hir/mod.rs::test::class_symmetric_difference_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class symmetric-difference coverage added via hir class operations block.
+src/hir/mod.rs::test::class_symmetric_difference_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class symmetric-difference coverage added via hir class operations block.
+src/hir/mod.rs::test::class_union_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class union coverage added via hir class operations block.
+src/hir/mod.rs::test::class_union_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class union coverage added via hir class operations block.
 src/hir/mod.rs::test::look_set_debug	missing	-	baseline
 src/hir/mod.rs::test::look_set_iter	missing	-	baseline
 src/hir/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline

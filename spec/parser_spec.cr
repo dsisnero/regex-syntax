@@ -192,6 +192,52 @@ describe Regex::Syntax::AstParser do
       outer.lhs.binary_op.as(Regex::Syntax::AST::ClassSetBinaryOp).kind.should eq(Regex::Syntax::AST::ClassSetBinaryOp::Kind::SymmetricDifference)
     end
 
+    it "parses bracketed class opening edge cases like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      right_bracket = parser.parse("[]]").root.as(Regex::Syntax::AST::ClassBracketed)
+      right_item = right_bracket.kind.item.as(Regex::Syntax::AST::ClassSetItem)
+      right_item.kind.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Literal)
+      right_item.item.as(Regex::Syntax::AST::Literal).c.should eq(']')
+
+      dash_prefix = parser.parse("[-a]").root.as(Regex::Syntax::AST::ClassBracketed)
+      dash_union = dash_prefix.kind.item.as(Regex::Syntax::AST::ClassSetItem)
+      dash_union.kind.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Union)
+      dash_items = dash_union.item.as(Regex::Syntax::AST::ClassSetUnion).items
+      dash_items[0].item.as(Regex::Syntax::AST::Literal).c.should eq('-')
+      dash_items[1].item.as(Regex::Syntax::AST::Literal).c.should eq('a')
+
+      negated_right = parser.parse("[^]a]").root.as(Regex::Syntax::AST::ClassBracketed)
+      negated_right.negated?.should be_true
+      negated_union = negated_right.kind.item.as(Regex::Syntax::AST::ClassSetItem)
+      negated_union.kind.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Union)
+      negated_items = negated_union.item.as(Regex::Syntax::AST::ClassSetUnion).items
+      negated_items[0].item.as(Regex::Syntax::AST::Literal).c.should eq(']')
+      negated_items[1].item.as(Regex::Syntax::AST::Literal).c.should eq('a')
+
+      escaped_open = parser.parse(%q([\[]]))
+      escaped_open.root.should be_a(Regex::Syntax::AST::Concat)
+      escaped_concat = escaped_open.root.as(Regex::Syntax::AST::Concat)
+      escaped_concat.children[0].should be_a(Regex::Syntax::AST::ClassBracketed)
+      escaped_concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("]".to_slice)
+    end
+
+    it "rejects bracketed class regressions like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      expect_raises(Regex::Syntax::ParseError, /invalid escape sequence in character class/) do
+        parser.parse(%q([\b]))
+      end
+
+      expect_raises(Regex::Syntax::ParseError, /invalid character class range/) do
+        parser.parse("[z-a]")
+      end
+
+      expect_raises(Regex::Syntax::ParseError) do
+        parser.parse("(?x)[-#]")
+      end
+    end
+
     it "assigns sequential capture indices" do
       parser = Regex::Syntax::AstParser.new
       ast = parser.parse("(a)(b)")
@@ -357,6 +403,25 @@ describe Regex::Syntax::AstParser do
       concat.children[2].should be_a(Regex::Syntax::AST::Dot)
     end
 
+    it "parses holistic escaped metacharacter cases like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      parser.parse("]").root.as(Regex::Syntax::AST::Literal).bytes.should eq("]".to_slice)
+
+      ast = parser.parse(%q(\\\.\+\*\?\(\)\|\[\]\{\}\^\$\#\&\-\~))
+      ast.root.should be_a(Regex::Syntax::AST::Concat)
+      concat = ast.root.as(Regex::Syntax::AST::Concat)
+      concat.children.size.should eq(18)
+
+      expected = ['\\', '.', '+', '*', '?', '(', ')', '|', '[', ']', '{', '}', '^', '$', '#', '&', '-', '~']
+      concat.children.zip(expected).each do |node, char|
+        node.should be_a(Regex::Syntax::AST::Literal)
+        literal = node.as(Regex::Syntax::AST::Literal)
+        literal.kind.should eq(Regex::Syntax::AST::Literal::Kind::Escaped)
+        literal.c.should eq(char)
+      end
+    end
+
     it "parses octal escapes only when enabled" do
       parser = Regex::Syntax::AstParser.new(octal: true)
 
@@ -423,6 +488,18 @@ describe Regex::Syntax::AstParser do
       literal = concat.children[1].as(Regex::Syntax::AST::Literal)
       literal.kind.should eq(Regex::Syntax::AST::Literal::Kind::Hex)
       literal.c.should eq('S')
+    end
+
+    it "parses escaped whitespace in verbose mode like Rust" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse(%q((?x)\ ))
+
+      ast.root.should be_a(Regex::Syntax::AST::Concat)
+      concat = ast.root.as(Regex::Syntax::AST::Concat)
+      concat.children[0].should be_a(Regex::Syntax::AST::SetFlags)
+      literal = concat.children[1].as(Regex::Syntax::AST::Literal)
+      literal.kind.should eq(Regex::Syntax::AST::Literal::Kind::Escaped)
+      literal.c.should eq(' ')
     end
 
     it "accepts trailing dashes in verbose-mode character classes like Rust" do
@@ -496,6 +573,47 @@ describe Regex::Syntax::AstParser do
 
       expect_raises(Regex::Syntax::ParseError, /invalid repetition range/) do
         parser.parse("a{2,1}")
+      end
+
+      expect_raises(Regex::Syntax::ParseError, /invalid decimal/) do
+        parser.parse("a{9999999999}")
+      end
+    end
+
+    it "parses chained repetitions like Rust" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("[ab]{3}{3}")
+
+      ast.root.should be_a(Regex::Syntax::AST::Repetition)
+      outer = ast.root.as(Regex::Syntax::AST::Repetition)
+      outer.op.kind.should eq(Regex::Syntax::AST::RepetitionOp::Kind::Range)
+      outer.op.min.should eq(3)
+      outer.op.max.should eq(3)
+
+      outer.child.should be_a(Regex::Syntax::AST::Repetition)
+      inner = outer.child.as(Regex::Syntax::AST::Repetition)
+      inner.op.kind.should eq(Regex::Syntax::AST::RepetitionOp::Kind::Range)
+      inner.op.min.should eq(3)
+      inner.op.max.should eq(3)
+    end
+
+    it "parses decimal repetition counts like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      parser.parse("a{123}").root.as(Regex::Syntax::AST::Repetition).op.min.should eq(123)
+      parser.parse("a{0}").root.as(Regex::Syntax::AST::Repetition).op.min.should eq(0)
+      parser.parse("a{01}").root.as(Regex::Syntax::AST::Repetition).op.min.should eq(1)
+
+      expect_raises(Regex::Syntax::ParseError, /empty repetition count/) do
+        parser.parse("a{-1}")
+      end
+
+      expect_raises(Regex::Syntax::ParseError, /empty repetition count/) do
+        parser.parse("a{}")
+      end
+
+      expect_raises(Regex::Syntax::ParseError, /invalid decimal/) do
+        parser.parse("a{9999999999}")
       end
     end
 

@@ -47,6 +47,48 @@ describe "Flag handling in AST parser" do
       group.flags.should_not be_nil
     end
 
+    it "parses the full Rust flag set in scoped groups" do
+      parser = Regex::Syntax::AstParser.new
+
+      {
+        "(?m:a)" => 'm',
+        "(?s:a)" => 's',
+        "(?U:a)" => 'U',
+        "(?u:a)" => 'u',
+        "(?R:a)" => 'R',
+        "(?x:a)" => 'x',
+      }.each do |pattern, flag|
+        ast = parser.parse(pattern)
+        ast.root.should be_a(Regex::Syntax::AST::Group)
+        group = ast.root.as(Regex::Syntax::AST::Group)
+        group.kind.should eq(Regex::Syntax::AST::Group::Kind::NonCapture)
+        group.flags.should_not be_nil
+        if flags = group.flags
+          flags.flag_state(flag).should be_true
+        end
+      end
+    end
+
+    it "parses Rust-style negation placement in flag groups" do
+      parser = Regex::Syntax::AstParser.new
+
+      ast = parser.parse("(?-isU:a)")
+      group = ast.root.as(Regex::Syntax::AST::Group)
+      if flags = group.flags
+        flags.flag_state('i').should be_false
+        flags.flag_state('s').should be_false
+        flags.flag_state('U').should be_false
+      end
+
+      mixed = parser.parse("(?i-sR:a)")
+      mixed_group = mixed.root.as(Regex::Syntax::AST::Group)
+      if mixed_flags = mixed_group.flags
+        mixed_flags.flag_state('i').should be_true
+        mixed_flags.flag_state('s').should be_false
+        mixed_flags.flag_state('R').should be_false
+      end
+    end
+
     it "parses negative flags (?-i:...)" do
       parser = Regex::Syntax::AstParser.new
       ast = parser.parse("(?-i:AB)")
@@ -91,6 +133,18 @@ describe "Flag handling in AST parser" do
       expect_raises(Regex::Syntax::ParseError, /unrecognized flag/) do
         parser.parse("(?ia:ab)")
       end
+
+      expect_raises(Regex::Syntax::ParseError, /unrecognized flag/) do
+        parser.parse("(?☃:ab)")
+      end
+    end
+
+    it "rejects unexpected eof in flag syntax like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      expect_raises(Regex::Syntax::ParseError, /unexpected end/) do
+        parser.parse("(?isU")
+      end
     end
   end
 
@@ -104,9 +158,9 @@ describe "Flag handling in AST parser" do
       )
 
       hir = translator.translate(ast)
-      hir.should be_a(Regex::Syntax::Hir::CharClass)
-      char_class = hir.as(Regex::Syntax::Hir::CharClass)
-      char_class.intervals.should eq([97_u8..97_u8, 65_u8..65_u8]) # 'a' and 'A'
+      hir.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      char_class = hir.as(Regex::Syntax::Hir::UnicodeClass)
+      char_class.intervals.should eq([65_u32..65_u32, 97_u32..97_u32]) # 'A' and 'a'
     end
 
     it "applies case-insensitive flag to character classes" do

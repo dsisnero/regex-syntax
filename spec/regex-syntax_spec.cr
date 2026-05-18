@@ -194,8 +194,8 @@ describe Regex::Syntax do
       hir.node.should be_a(Regex::Syntax::Hir::Concat)
       concat = hir.node.as(Regex::Syntax::Hir::Concat)
       concat.children.size.should eq(2)
-      concat.children[0].should be_a(Regex::Syntax::Hir::CharClass)
-      concat.children[1].should be_a(Regex::Syntax::Hir::CharClass)
+      concat.children[0].should be_a(Regex::Syntax::Hir::UnicodeClass)
+      concat.children[1].should be_a(Regex::Syntax::Hir::UnicodeClass)
     end
 
     it "parses global inline flags (?i) for following expression" do
@@ -203,8 +203,8 @@ describe Regex::Syntax do
       hir.node.should be_a(Regex::Syntax::Hir::Concat)
       concat = hir.node.as(Regex::Syntax::Hir::Concat)
       concat.children.size.should eq(2)
-      concat.children[0].should be_a(Regex::Syntax::Hir::CharClass)
-      concat.children[1].should be_a(Regex::Syntax::Hir::CharClass)
+      concat.children[0].should be_a(Regex::Syntax::Hir::UnicodeClass)
+      concat.children[1].should be_a(Regex::Syntax::Hir::UnicodeClass)
     end
 
     it "rejects unsupported look-ahead groups" do
@@ -409,6 +409,80 @@ describe Regex::Syntax do
       class_bracketed = Regex::Syntax::AST::ClassBracketed.new(span, false, class_set)
       class_bracketed.negated?.should be_false
       class_bracketed.kind.should be_a(Regex::Syntax::AST::ClassSet)
+    end
+  end
+
+  describe "hir class operations" do
+    it "canonicalizes byte and unicode classes like Rust" do
+      bytes = Regex::Syntax::Hir::CharClass.new(false, [0x78_u8..0x7A_u8, 0x77_u8..0x79_u8, 0x61_u8..0x63_u8])
+      bytes.intervals.should eq([0x61_u8..0x63_u8, 0x77_u8..0x7A_u8])
+
+      unicode = Regex::Syntax::Hir::UnicodeClass.new(false, [0x78_u32..0x7A_u32, 0x77_u32..0x79_u32, 0x61_u32..0x63_u32])
+      unicode.intervals.should eq([0x61_u32..0x63_u32, 0x77_u32..0x7A_u32])
+    end
+
+    it "canonicalizes reversed byte and unicode ranges like Rust" do
+      bytes = Regex::Syntax::Hir::CharClass.new(false, [0xFF_u8..0x00_u8])
+      bytes.intervals.should eq([0x00_u8..0xFF_u8])
+
+      unicode = Regex::Syntax::Hir::UnicodeClass.new(false, [0x00FF_u32..0x0000_u32])
+      unicode.intervals.should eq([0x0000_u32..0x00FF_u32])
+    end
+
+    it "case folds byte and unicode classes like Rust" do
+      bytes = Regex::Syntax::Hir::CharClass.new(false, [0x6B_u8..0x6B_u8])
+      bytes.case_fold_simple
+      bytes.intervals.should eq([0x4B_u8..0x4B_u8, 0x6B_u8..0x6B_u8])
+
+      unicode = Regex::Syntax::Hir::UnicodeClass.new(false, [0x6B_u32..0x6B_u32])
+      unicode.case_fold_simple
+      unicode.intervals.should eq([0x4B_u32..0x4B_u32, 0x6B_u32..0x6B_u32, 0x212A_u32..0x212A_u32])
+    end
+
+    it "negates and combines byte classes like Rust" do
+      negated = Regex::Syntax::Hir::CharClass.new(false, [0x61_u8..0x61_u8])
+      negated.negate
+      negated.intervals.should eq([0x00_u8..0x60_u8, 0x62_u8..0xFF_u8])
+
+      union = Regex::Syntax::Hir::CharClass.new(false, [0x61_u8..0x67_u8, 0x6D_u8..0x74_u8, 0x41_u8..0x43_u8])
+      union.union(Regex::Syntax::Hir::CharClass.new(false, [0x61_u8..0x7A_u8]))
+      union.intervals.should eq([0x41_u8..0x43_u8, 0x61_u8..0x7A_u8])
+
+      intersection = Regex::Syntax::Hir::CharClass.new(false, [0x61_u8..0x62_u8, 0x63_u8..0x64_u8, 0x65_u8..0x66_u8])
+      intersection.intersect(Regex::Syntax::Hir::CharClass.new(false, [0x62_u8..0x63_u8, 0x64_u8..0x65_u8, 0x66_u8..0x67_u8]))
+      intersection.intervals.should eq([0x62_u8..0x66_u8])
+
+      difference = Regex::Syntax::Hir::CharClass.new(false, [0x61_u8..0x7A_u8])
+      difference.difference(Regex::Syntax::Hir::CharClass.new(false, [0x6D_u8..0x6D_u8]))
+      difference.intervals.should eq([0x61_u8..0x6C_u8, 0x6E_u8..0x7A_u8])
+    end
+
+    it "negates and combines unicode classes like Rust" do
+      negated = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x61_u32])
+      negated.negate
+      negated.intervals.should eq([0x00_u32..0x60_u32, 0x62_u32..0x10FFFF_u32])
+
+      union = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x67_u32, 0x6D_u32..0x74_u32, 0x41_u32..0x43_u32])
+      union.union(Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x7A_u32]))
+      union.intervals.should eq([0x41_u32..0x43_u32, 0x61_u32..0x7A_u32])
+
+      intersection = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x62_u32, 0x63_u32..0x64_u32, 0x65_u32..0x66_u32])
+      intersection.intersect(Regex::Syntax::Hir::UnicodeClass.new(false, [0x62_u32..0x63_u32, 0x64_u32..0x65_u32, 0x66_u32..0x67_u32]))
+      intersection.intervals.should eq([0x62_u32..0x66_u32])
+
+      difference = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x7A_u32])
+      difference.difference(Regex::Syntax::Hir::UnicodeClass.new(false, [0x6D_u32..0x6D_u32]))
+      difference.intervals.should eq([0x61_u32..0x6C_u32, 0x6E_u32..0x7A_u32])
+    end
+
+    it "computes symmetric difference for byte and unicode classes like Rust" do
+      bytes = Regex::Syntax::Hir::CharClass.new(false, [0x61_u8..0x6D_u8])
+      bytes.symmetric_difference(Regex::Syntax::Hir::CharClass.new(false, [0x67_u8..0x74_u8]))
+      bytes.intervals.should eq([0x61_u8..0x66_u8, 0x6E_u8..0x74_u8])
+
+      unicode = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x6D_u32])
+      unicode.symmetric_difference(Regex::Syntax::Hir::UnicodeClass.new(false, [0x67_u32..0x74_u32]))
+      unicode.intervals.should eq([0x61_u32..0x66_u32, 0x6E_u32..0x74_u32])
     end
   end
 
