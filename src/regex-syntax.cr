@@ -1,5 +1,7 @@
 require "set"
 require "./regex/syntax/hir"
+require "./regex/syntax/rank"
+require "./regex/syntax/literal"
 require "./regex/syntax/ast"
 require "./regex/syntax/parser"
 require "./regex/syntax/translate"
@@ -134,8 +136,21 @@ module Regex::Syntax
 
     private def parse_atom : AST::Node
       node = parse_primary
-      node = parse_repetition(node)
+      while repetition_operator_start?
+        node = parse_repetition(node)
+      end
       node
+    end
+
+    private def repetition_operator_start? : Bool
+      return false if eof?
+
+      case current_char
+      when '*', '+', '?', '{'
+        true
+      else
+        false
+      end
     end
 
     private def parse_primary : AST::Node
@@ -519,7 +534,15 @@ module Regex::Syntax
         advance # skip '^'
       end
 
-      class_set = parse_class_set
+      bump_space
+
+      prefix_items = [] of AST::ClassSetItem
+      if !eof? && (current_char == ']' || current_char == '-')
+        literal = parse_class_literal
+        prefix_items << AST::ClassSetItem.new(literal.span, AST::ClassSetItem::Kind::Literal, literal)
+      end
+
+      class_set = parse_class_set(prefix_items)
 
       raise ParseError.new("unclosed character class") if eof? || current_char != ']'
       advance # skip ']'
@@ -527,9 +550,9 @@ module Regex::Syntax
       AST::ClassBracketed.new(AST::Span.new(start, @pos), negated, class_set)
     end
 
-    private def parse_class_set : AST::ClassSet
+    private def parse_class_set(prefix_items : Array(AST::ClassSetItem) = [] of AST::ClassSetItem) : AST::ClassSet
       start = @pos
-      lhs = parse_class_set_operand
+      lhs = parse_class_set_operand(prefix_items)
 
       while op_kind = parse_class_set_binary_op_kind
         rhs = parse_class_set_operand
@@ -544,11 +567,13 @@ module Regex::Syntax
       lhs
     end
 
-    private def parse_class_set_operand : AST::ClassSet
+    private def parse_class_set_operand(prefix_items : Array(AST::ClassSetItem) = [] of AST::ClassSetItem) : AST::ClassSet
       start = @pos
-      items = [] of AST::ClassSetItem
+      items = prefix_items.dup
 
       while !eof? && current_char != ']'
+        bump_space
+        break if eof? || current_char == ']'
         break if parse_class_set_binary_op_kind?(peek: true)
         items << parse_class_set_range_or_item
       end
@@ -585,6 +610,11 @@ module Regex::Syntax
       second_literal = second.item.as?(AST::Literal)
       unless first.kind == AST::ClassSetItem::Kind::Literal && second.kind == AST::ClassSetItem::Kind::Literal && first_literal && second_literal
         raise ParseError.new("invalid character class range")
+      end
+      if first_char = first_literal.c
+        if second_char = second_literal.c
+          raise ParseError.new("invalid character class range") if first_char > second_char
+        end
       end
 
       range = AST::ClassSetRange.new(
@@ -737,7 +767,7 @@ module Regex::Syntax
                      when 'n' then '\n'
                      when 'r' then '\r'
                      when 't' then '\t'
-                     when '\\', '-', ']', '^'
+                     when '\\', '-', ']', '^', '['
                        c
                      else
                        raise ParseError.new("invalid escape sequence in character class")
@@ -860,7 +890,11 @@ module Regex::Syntax
           # Negative lookahead: (?!...) - not supported
           raise ParseError.new("look-ahead groups not supported")
         else
-          raise ParseError.new("unsupported group syntax")
+          if can_start_flag_set?(current_char)
+            parse_unknown_flag_group(start)
+          else
+            raise ParseError.new("unsupported group syntax")
+          end
         end
       else
         # Regular capturing group
@@ -924,11 +958,58 @@ module Regex::Syntax
       end
     end
 
+    private def can_start_flag_set?(char : Char) : Bool
+      char != ':' && char != '=' && char != '!' && char != '<' && char != 'P'
+    end
+
+    private def parse_unknown_flag_group(start : Int32) : AST::Node
+      flags_start = @pos
+      flags_items = parse_flags_items
+
+      if current_char == ':'
+        old_ignore_whitespace = @ignore_whitespace
+        old_swap_greed = @swap_greed
+        old_ignore_case = @ignore_case
+        old_multi_line = @multi_line
+        old_dot_matches_new_line = @dot_matches_new_line
+        old_unicode = @unicode
+        old_crlf = @crlf
+
+        apply_flags_from_items(flags_items)
+
+        advance
+        child = parse_alternation
+        raise ParseError.new("unclosed group") if eof? || current_char != ')'
+        advance
+
+        @ignore_whitespace = old_ignore_whitespace
+        @swap_greed = old_swap_greed
+        @ignore_case = old_ignore_case
+        @multi_line = old_multi_line
+        @dot_matches_new_line = old_dot_matches_new_line
+        @unicode = old_unicode
+        @crlf = old_crlf
+
+        flags = AST::Flags.new(AST::Span.new(flags_start, @pos), flags_items)
+        AST::Group.new(
+          AST::Span.new(start, @pos),
+          AST::Group::Kind::NonCapture,
+          child,
+          flags: flags
+        )
+      else
+        raise ParseError.new("unclosed group") if eof? || current_char != ')'
+        advance
+        apply_flags_from_items(flags_items)
+        AST::SetFlags.new(AST::Span.new(start, @pos), flags_items)
+      end
+    end
+
     private def parse_literal : AST::Node
       start = @pos
       bytes = [] of UInt8
 
-      while !eof? && !"|().*+?{[\\".includes?(current_char)
+      while !eof? && !"|().*+?{[\\^$".includes?(current_char)
         # In verbose mode, stop at whitespace or comment
         break if @ignore_whitespace && (current_char.ascii_whitespace? || current_char == '#')
 
@@ -997,18 +1078,7 @@ module Regex::Syntax
         raise ParseError.new("unclosed repetition count")
       end
 
-      # Parse min count
-      min_start = @pos
-      while !eof? && current_char.ascii_number?
-        advance
-      end
-
-      if @pos == min_start
-        raise ParseError.new("empty repetition count")
-      end
-
-      min_str = @input[min_start...@pos]
-      min = min_str.to_i
+      min = parse_repetition_decimal
 
       if eof?
         raise ParseError.new("unclosed repetition count")
@@ -1044,18 +1114,7 @@ module Regex::Syntax
           op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::Range, min: min)
           AST::Repetition.new(AST::Span.new(start, @pos), op, greedy, expr)
         else
-          # Parse max count
-          max_start = @pos
-          while !eof? && current_char.ascii_number?
-            advance
-          end
-
-          if @pos == max_start
-            raise ParseError.new("empty repetition count")
-          end
-
-          max_str = @input[max_start...@pos]
-          max = max_str.to_i
+          max = parse_repetition_decimal
 
           if eof? || current_char != '}'
             raise ParseError.new("unclosed repetition count")
@@ -1074,6 +1133,35 @@ module Regex::Syntax
         end
       else
         raise ParseError.new("unclosed repetition count")
+      end
+    end
+
+    private def parse_decimal : UInt32
+      value = 0_u64
+      saw_digit = false
+
+      while !eof? && current_char.ascii_number?
+        saw_digit = true
+        value = value * 10_u64 + (current_char.ord - '0'.ord).to_u64
+        advance
+        raise ParseError.new("invalid decimal") if value > UInt32::MAX
+      end
+
+      raise ParseError.new("empty decimal") unless saw_digit
+
+      value.to_u32
+    end
+
+    private def parse_repetition_decimal : UInt32
+      parse_decimal
+    rescue ex : ParseError
+      case ex.message
+      when "empty decimal"
+        raise ParseError.new("empty repetition count")
+      when "invalid decimal"
+        raise ParseError.new("invalid decimal")
+      else
+        raise ex
       end
     end
 

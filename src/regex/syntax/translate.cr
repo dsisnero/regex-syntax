@@ -650,19 +650,18 @@ module Regex::Syntax
 
     private def translate_repetition(repetition : AST::Repetition) : Hir::Node
       child = translate(repetition.child)
-      return Hir::Empty.new if child.is_a?(Hir::Empty)
 
       case repetition.op.kind
       when AST::RepetitionOp::Kind::ZeroOrOne
-        Hir::Repetition.new(child, 0, 1, greedy: repetition.greedy?)
+        Hir::Repetition.new(child, 0_u32, 1_u32, greedy: repetition.greedy?)
       when AST::RepetitionOp::Kind::ZeroOrMore
-        Hir::Repetition.new(child, 0, nil, greedy: repetition.greedy?)
+        Hir::Repetition.new(child, 0_u32, nil, greedy: repetition.greedy?)
       when AST::RepetitionOp::Kind::OneOrMore
-        Hir::Repetition.new(child, 1, nil, greedy: repetition.greedy?)
+        Hir::Repetition.new(child, 1_u32, nil, greedy: repetition.greedy?)
       when AST::RepetitionOp::Kind::Range
         Hir::Repetition.new(
           child,
-          repetition.op.min || 0,
+          repetition.op.min || 0_u32,
           repetition.op.max,
           greedy: repetition.greedy?
         )

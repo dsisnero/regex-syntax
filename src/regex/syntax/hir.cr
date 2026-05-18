@@ -1,4 +1,258 @@
 module Regex::Syntax::Hir
+  module IntervalOps
+    extend self
+
+    def canonicalize(intervals : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      return [] of Range(UInt8, UInt8) if intervals.empty?
+
+      sorted = intervals.map { |range| canonical_range(range) }
+      sorted.sort_by!(&.begin)
+      merged = [] of Range(UInt8, UInt8)
+      current = sorted.first
+
+      sorted[1..].each do |range|
+        if range.begin.to_u16 <= current.end.to_u16 + 1
+          current = current.begin..Math.max(current.end, range.end)
+        else
+          merged << current
+          current = range
+        end
+      end
+      merged << current
+      merged
+    end
+
+    def canonicalize(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      return [] of Range(UInt32, UInt32) if intervals.empty?
+
+      sorted = intervals.map { |range| canonical_range(range) }
+      sorted.sort_by!(&.begin)
+      merged = [] of Range(UInt32, UInt32)
+      current = sorted.first
+
+      sorted[1..].each do |range|
+        if range.begin.to_u64 <= current.end.to_u64 + 1
+          current = current.begin..Math.max(current.end, range.end)
+        else
+          merged << current
+          current = range
+        end
+      end
+      merged << current
+      merged
+    end
+
+    def invert(intervals : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      canonical = canonicalize(intervals)
+      return [0_u8..255_u8] if canonical.empty?
+
+      result = [] of Range(UInt8, UInt8)
+      next_start = 0_u8
+      canonical.each do |range|
+        if next_start < range.begin
+          result << (next_start..(range.begin - 1).to_u8)
+        end
+        next_start = range.end == 255_u8 ? 255_u8 : (range.end + 1).to_u8
+      end
+      result << (next_start..255_u8) if canonical.last.end < 255_u8
+      result
+    end
+
+    def invert(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      canonical = canonicalize(intervals)
+      return [0_u32..0x10FFFF_u32] if canonical.empty?
+
+      result = [] of Range(UInt32, UInt32)
+      next_start = 0_u32
+      canonical.each do |range|
+        if next_start < range.begin
+          result << (next_start..(range.begin - 1).to_u32)
+        end
+        next_start = range.end == 0x10FFFF_u32 ? 0x10FFFF_u32 : (range.end + 1).to_u32
+      end
+      result << (next_start..0x10FFFF_u32) if canonical.last.end < 0x10FFFF_u32
+      result
+    end
+
+    def union(a : Array(Range(UInt8, UInt8)), b : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      canonicalize(a + b)
+    end
+
+    def union(a : Array(Range(UInt32, UInt32)), b : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      canonicalize(a + b)
+    end
+
+    def intersect(a : Array(Range(UInt8, UInt8)), b : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      return [] of Range(UInt8, UInt8) if a.empty? || b.empty?
+      left = canonicalize(a)
+      right = canonicalize(b)
+      result = [] of Range(UInt8, UInt8)
+      i = 0
+      j = 0
+      while i < left.size && j < right.size
+        l = left[i]
+        r = right[j]
+        if l.end < r.begin
+          i += 1
+        elsif r.end < l.begin
+          j += 1
+        else
+          result << (Math.max(l.begin, r.begin)..Math.min(l.end, r.end))
+          if l.end < r.end
+            i += 1
+          else
+            j += 1
+          end
+        end
+      end
+      result
+    end
+
+    def intersect(a : Array(Range(UInt32, UInt32)), b : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      return [] of Range(UInt32, UInt32) if a.empty? || b.empty?
+      left = canonicalize(a)
+      right = canonicalize(b)
+      result = [] of Range(UInt32, UInt32)
+      i = 0
+      j = 0
+      while i < left.size && j < right.size
+        l = left[i]
+        r = right[j]
+        if l.end < r.begin
+          i += 1
+        elsif r.end < l.begin
+          j += 1
+        else
+          result << (Math.max(l.begin, r.begin)..Math.min(l.end, r.end))
+          if l.end < r.end
+            i += 1
+          else
+            j += 1
+          end
+        end
+      end
+      result
+    end
+
+    def difference(a : Array(Range(UInt8, UInt8)), b : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      return canonicalize(a) if b.empty?
+      return [] of Range(UInt8, UInt8) if a.empty?
+      left = canonicalize(a)
+      right = canonicalize(b)
+      result = [] of Range(UInt8, UInt8)
+      i = 0
+      j = 0
+      while i < left.size
+        l = left[i]
+        while j < right.size && right[j].end < l.begin
+          j += 1
+        end
+        if j >= right.size || right[j].begin > l.end
+          result << l
+          i += 1
+          next
+        end
+        current_start = l.begin
+        k = j
+        while k < right.size && right[k].begin <= l.end
+          r = right[k]
+          result << (current_start..(r.begin - 1).to_u8) if current_start < r.begin
+          current_start = Math.max(current_start, (r.end + 1).to_u8)
+          break if r.end >= l.end
+          k += 1
+        end
+        result << (current_start..l.end) if current_start <= l.end
+        i += 1
+      end
+      result
+    end
+
+    def difference(a : Array(Range(UInt32, UInt32)), b : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      return canonicalize(a) if b.empty?
+      return [] of Range(UInt32, UInt32) if a.empty?
+      left = canonicalize(a)
+      right = canonicalize(b)
+      result = [] of Range(UInt32, UInt32)
+      i = 0
+      j = 0
+      while i < left.size
+        l = left[i]
+        while j < right.size && right[j].end < l.begin
+          j += 1
+        end
+        if j >= right.size || right[j].begin > l.end
+          result << l
+          i += 1
+          next
+        end
+        current_start = l.begin
+        k = j
+        while k < right.size && right[k].begin <= l.end
+          r = right[k]
+          result << (current_start..(r.begin - 1).to_u32) if current_start < r.begin
+          current_start = Math.max(current_start, (r.end + 1).to_u32)
+          break if r.end >= l.end
+          k += 1
+        end
+        result << (current_start..l.end) if current_start <= l.end
+        i += 1
+      end
+      result
+    end
+
+    def symmetric_difference(a : Array(Range(UInt8, UInt8)), b : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      difference(union(a, b), intersect(a, b))
+    end
+
+    def symmetric_difference(a : Array(Range(UInt32, UInt32)), b : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      difference(union(a, b), intersect(a, b))
+    end
+
+    private def canonical_range(range : Range(UInt8, UInt8)) : Range(UInt8, UInt8)
+      range.begin <= range.end ? range : (range.end..range.begin)
+    end
+
+    private def canonical_range(range : Range(UInt32, UInt32)) : Range(UInt32, UInt32)
+      range.begin <= range.end ? range : (range.end..range.begin)
+    end
+
+    def case_fold_ascii(intervals : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
+      folded = canonicalize(intervals)
+      additions = [] of Range(UInt8, UInt8)
+      folded.each do |range|
+        upper_start = range.begin > 'A'.ord.to_u8 ? range.begin : 'A'.ord.to_u8
+        upper_end = range.end < 'Z'.ord.to_u8 ? range.end : 'Z'.ord.to_u8
+        additions << ((upper_start + 32).to_u8..(upper_end + 32).to_u8) if upper_start <= upper_end
+
+        lower_start = range.begin > 'a'.ord.to_u8 ? range.begin : 'a'.ord.to_u8
+        lower_end = range.end < 'z'.ord.to_u8 ? range.end : 'z'.ord.to_u8
+        additions << ((lower_start - 32).to_u8..(lower_end - 32).to_u8) if lower_start <= lower_end
+      end
+      canonicalize(folded + additions)
+    end
+
+    def case_fold_unicode(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
+      folded = canonicalize(intervals)
+      additions = [] of Range(UInt32, UInt32)
+      folded.each do |range|
+        additions << range
+        next if range.end - range.begin > 512
+
+        range.each do |code_point|
+          char = code_point.chr
+          additions << (char.ord.to_u32..char.ord.to_u32)
+          if mapped = Regex::Syntax::UnicodeTables::CaseFoldingSimple::CASE_FOLDING_SIMPLE[char]?
+            mapped.each do |mapped_char|
+              cp = mapped_char.ord.to_u32
+              additions << (cp..cp)
+            end
+          end
+        end
+      end
+      canonicalize(additions)
+    end
+  end
+
   # Apply ASCII-only case folding to a HIR, for ignore_ascii_case support.
   def self.case_fold_ascii(hir : Hir) : Hir
     Hir.new(case_fold_ascii_node(hir.node))
@@ -80,14 +334,8 @@ module Regex::Syntax::Hir
     string = String.new(bytes)
     nodes = [] of Node
     string.each_char do |char|
-      if char.ascii?
-        lower, upper = ascii_fold_pair(char.ord.to_u8)
-        ranges = [lower..lower, upper..upper]
-        nodes << CharClass.new(false, ranges)
-      else
-        variants = unicode_case_variants(char)
-        nodes << UnicodeClass.new(false, variants.map { |code_point| code_point..code_point })
-      end
+      variants = unicode_case_variants(char)
+      nodes << UnicodeClass.new(false, variants.map { |code_point| code_point..code_point })
     end
     return nodes.first if nodes.size == 1
     Concat.new(nodes)
@@ -266,6 +514,7 @@ module Regex::Syntax::Hir
     getter intervals : Array(Range(UInt8, UInt8))
 
     def initialize(negated : Bool = false, @intervals : Array(Range(UInt8, UInt8)) = [] of Range(UInt8, UInt8))
+      @intervals = IntervalOps.canonicalize(@intervals)
       if negated && full_byte_domain?(@intervals)
         @negated = false
         @intervals = [] of Range(UInt8, UInt8)
@@ -286,8 +535,59 @@ module Regex::Syntax::Hir
       false
     end
 
+    def negate : self
+      if negated?
+        @negated = false
+      else
+        @intervals = IntervalOps.invert(@intervals)
+      end
+      normalize_full_domain_negation
+      self
+    end
+
+    def union(other : CharClass) : self
+      @intervals = IntervalOps.union(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def intersect(other : CharClass) : self
+      @intervals = IntervalOps.intersect(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def difference(other : CharClass) : self
+      @intervals = IntervalOps.difference(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def symmetric_difference(other : CharClass) : self
+      @intervals = IntervalOps.symmetric_difference(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def case_fold_simple : self
+      @intervals = IntervalOps.case_fold_ascii(@intervals)
+      normalize_full_domain_negation
+      self
+    end
+
     private def full_byte_domain?(intervals : Array(Range(UInt8, UInt8))) : Bool
       intervals.size == 1 && intervals[0].begin == 0_u8 && intervals[0].end == 255_u8
+    end
+
+    protected def effective_intervals : Array(Range(UInt8, UInt8))
+      negated? ? IntervalOps.invert(@intervals) : @intervals
+    end
+
+    private def normalize_full_domain_negation : Nil
+      if negated? && full_byte_domain?(@intervals)
+        @negated = false
+        @intervals = [] of Range(UInt8, UInt8)
+      end
     end
   end
 
@@ -297,6 +597,7 @@ module Regex::Syntax::Hir
     getter intervals : Array(Range(UInt32, UInt32))
 
     def initialize(negated : Bool = false, @intervals : Array(Range(UInt32, UInt32)) = [] of Range(UInt32, UInt32))
+      @intervals = IntervalOps.canonicalize(@intervals)
       if negated && full_unicode_domain?(@intervals)
         @negated = false
         @intervals = [] of Range(UInt32, UInt32)
@@ -317,8 +618,59 @@ module Regex::Syntax::Hir
       false
     end
 
+    def negate : self
+      if negated?
+        @negated = false
+      else
+        @intervals = IntervalOps.invert(@intervals)
+      end
+      normalize_full_domain_negation
+      self
+    end
+
+    def union(other : UnicodeClass) : self
+      @intervals = IntervalOps.union(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def intersect(other : UnicodeClass) : self
+      @intervals = IntervalOps.intersect(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def difference(other : UnicodeClass) : self
+      @intervals = IntervalOps.difference(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def symmetric_difference(other : UnicodeClass) : self
+      @intervals = IntervalOps.symmetric_difference(effective_intervals, other.effective_intervals)
+      @negated = false
+      self
+    end
+
+    def case_fold_simple : self
+      @intervals = IntervalOps.case_fold_unicode(@intervals)
+      normalize_full_domain_negation
+      self
+    end
+
     private def full_unicode_domain?(intervals : Array(Range(UInt32, UInt32))) : Bool
       intervals.size == 1 && intervals[0].begin == 0_u32 && intervals[0].end == 0x10FFFF_u32
+    end
+
+    protected def effective_intervals : Array(Range(UInt32, UInt32))
+      negated? ? IntervalOps.invert(@intervals) : @intervals
+    end
+
+    private def normalize_full_domain_negation : Nil
+      if negated? && full_unicode_domain?(@intervals)
+        @negated = false
+        @intervals = [] of Range(UInt32, UInt32)
+      end
     end
   end
 
@@ -367,16 +719,17 @@ module Regex::Syntax::Hir
   # Repetition
   class Repetition < Node
     getter sub : Node
-    getter min : Int32
-    getter max : Int32?
+    getter min : UInt32
+    getter max : UInt32?
     getter? greedy : Bool
 
-    def initialize(@sub : Node, @min : Int32, @max : Int32?, greedy : Bool = true)
+    def initialize(@sub : Node, @min : UInt32, @max : UInt32?, greedy : Bool = true)
       @greedy = greedy
     end
 
     def complexity : Int32
-      min * sub.complexity
+      complexity = min.to_u64 * sub.complexity.to_u64
+      complexity > Int32::MAX ? Int32::MAX : complexity.to_i32
     end
 
     def has_greedy_all? : Bool
@@ -391,7 +744,7 @@ module Regex::Syntax::Hir
     end
 
     def can_match_empty? : Bool
-      min == 0 || sub.can_match_empty?
+      min == 0_u32 || sub.can_match_empty?
     end
   end
 

@@ -357,10 +357,10 @@ module Regex::Syntax::AST
     end
 
     getter kind : Kind
-    getter min : Int32?
-    getter max : Int32?
+    getter min : UInt32?
+    getter max : UInt32?
 
-    def initialize(@kind : Kind, @min : Int32? = nil, @max : Int32? = nil)
+    def initialize(@kind : Kind, @min : UInt32? = nil, @max : UInt32? = nil)
     end
   end
 
