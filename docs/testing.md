@@ -1,77 +1,136 @@
 # Testing
 
-## Philosophy
+Testing in this repo is organized around vendored Rust behavior, not around generic unit-test categories.
 
-**Test parity**: Port Rust tests faithfully to ensure behavioral correctness with the upstream `regex-syntax` crate.
+## Primary command
 
-## Test Structure
+Run the full suite with:
 
-### Spec Files
-- `spec/regex/syntax/parser_spec.cr` - Parser tests
-- `spec/regex/syntax/ast_spec.cr` - AST tests
-- `spec/regex/syntax/hir_spec.cr` - HIR tests
-- `spec/regex/syntax/unicode_spec.cr` - Unicode tests
-
-### Test Patterns
-```crystal
-describe "Regex::Syntax::Parser" do
-  it "parses simple patterns" do
-    hir = Regex::Syntax.parse("[a-z]+")
-    hir.should be_a(Regex::Syntax::Hir::Hir)
-  end
-
-  it "handles alternation" do
-    hir = Regex::Syntax.parse("a|b")
-    # Test specific behavior
-  end
-end
-```
-
-## Porting Rust Tests
-
-### Source Reference
-- Rust tests: `vendor/regex-syntax/src/` and `vendor/regex-syntax/test/`
-- Convert `#[test]` functions to Crystal `it` blocks
-- Preserve test names and assertions
-
-### Assertion Mapping
-- Rust `assert!(expr)` → Crystal `expr.should be_true`
-- Rust `assert_eq!(a, b)` → Crystal `a.should eq(b)`
-- Rust `assert_ne!(a, b)` → Crystal `a.should_not eq(b)`
-
-### Test Data
-- Use same test patterns as Rust source
-- Include edge cases and error conditions
-- Test Unicode properties and character classes
-
-## Running Tests
-
-### Basic Testing
 ```bash
-make test           # Run all tests
-crystal spec        # Run all tests (alternative)
+make test
 ```
 
-### Specific Tests
+That runs:
+
 ```bash
-crystal spec spec/regex/syntax/parser_spec.cr
-crystal spec --line 42 spec/regex/syntax/parser_spec.cr
+crystal spec
 ```
 
-### Test Coverage
+Before committing, also run:
+
 ```bash
-crystal spec --release  # Faster execution
+make format
+make lint
+make test
 ```
 
-## Test Maintenance
+## Spec layout
 
-### Adding New Tests
-1. Identify corresponding Rust test
-2. Port to Crystal with exact assertions
-3. Update parity inventory status
-4. Run all tests to ensure no regressions
+The current spec suite is intentionally split by subsystem.
 
-### Test Updates
-- When Rust source tests change, update Crystal tests accordingly
-- Run parity checks to identify test drift
-- Maintain test parity manifest in `plans/inventory/rust_test_parity.tsv`
+### Public parser / HIR behavior
+
+- [`spec/regex-syntax_spec.cr`](../spec/regex-syntax_spec.cr)
+  - broad public API, parser, translator, HIR analysis, look sets, class helpers, constructors, Unicode property, and parity matrix coverage
+- [`spec/parser_builder_spec.cr`](../spec/parser_builder_spec.cr)
+  - public `ParserBuilder` surface
+- [`spec/translator_spec.cr`](../spec/translator_spec.cr)
+  - focused translator regressions and byte/Unicode cases
+- [`spec/translator_builder_spec.cr`](../spec/translator_builder_spec.cr)
+  - translator option surface
+
+### Direct AST parser behavior
+
+- [`spec/parser_spec.cr`](../spec/parser_spec.cr)
+  - vendored `src/ast/parse.rs` behavior through the Crystal `AstParser` surface
+- [`spec/flag_handling_spec.cr`](../spec/flag_handling_spec.cr)
+  - detailed scoped/global flag parsing and error spans
+- [`spec/ast_parser_builder_spec.cr`](../spec/ast_parser_builder_spec.cr)
+  - direct `AstParserBuilder` surface
+
+### AST / HIR API shape
+
+- [`spec/ast_api_spec.cr`](../spec/ast_api_spec.cr)
+- [`spec/hir_literal_api_spec.cr`](../spec/hir_literal_api_spec.cr)
+
+These lock down Crystal-facing helpers that intentionally differ in shape from Rust while still preserving behavior.
+
+### Printers and visitors
+
+- [`spec/ast_print_spec.cr`](../spec/ast_print_spec.cr)
+- [`spec/hir_print_spec.cr`](../spec/hir_print_spec.cr)
+- [`spec/ast_visitor_spec.cr`](../spec/ast_visitor_spec.cr)
+- [`spec/hir_visitor_spec.cr`](../spec/hir_visitor_spec.cr)
+
+These matter because round-tripping and traversal order are explicit parity surfaces.
+
+### Dedicated subsystems
+
+- [`spec/hir_interval_spec.cr`](../spec/hir_interval_spec.cr)
+  - interval-set operations
+- [`spec/hir_literal_spec.cr`](../spec/hir_literal_spec.cr)
+  - vendored `src/hir/literal.rs` matrix
+- [`spec/unicode_spec.cr`](../spec/unicode_spec.cr)
+  - Unicode helper and normalization surfaces
+- [`spec/utf8_spec.cr`](../spec/utf8_spec.cr)
+  - vendored UTF-8 decomposition behavior
+- [`spec/error_spec.cr`](../spec/error_spec.cr)
+  - structured parser/HIR formatter output
+- [`spec/lib_spec.cr`](../spec/lib_spec.cr)
+  - top-level helper functions from the `src/lib.rs` parity surface
+
+### Focused parity slices
+
+- [`spec/hir_semantic_parity_spec.cr`](../spec/hir_semantic_parity_spec.cr)
+  - concentrated vendored HIR translator and analysis matrices
+- [`spec/perl_class_unicode_spec.cr`](../spec/perl_class_unicode_spec.cr)
+  - byte-vs-Unicode Perl class behavior
+
+## How parity tests are written
+
+Tests should be sourced from vendored Rust whenever possible.
+
+Typical mapping:
+
+- vendored parser test in `vendor/regex-syntax/src/ast/parse.rs`
+  - port to `spec/parser_spec.cr` or `spec/flag_handling_spec.cr`
+- vendored translator/analysis test in `vendor/regex-syntax/src/hir/translate.rs`
+  - port to `spec/regex-syntax_spec.cr`, `spec/translator_spec.cr`, or `spec/hir_semantic_parity_spec.cr`
+- vendored literal test in `vendor/regex-syntax/src/hir/literal.rs`
+  - port to `spec/hir_literal_spec.cr`
+- vendored helper test in `vendor/regex-syntax/src/unicode.rs` or `src/utf8.rs`
+  - port to `spec/unicode_spec.cr` or `spec/utf8_spec.cr`
+
+## What counts as “done”
+
+A parity slice is not done just because the code works on a hand-written example.
+
+It is done when:
+
+1. the relevant vendored behavior is implemented
+2. the corresponding Crystal spec exists
+3. the parity manifests are reconciled
+4. `make format`, `make lint`, and `make test` pass
+
+## Structured error assertions
+
+Use the helpers in [`spec/spec_helper.cr`](../spec/spec_helper.cr) when checking parser and translator diagnostics.
+
+Important distinction:
+
+- parser errors should assert structured `AST::Error` kind/span behavior where relevant
+- translator errors should assert structured `Hir::Error` kind/span behavior where relevant
+
+Do not reduce a structured parity case to “message contains text” if the current code exposes a stronger surface.
+
+## Partial rows in parity manifests
+
+Not every `partial` row means missing semantics.
+
+At the current project state, remaining `partial` rows in the inventories are largely:
+
+- intentional AST model-shape differences
+- simplified position/span modeling
+- internal Rust helper functions that are not exposed as separate Crystal helpers
+
+That distinction should be preserved when updating manifests.
