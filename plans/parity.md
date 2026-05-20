@@ -68,8 +68,8 @@ Rules for this file:
 
 ### Final Reconciliation and Done Pass
 
-- [] Do one final parity closeout pass across all manifests and broad buckets.
-  The goal of this bucket is to eliminate the remaining high-level `[]` items by either implementing the remaining semantics, explicitly documenting intentional shape differences, or proving that the remaining partial rows are only partial because of non-blocking model-shape differences rather than missing behavior.
+- [x] Do one final parity closeout pass across all manifests and broad buckets.
+  The manifests now distinguish between real semantic coverage and intentional model-shape differences. Remaining `partial` rows are limited to documented AST/source/API shape differences, simplified Position/Span modeling, or internal helper surfaces Crystal intentionally does not expose separately; they no longer represent open semantic drift.
 
 - [x] The project is already in a strong closeout state.
   Quality gates pass, inventories are synced, the parity scope is documented, and the remaining work is concentrated in a few large semantic closure passes instead of scattered foundational debt.
@@ -78,8 +78,8 @@ Rules for this file:
 
 - [x] Every former `missing` row is now either implemented, explicitly marked `not_applicable`, or documented as an intentional API difference.
 
-- [] All remaining open feature buckets above are closed.
-  This means no broad parity workstream is still being driven by open semantic drift; only documented intentional shape differences may remain.
+- [x] All remaining open feature buckets above are closed.
+  No broad parity workstream is still being driven by open semantic drift; only documented intentional shape differences remain in the inventories.
 
 - [x] Verified gates continue to pass after each slice:
   `make format`, `make lint`, `make test`.
