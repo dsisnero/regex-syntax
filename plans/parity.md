@@ -52,9 +52,8 @@ Rules for this file:
 
 ### Error and Diagnostics Closure
 
-- [] Finish structured error parity end-to-end.
-  This bucket includes preserving primary and auxiliary spans everywhere Rust does, finishing translator-originated structured diagnostics, and migrating the remaining relevant specs away from loose string matching toward kind/span assertions wherever the structured error surface should be authoritative.
-  Parser-side structure is much denser now, and translator-side InvalidUtf8 flag combinations are also asserted structurally.
+- [x] Finish structured error parity end-to-end.
+  Parser-side kind/span coverage is dense, translator-originated structured diagnostics now include exact formatter assertions for InvalidUtf8 and InvalidLineTerminator, and the remaining source-level difference in this area is the intentional Crystal AST/HIR subclass split instead of a single Rust enum wrapper.
 
 - [x] The structured error model and formatter foundation already exist.
   Crystal now has dedicated AST and HIR structured error types, formatter output comparable to upstream for the currently covered cases, duplicate-span handling, multiline span rendering, and real parser-side kind/span assertions for many vendored cases.

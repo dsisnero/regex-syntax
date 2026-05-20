@@ -79,4 +79,44 @@ TEXT
     err.pattern.should eq(%q(\pZ))
     err.to_s.should contain("error: Unicode not allowed here")
   end
+
+  it "formats invalid UTF-8 translator errors with exact spans" do
+    err = begin
+      Regex::Syntax.parse(%q((?-u)\xFF))
+      raise "expected translate error"
+    rescue ex : Regex::Syntax::Hir::Error
+      ex
+    end
+
+    err.kind.should eq(Regex::Syntax::Hir::ErrorKind::InvalidUtf8)
+    err.span.should eq(Regex::Syntax::AST::Span.new(5, 9))
+    err.to_s.should eq(<<-TEXT.chomp)
+regex parse error:
+    (?-u)\\xFF
+         ^^^^
+error: pattern can match invalid UTF-8
+TEXT
+  end
+
+  it "formats invalid line terminator translator errors with exact spans" do
+    err = begin
+      Regex::Syntax::ParserBuilder.new
+        .utf8(false)
+        .line_terminator(0xFF_u8)
+        .build
+        .parse(".")
+      raise "expected translate error"
+    rescue ex : Regex::Syntax::Hir::Error
+      ex
+    end
+
+    err.kind.should eq(Regex::Syntax::Hir::ErrorKind::InvalidLineTerminator)
+    err.span.should eq(Regex::Syntax::AST::Span.new(0, 1))
+    err.to_s.should eq(<<-TEXT.chomp)
+regex parse error:
+    .
+    ^
+error: invalid line terminator, must be ASCII
+TEXT
+  end
 end
