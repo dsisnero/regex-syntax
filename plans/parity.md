@@ -61,8 +61,8 @@ Rules for this file:
 
 ### Print, Visitor, and Module Round-Trip Closure
 
-- [] Finish the remaining round-trip and helper parity for dedicated modules as one closure pass.
-  This bucket covers any remaining AST/HIR printer edge cases, visitor edge cases, and any dedicated-module gaps that still exist only as embedded approximations or partial test coverage in the manifests.
+- [x] Finish the remaining round-trip and helper parity for dedicated modules as one closure pass.
+  Dedicated AST/HIR printer coverage now closes the vendored print matrices, UTF-8 helper coverage closes the vendored utf8 tests, and the remaining source-level partial rows in this area are documented intentional API/model differences such as Crystal trait/enum shaping rather than missing behavior.
 
 - [x] Most of this surface is already ported.
   Dedicated AST/HIR printers, AST/HIR visitors, interval sets, UTF-8 helpers, and the HIR literal subsystem are already present with broad upstream-backed coverage.

@@ -108,9 +108,9 @@ src/ast/parse.rs::method::Parser.new	partial	src/regex-syntax.cr;spec/ast_parser
 src/ast/parse.rs::method::ParserBuilder.new	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParserBuilder.new over the direct AST parser surface.
 src/ast/parse.rs::struct::Parser	partial	src/regex-syntax.cr;spec/ast_parser_builder_spec.cr	Crystal maps the vendored AST parser type to Regex::Syntax::AstParser instead of a nested ast::parse::Parser type.
 src/ast/parse.rs::struct::ParserBuilder	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now defines a dedicated AstParserBuilder over the direct AST parser surface.
-src/ast/print.rs::func::new	partial	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer module added with constructor-based public print surface and parser-backed print specs for the preserved AST forms
-src/ast/print.rs::method::Printer.new	partial	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Printer.new and print(Ast, IO) now exist through a dedicated Crystal printer module over the current AST node model
-src/ast/print.rs::struct::Printer	partial	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Crystal AST printer type now exists as a dedicated module instead of relying on ad hoc node rendering
+src/ast/print.rs::func::new	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer constructor surface exists and is covered directly.
+src/ast/print.rs::method::Printer.new	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Printer.new and print(Ast, IO) exist through the dedicated Crystal AST printer.
+src/ast/print.rs::struct::Printer	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer type exists with direct round-trip coverage.
 src/ast/visitor.rs::trait::Visitor	partial	src/regex/syntax/ast_visitor.cr;spec/ast_visitor_spec.cr	Dedicated Crystal AST visitor mixin and iterative AST.visit traversal now exist with hook-order coverage for expression and class-set walks plus explicit failure-propagation coverage via raising visitors.
 src/either.rs::enum::Either	not_applicable	-	Rust's internal Either helper is not needed in the Crystal port because the corresponding surfaces are modeled with direct unions, overloads, and concrete node classes instead of a shared sum helper enum.
 src/error.rs::enum::Error	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Crystal now has a dedicated structured error layer with AST and HIR error subclasses over the shared ParseError base instead of a single enum wrapper
@@ -278,9 +278,9 @@ src/hir/mod.rs::struct::LookSet	partial	src/regex/syntax/hir.cr;spec/regex-synta
 src/hir/mod.rs::struct::LookSetIter	partial	src/regex/syntax/hir.cr	Crystal exposes LookSet iteration through Enumerable instead of a separate iterator wrapper.
 src/hir/mod.rs::struct::Properties	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exists as a dedicated Crystal wrapper over precomputed HIR analysis.
 src/hir/mod.rs::struct::Repetition	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition exists as a concrete Crystal HIR node with constructor, subs, and replacement-helper coverage.
-src/hir/print.rs::func::new	partial	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer module added with constructor-based public print surface and direct parity specs for core printed forms
-src/hir/print.rs::method::Printer.new	partial	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Printer.new and print(Hir, IO) now exist through a dedicated Crystal printer with literal/class/anchor/group/repetition coverage
-src/hir/print.rs::struct::Printer	partial	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Crystal HIR printer type now exists as a dedicated module instead of embedded to_s logic
+src/hir/print.rs::func::new	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer constructor surface exists and is covered directly.
+src/hir/print.rs::method::Printer.new	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Printer.new and print(Hir, IO) exist through the dedicated Crystal HIR printer.
+src/hir/print.rs::struct::Printer	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer type exists with direct parity coverage.
 src/hir/translate.rs::func::build	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.build over the direct AST-to-HIR translator surface.
 src/hir/translate.rs::func::case_insensitive	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.case_insensitive over the direct translator surface.
 src/hir/translate.rs::func::crlf	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.crlf over the direct translator surface.
@@ -868,12 +868,12 @@ src/unicode_tables/word_break.rs::const::SINGLE_QUOTE	done	src/regex/syntax/unic
 src/unicode_tables/word_break.rs::const::WSEGSPACE	done	src/regex/syntax/unicode_tables/word_break.cr	Generated Unicode table constant exists in the Crystal port with the same canonical constant name.
 src/unicode_tables/word_break.rs::const::ZWJ	done	src/regex/syntax/unicode_tables/word_break.cr	Generated Unicode table constant exists in the Crystal port with the same canonical constant name.
 src/utf8.rs::enum::Utf8Sequence	partial	src/regex/syntax/utf8.cr	Modeled as a dedicated Crystal sequence wrapper over UTF-8 byte ranges instead of a Rust enum variant family
-src/utf8.rs::func::as_slice	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes as_slice on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::len	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes len on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::matches	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes matches on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::new	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences and Utf8Sequence expose dedicated Crystal constructors for the upstream UTF-8 module surface with direct behavior coverage
-src/utf8.rs::func::reset	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes reset on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::reverse	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes reverse! on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::method::Utf8Sequences.new	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes the upstream iterator constructor on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::struct::Utf8Range	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Range exists as a dedicated Crystal UTF-8 range type with public rendering/matching coverage
-src/utf8.rs::struct::Utf8Sequences	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exists as a dedicated Crystal UTF-8 sequence iterator type with public iteration/reset coverage
+src/utf8.rs::func::as_slice	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes as_slice with direct behavior coverage.
+src/utf8.rs::func::len	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes len with direct behavior coverage.
+src/utf8.rs::func::matches	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes matches with direct behavior coverage.
+src/utf8.rs::func::new	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences and Utf8Sequence expose dedicated constructors with direct behavior coverage.
+src/utf8.rs::func::reset	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes reset with direct behavior coverage.
+src/utf8.rs::func::reverse	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes reverse! with direct behavior coverage.
+src/utf8.rs::method::Utf8Sequences.new	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes the iterator constructor with direct behavior coverage.
+src/utf8.rs::struct::Utf8Range	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Range exists as a dedicated range type with public rendering and matching coverage.
+src/utf8.rs::struct::Utf8Sequences	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exists as a dedicated iterator type with public iteration and reset coverage.

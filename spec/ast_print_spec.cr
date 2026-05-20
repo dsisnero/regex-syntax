@@ -39,11 +39,11 @@ describe Regex::Syntax::AST::Printer do
     print_ast("ab").should eq("ab")
     print_ast("abcde").should eq("abcde")
     print_ast("a|b").should eq("a|b")
-    print_ast("a(bcd)ef").should eq("a(bcd)ef")
     print_ast("a|b|c").should eq("a|b|c")
     print_ast("a|b|c|d|e").should eq("a|b|c|d|e")
     print_ast("|a|b|c|d|e").should eq("|a|b|c|d|e")
-    print_ast("|a|b|").should eq("|a|b|")
+    print_ast("|a|b|c|d|e|").should eq("|a|b|c|d|e|")
+    print_ast("a(bcd)ef").should eq("a(bcd)ef")
     print_ast("a(b|c|d)|e|f").should eq("a(b|c|d)|e|f")
   end
 
@@ -94,6 +94,7 @@ describe Regex::Syntax::AST::Printer do
     print_ast("[^a-z]").should eq("[^a-z]")
     print_ast("[a-z0-9]").should eq("[a-z0-9]")
     print_ast("[-a-z0-9]").should eq("[-a-z0-9]")
+    print_ast("[a-z0-9---]").should eq("[a-z0-9---]")
     print_ast("[a-z&&m-n]").should eq("[a-z&&m-n]")
     print_ast("[a-z--m-n]").should eq("[a-z--m-n]")
     print_ast("[a-z~~m-n]").should eq("[a-z~~m-n]")

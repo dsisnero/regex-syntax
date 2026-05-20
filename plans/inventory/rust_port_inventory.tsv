@@ -139,18 +139,18 @@ src/ast/parse.rs::test::parse_unsupported_backreference	test	done	spec/parser_sp
 src/ast/parse.rs::test::parse_unsupported_lookaround	test	done	spec/parser_spec.cr,spec/regex-syntax_spec.cr	look-ahead and look-behind rejection covered
 src/ast/parse.rs::test::regression_454_nest_too_big	test	done	spec/ast_parser_builder_spec.cr	Long verbose alternation pattern now covered through AstParserBuilder with nest_limit 50 to ensure post-traversal depth accounting does not overcount.
 src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	test	partial	spec/parser_spec.cr	representative verbose-mode trailing-dash acceptance and unclosed error covered
-src/ast/print.rs::func::new	func	partial	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer module added with constructor-based public print surface and parser-backed print specs for the preserved AST forms
-src/ast/print.rs::method::Printer.new	method	partial	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Printer.new and print(Ast, IO) now exist through a dedicated Crystal printer module over the current AST node model
-src/ast/print.rs::struct::Printer	struct	partial	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Crystal AST printer type now exists as a dedicated module instead of relying on ad hoc node rendering
-src/ast/print.rs::test::print_alternation	test	partial	spec/ast_print_spec.cr	Direct AST printer alternation coverage now includes simple, long, leading-empty, trailing-empty, and nested grouped alternations through parser-backed round-trip specs.
-src/ast/print.rs::test::print_assertion	test	partial	spec/ast_print_spec.cr	Direct AST printer assertion coverage now includes anchors, word boundaries, special boundary forms, and angle word-boundary aliases preserved by the current AST model.
-src/ast/print.rs::test::print_class	test	partial	spec/ast_print_spec.cr	Direct AST printer class coverage now includes nested bracketed classes, set binary ops, perl classes, the full ASCII class family exercised by vendored tests, and Unicode class queries supported by the current AST model.
-src/ast/print.rs::test::print_concat	test	partial	spec/ast_print_spec.cr	Direct AST printer concatenation coverage now includes short, long, and grouped concat output through parser-backed round-trip specs.
-src/ast/print.rs::test::print_dot	test	partial	spec/ast_print_spec.cr	Direct AST printer dot coverage added via parser-backed round-trip spec.
-src/ast/print.rs::test::print_flags	test	partial	spec/ast_print_spec.cr	Direct AST printer flag-set coverage now includes negation placement, grouped flag combinations, and the vendored `(?siUmux)` surface.
-src/ast/print.rs::test::print_group	test	partial	spec/ast_print_spec.cr	Direct AST printer group coverage now includes capture, named capture, angle-named capture normalization, and non-capturing groups.
-src/ast/print.rs::test::print_literal	test	partial	spec/ast_print_spec.cr	Direct AST printer literal coverage now includes verbatim, escaped, octal, fixed hex, brace hex, fixed-width `\u`/`\U`, brace Unicode, and special escaped literals preserved by the AST model.
-src/ast/print.rs::test::print_repetition	test	partial	spec/ast_print_spec.cr	Direct AST printer repetition coverage now includes greedy, nongreedy, exact, lower-bounded, and bounded ranges.
+src/ast/print.rs::func::new	func	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer constructor surface exists and is covered directly.
+src/ast/print.rs::method::Printer.new	method	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Printer.new and print(Ast, IO) exist through the dedicated Crystal AST printer.
+src/ast/print.rs::struct::Printer	struct	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer type exists with direct round-trip coverage.
+src/ast/print.rs::test::print_alternation	test	done	spec/ast_print_spec.cr	Vendored AST printer alternation cases are covered directly, including leading and trailing empty branches and grouped alternations.
+src/ast/print.rs::test::print_assertion	test	done	spec/ast_print_spec.cr	Vendored AST printer assertion cases are covered directly.
+src/ast/print.rs::test::print_class	test	done	spec/ast_print_spec.cr	Vendored AST printer class cases are covered directly, including `---`, set ops, nested classes, Perl classes, and the ASCII class family.
+src/ast/print.rs::test::print_concat	test	done	spec/ast_print_spec.cr	Vendored AST printer concat cases are covered directly.
+src/ast/print.rs::test::print_dot	test	done	spec/ast_print_spec.cr	Vendored AST printer dot case is covered directly.
+src/ast/print.rs::test::print_flags	test	done	spec/ast_print_spec.cr	Vendored AST printer flag-printing cases are covered directly.
+src/ast/print.rs::test::print_group	test	done	spec/ast_print_spec.cr	Vendored AST printer group cases are covered directly, including named capture normalization.
+src/ast/print.rs::test::print_literal	test	done	spec/ast_print_spec.cr	Vendored AST printer literal and escape-form cases are covered directly.
+src/ast/print.rs::test::print_repetition	test	done	spec/ast_print_spec.cr	Vendored AST printer repetition cases are covered directly.
 src/ast/visitor.rs::trait::Visitor	trait	partial	src/regex/syntax/ast_visitor.cr;spec/ast_visitor_spec.cr	Dedicated Crystal AST visitor mixin and iterative AST.visit traversal now exist with hook-order coverage for expression and class-set walks plus explicit failure-propagation coverage via raising visitors.
 src/either.rs::enum::Either	enum	not_applicable	-	Rust's internal Either helper is not needed in the Crystal port because the corresponding surfaces are modeled with direct unions, overloads, and concrete node classes instead of a shared sum helper enum.
 src/error.rs::enum::Error	enum	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Crystal now has a dedicated structured error layer with AST and HIR error subclasses over the shared ParseError base instead of a single enum wrapper
@@ -356,19 +356,19 @@ src/hir/mod.rs::test::class_union_unicode	test	partial	spec/regex-syntax_spec.cr
 src/hir/mod.rs::test::look_set_debug	test	partial	spec/regex-syntax_spec.cr	LookSet debug rendering now covers empty and full Rust-style glyph output through the public Crystal bitset wrapper
 src/hir/mod.rs::test::look_set_iter	test	partial	spec/regex-syntax_spec.cr	LookSet iteration now covers empty, full, singleton, and two-element public bitset cases, including direct LookSet.singleton/empty constructor usage on the public Crystal API
 src/hir/mod.rs::test::no_stack_overflow_on_drop	test	not_applicable	-	Vendored Rust checks a custom `Drop` implementation for recursive HIR values. Crystal uses GC-managed reference objects and does not expose an equivalent user-defined destructor path for this HIR surface.
-src/hir/print.rs::func::new	func	partial	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer module added with constructor-based public print surface and direct parity specs for core printed forms
-src/hir/print.rs::method::Printer.new	method	partial	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Printer.new and print(Hir, IO) now exist through a dedicated Crystal printer with literal/class/anchor/group/repetition coverage
-src/hir/print.rs::struct::Printer	struct	partial	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Crystal HIR printer type now exists as a dedicated module instead of embedded to_s logic
-src/hir/print.rs::test::print_alternation	test	partial	spec/hir_print_spec.cr	Direct HIR printer alternation coverage now includes empty-branch alternations, singleton-class collapse, long literal alternations, and multi-literal alternation output.
-src/hir/print.rs::test::print_anchor	test	partial	spec/hir_print_spec.cr	Direct HIR printer anchor coverage now includes start/end and multiline anchor output for both ^/$ and printed \\A/\\z forms.
-src/hir/print.rs::test::print_class	test	partial	spec/hir_print_spec.cr	Direct HIR printer class coverage now includes normalized difference output, negated-class singleton collapse, meta-character escaping for Unicode and byte classes, Unicode range forms, byte range forms, and empty-class printing.
-src/hir/print.rs::test::print_group	test	partial	spec/hir_print_spec.cr	Direct HIR printer group coverage now includes empty captures, named empty captures, non-capturing simplification, and deeply nested capture output.
-src/hir/print.rs::test::print_literal	test	partial	spec/hir_print_spec.cr	Direct HIR printer literal coverage now includes ASCII, Unicode, raw byte-mode, and non-ASCII byte literal output.
-src/hir/print.rs::test::print_repetition	test	partial	spec/hir_print_spec.cr	Direct HIR printer repetition coverage now includes greedy/lazy forms, swap-greed output, exact/at-least/bounded normalization, and zero-count collapse to the empty regex for plain, grouped, and class expressions.
-src/hir/print.rs::test::print_word_boundary	test	partial	spec/hir_print_spec.cr	Direct HIR printer word-boundary coverage now includes Unicode and ASCII boundary forms for both positive and negated boundaries.
-src/hir/print.rs::test::regression_alternation_concat	test	partial	spec/hir_print_spec.cr	Direct HIR printer regression coverage now includes manual concat-with-alternation shapes that cannot arise from concrete syntax but must still print with correct grouping.
-src/hir/print.rs::test::regression_repetition_alternation	test	partial	spec/hir_print_spec.cr	Direct HIR printer regression coverage now includes repetition-over-alternation shapes, including zero-width assertion variants built through the smart constructor path.
-src/hir/print.rs::test::regression_repetition_concat	test	partial	spec/hir_print_spec.cr	Direct HIR printer regression coverage now includes repetition-over-concat shapes, including zero-width assertion variants built through the smart constructor path.
+src/hir/print.rs::func::new	func	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer constructor surface exists and is covered directly.
+src/hir/print.rs::method::Printer.new	method	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Printer.new and print(Hir, IO) exist through the dedicated Crystal HIR printer.
+src/hir/print.rs::struct::Printer	struct	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer type exists with direct parity coverage.
+src/hir/print.rs::test::print_alternation	test	done	spec/hir_print_spec.cr	Vendored HIR printer alternation cases are covered directly.
+src/hir/print.rs::test::print_anchor	test	done	spec/hir_print_spec.cr	Vendored HIR printer anchor cases are covered directly.
+src/hir/print.rs::test::print_class	test	done	spec/hir_print_spec.cr	Vendored HIR printer class cases are covered directly, including byte-mode range/meta-character and empty-class forms.
+src/hir/print.rs::test::print_group	test	done	spec/hir_print_spec.cr	Vendored HIR printer group cases are covered directly.
+src/hir/print.rs::test::print_literal	test	done	spec/hir_print_spec.cr	Vendored HIR printer literal cases are covered directly.
+src/hir/print.rs::test::print_repetition	test	done	spec/hir_print_spec.cr	Vendored HIR printer repetition cases are covered directly, including smart zero-count collapse output.
+src/hir/print.rs::test::print_word_boundary	test	done	spec/hir_print_spec.cr	Vendored HIR printer word-boundary cases are covered directly.
+src/hir/print.rs::test::regression_alternation_concat	test	done	spec/hir_print_spec.cr	Vendored HIR printer concat-with-alternation regression cases are covered directly.
+src/hir/print.rs::test::regression_repetition_alternation	test	done	spec/hir_print_spec.cr	Vendored HIR printer repetition-over-alternation regression cases are covered directly.
+src/hir/print.rs::test::regression_repetition_concat	test	done	spec/hir_print_spec.cr	Vendored HIR printer repetition-over-concat regression cases are covered directly.
 src/hir/translate.rs::func::build	func	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.build over the direct AST-to-HIR translator surface.
 src/hir/translate.rs::func::case_insensitive	func	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.case_insensitive over the direct translator surface.
 src/hir/translate.rs::func::crlf	func	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.crlf over the direct translator surface.
@@ -1021,16 +1021,16 @@ src/unicode_tables/word_break.rs::const::SINGLE_QUOTE	const	done	src/regex/synta
 src/unicode_tables/word_break.rs::const::WSEGSPACE	const	done	src/regex/syntax/unicode_tables/word_break.cr	Generated Unicode table constant exists in the Crystal port with the same canonical constant name.
 src/unicode_tables/word_break.rs::const::ZWJ	const	done	src/regex/syntax/unicode_tables/word_break.cr	Generated Unicode table constant exists in the Crystal port with the same canonical constant name.
 src/utf8.rs::enum::Utf8Sequence	enum	partial	src/regex/syntax/utf8.cr	Modeled as a dedicated Crystal sequence wrapper over UTF-8 byte ranges instead of a Rust enum variant family
-src/utf8.rs::func::as_slice	func	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes as_slice on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::len	func	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes len on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::matches	func	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes matches on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::new	func	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences and Utf8Sequence expose dedicated Crystal constructors for the upstream UTF-8 module surface with direct behavior coverage
-src/utf8.rs::func::reset	func	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes reset on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::func::reverse	func	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes reverse! on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::method::Utf8Sequences.new	method	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes the upstream iterator constructor on the dedicated Crystal UTF-8 module with direct behavior coverage
-src/utf8.rs::struct::Utf8Range	struct	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Range exists as a dedicated Crystal UTF-8 range type with public rendering/matching coverage
-src/utf8.rs::struct::Utf8Sequences	struct	partial	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exists as a dedicated Crystal UTF-8 sequence iterator type with public iteration/reset coverage
-src/utf8.rs::test::bmp	test	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers the vendored BMP sequence decomposition
-src/utf8.rs::test::codepoints_no_surrogates	test	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers vendored surrogate-rejection behavior across representative scalar ranges
-src/utf8.rs::test::reverse	test	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers vendored sequence reversal behavior for lengths 1 through 4
-src/utf8.rs::test::single_codepoint_one_sequence	test	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers the vendored one-sequence-per-scalar invariant across valid Unicode scalar values
+src/utf8.rs::func::as_slice	func	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes as_slice with direct behavior coverage.
+src/utf8.rs::func::len	func	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes len with direct behavior coverage.
+src/utf8.rs::func::matches	func	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes matches with direct behavior coverage.
+src/utf8.rs::func::new	func	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences and Utf8Sequence expose dedicated constructors with direct behavior coverage.
+src/utf8.rs::func::reset	func	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes reset with direct behavior coverage.
+src/utf8.rs::func::reverse	func	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequence exposes reverse! with direct behavior coverage.
+src/utf8.rs::method::Utf8Sequences.new	method	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exposes the iterator constructor with direct behavior coverage.
+src/utf8.rs::struct::Utf8Range	struct	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Range exists as a dedicated range type with public rendering and matching coverage.
+src/utf8.rs::struct::Utf8Sequences	struct	done	src/regex/syntax/utf8.cr,spec/utf8_spec.cr	Regex::Syntax::Utf8::Utf8Sequences exists as a dedicated iterator type with public iteration and reset coverage.
+src/utf8.rs::test::bmp	test	done	spec/utf8_spec.cr	Vendored BMP UTF-8 sequence decomposition test is covered directly.
+src/utf8.rs::test::codepoints_no_surrogates	test	done	spec/utf8_spec.cr	Vendored surrogate-rejection UTF-8 test is covered directly.
+src/utf8.rs::test::reverse	test	done	spec/utf8_spec.cr	Vendored UTF-8 sequence reversal test is covered directly.
+src/utf8.rs::test::single_codepoint_one_sequence	test	done	spec/utf8_spec.cr	Vendored one-sequence-per-scalar UTF-8 test is covered directly.
