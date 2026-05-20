@@ -14,7 +14,7 @@ require "./regex/syntax/parser"
 require "./regex/syntax/translate"
 
 module Regex::Syntax
-  VERSION = "0.1.0"
+  VERSION = "0.4.0"
 
   class UnicodeWordError < Error
   end
