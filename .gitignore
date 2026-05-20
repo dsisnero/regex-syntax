@@ -14,6 +14,12 @@ temp/
 /lib/
 /.shards/
 *.dwarf
+/bin/ameba
+/bin/._ameba
+.DS_Store
+._*
+.Spotlight-V100/
+.Trashes/
 
 # Libraries don't need dependency lock
 # Dependencies will be locked in applications that use them
