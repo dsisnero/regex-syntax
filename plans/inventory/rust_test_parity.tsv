@@ -1,68 +1,68 @@
 # source_test_id	status	crystal_refs	notes
-src/ast/mod.rs::test::ast_size	missing	-	baseline
-src/ast/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
+src/ast/mod.rs::test::ast_size	not_applicable	-	Vendored Rust checks inline enum value size. Crystal models the AST as reference objects under a different runtime/object layout, so Rust's `size_of::<Ast>()` heuristic is not a meaningful parity target here.
+src/ast/mod.rs::test::no_stack_overflow_on_drop	not_applicable	-	Vendored Rust checks a custom `Drop` implementation for recursive AST values. Crystal uses GC-managed reference objects and does not expose an equivalent user-defined destructor path for this AST surface.
 src/ast/parse.rs::test::maybe_parse_ascii_class	done	spec/parser_spec.cr	matches current ASCII class parse/backtrack coverage
 src/ast/parse.rs::test::parse_alternate	partial	spec/parser_spec.cr:391	representative alternation parsing covered for flat and grouped cases; local AST still coalesces adjacent verbatim literals compared with upstream literal-by-literal AST shape
-src/ast/parse.rs::test::parse_capture_name	done	spec/parser_spec.cr	named capture success, duplicate rejection, and invalid syntax covered
+src/ast/parse.rs::test::parse_capture_name	done	spec/parser_spec.cr	named capture success, duplicate rejection, invalid syntax, and structured capture-name EOF diagnostics covered
 src/ast/parse.rs::test::parse_comments	partial	spec/parser_spec.cr:391	AstParser now exposes parse_with_comments and captures Rust-style comment text/spans, but local AST still coalesces adjacent verbatim literals instead of matching upstream literal-by-literal AST shape
-src/ast/parse.rs::test::parse_counted_repetition	partial	spec/parser_spec.cr:429	representative exact, at-least, bounded, nongreedy, and invalid descending-range cases covered; full upstream decimal/error-span matrix still missing
-src/ast/parse.rs::test::parse_decimal	partial	spec/parser_spec.cr	decimal parsing is now covered indirectly through counted repetition for representative success, empty, leading-zero, and overflow cases; direct internal parse_decimal span parity is still missing
-src/ast/parse.rs::test::parse_escape	partial	spec/parser_spec.cr:312	representative meta/special escapes and perl-class escape parsing covered, including Rust-style \\a \\f \\t \\n \\r \\v behavior; full upstream escape matrix and error-kind parity still missing
-src/ast/parse.rs::test::parse_flag	partial	spec/flag_handling_spec.cr	individual flag acceptance is covered through scoped/public group parsing for i,m,s,U,u,R,x and representative unrecognized-flag failures; direct internal parse_flag span parity is still missing
-src/ast/parse.rs::test::parse_flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	global flags, scoped flags, negation placement, duplicate flags, repeated negation, dangling negation, unexpected EOF, and unrecognized flag cases covered; structured error-kind/span parity is still missing
-src/ast/parse.rs::test::parse_group	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	captures, named captures, non-captures, and unsupported look-ahead covered; richer error parity still missing
-src/ast/parse.rs::test::parse_hex_brace	partial	spec/parser_spec.cr	positive x/u/U brace forms and representative error cases covered
-src/ast/parse.rs::test::parse_hex_eight	partial	spec/parser_spec.cr	representative positive long form and error cases covered
-src/ast/parse.rs::test::parse_hex_four	partial	spec/parser_spec.cr	representative positive short Unicode form and error cases covered
-src/ast/parse.rs::test::parse_hex_two	partial	spec/parser_spec.cr	representative positive byte hex form and error cases covered
+src/ast/parse.rs::test::parse_counted_repetition	partial	spec/parser_spec.cr:429	representative exact, at-least, bounded, nongreedy, invalid descending-range, decimal overflow, unclosed counts, invalid ranges, duplicate-capture auxiliary-span, special-word-boundary ambiguity, and Unicode-property EOF structured error cases covered; the full upstream matrix is still larger.
+src/ast/parse.rs::test::parse_decimal	partial	spec/parser_spec.cr	decimal parsing is now covered indirectly through counted repetition for representative success, empty, leading-zero, overflow, and Rust-style DecimalInvalid span propagation; the direct internal helper is still not exposed separately in Crystal.
+src/ast/parse.rs::test::parse_escape	partial	spec/parser_spec.cr:312	representative meta/special escapes, perl-class escape parsing, fixed/braced hex metadata, special-word-boundary ambiguity and unrecognized cases, and structured EOF/invalid-hex diagnostics covered; full upstream escape matrix still missing.
+src/ast/parse.rs::test::parse_flag	partial	spec/flag_handling_spec.cr	individual flag acceptance is covered through scoped/public group parsing for i,m,s,U,u,R,x, and duplicate/repeated-negation/dangling-negation auxiliary-span diagnostics are asserted directly; direct internal parse_flag helper parity is still missing.
+src/ast/parse.rs::test::parse_flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	global flags, scoped flags, negation placement, duplicate flags, repeated negation, dangling negation, unexpected EOF, and unrecognized flag cases covered with structured error-kind/span assertions for the duplicate/negation cases.
+src/ast/parse.rs::test::parse_group	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	captures, named captures, non-captures, capture-name EOF diagnostics, unsupported look-ahead, duplicate-capture auxiliary spans, and Unicode-property EOF diagnostics are covered; richer remaining parser error parity still missing.
+src/ast/parse.rs::test::parse_hex_brace	partial	spec/parser_spec.cr	positive x/u/U brace forms and representative error cases covered, including direct AST assertions for preserved brace-form metadata and original escape prefix.
+src/ast/parse.rs::test::parse_hex_eight	partial	spec/parser_spec.cr	representative positive long fixed-width form and error cases covered, including direct AST assertions for preserved 8-digit form metadata and `\U` prefix.
+src/ast/parse.rs::test::parse_hex_four	partial	spec/parser_spec.cr	representative positive short Unicode fixed-width form and error cases covered, including direct AST assertions for preserved 4-digit form metadata and `\u` prefix.
+src/ast/parse.rs::test::parse_hex_two	partial	spec/parser_spec.cr	representative positive byte fixed-width form and error cases covered, including direct AST assertions for preserved 2-digit form metadata and `\x` prefix.
 src/ast/parse.rs::test::parse_holistic	partial	spec/parser_spec.cr:360	public parser coverage now includes literal `]` and the escaped metacharacter matrix from the Rust holistic test; full AST span/kind parity still differs because verbatim literal runs are coalesced locally
 src/ast/parse.rs::test::parse_ignore_whitespace	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	verbose-mode parsing, whitespace toggles, grouped whitespace, escaped-space handling, and hex spacing covered
 src/ast/parse.rs::test::parse_nest_limit	done	spec/regex-syntax_spec.cr	nest_limit enforced through public parser
 src/ast/parse.rs::test::parse_newlines	partial	spec/parser_spec.cr:348	public parser handling of literal newlines between tokens covered; full upstream line/column span parity is blocked on the simplified Position/Span model
 src/ast/parse.rs::test::parse_octal	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	octal option and representative parse/parse_escape behavior covered
-src/ast/parse.rs::test::parse_perl_class	partial	spec/parser_spec.cr:312	representative \\d \\D \\s \\w parse coverage present through the public parser; full upstream direct parse_escape matrix still missing
+src/ast/parse.rs::test::parse_perl_class	partial	spec/parser_spec.cr:312	representative \\d \\D \\s \\w parse coverage now includes direct AST concat coverage for perl-class-followed-by-literal cases like `\\dz`; the full direct parse_escape matrix is still larger.
 src/ast/parse.rs::test::parse_primitive_non_escape	partial	spec/parser_spec.cr:312	public parser coverage exists for dot, anchors, and representative verbatim literals; internal parse_primitive-only cases like bare | are not directly exposed in Crystal
 src/ast/parse.rs::test::parse_set_class	partial	spec/parser_spec.cr:43,spec/parser_spec.cr:76,spec/parser_spec.cr:91,spec/parser_spec.cr:105,spec/parser_spec.cr:195,spec/parser_spec.cr:225	public parser coverage now includes ASCII/unicode/perl items, binary ops, leading `]`/`-` opening cases, escaped `[` and `]`, invalid class escapes, descending ranges, and verbose-mode comment regression handling; full upstream AST-shape/span parity is still missing
 src/ast/parse.rs::test::parse_set_class_open	partial	spec/parser_spec.cr:195,spec/parser_spec.cr:225	public parser coverage exercises the Rust opening-edge behavior for leading `]`, leading `-`, negated leading `]`, escaped `[`, and the verbose-mode `(?x)[-#]` regression; the internal helper itself is not exposed in Crystal
 src/ast/parse.rs::test::parse_uncounted_repetition	partial	spec/parser_spec.cr:409	representative greedy, nongreedy, alternation-edge, and repetition-missing cases covered; full upstream error-kind/span parity still missing
-src/ast/parse.rs::test::parse_unicode_class	partial	spec/regex-syntax_spec.cr	general category, script, scx, age, gcb, wb, sb, aliases, and errors covered
+src/ast/parse.rs::test::parse_unicode_class	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	general category, script, scx, age, gcb, wb, sb, aliases, EOF/error cases, unicode-class-followed-by-literal AST shapes, and malformed `\\p\\{` / `\\P\\{` rejection are now covered directly.
 src/ast/parse.rs::test::parse_unsupported_backreference	done	spec/parser_spec.cr	\\0 and \\9 rejection covered
 src/ast/parse.rs::test::parse_unsupported_lookaround	done	spec/parser_spec.cr,spec/regex-syntax_spec.cr	look-ahead and look-behind rejection covered
-src/ast/parse.rs::test::regression_454_nest_too_big	missing	-	baseline
+src/ast/parse.rs::test::regression_454_nest_too_big	done	spec/ast_parser_builder_spec.cr	Long verbose alternation pattern now covered through AstParserBuilder with nest_limit 50 to ensure post-traversal depth accounting does not overcount.
 src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	partial	spec/parser_spec.cr	representative verbose-mode trailing-dash acceptance and unclosed error covered
-src/ast/print.rs::test::print_alternation	missing	-	baseline
-src/ast/print.rs::test::print_assertion	missing	-	baseline
-src/ast/print.rs::test::print_class	missing	-	baseline
-src/ast/print.rs::test::print_concat	missing	-	baseline
-src/ast/print.rs::test::print_dot	missing	-	baseline
-src/ast/print.rs::test::print_flags	missing	-	baseline
-src/ast/print.rs::test::print_group	missing	-	baseline
-src/ast/print.rs::test::print_literal	missing	-	baseline
-src/ast/print.rs::test::print_repetition	missing	-	baseline
-src/error.rs::test::regression_464	missing	-	baseline
-src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	missing	-	baseline
-src/hir/literal.rs::test::alternation	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for exact alternation sequences; larger inexact/limit-driven alternation cases still missing.
-src/hir/literal.rs::test::anything	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for dot and over-limit class becoming infinite; broader anything composition cases still missing.
+src/ast/print.rs::test::print_alternation	partial	spec/ast_print_spec.cr	Direct AST printer alternation coverage now includes simple, long, leading-empty, trailing-empty, and nested grouped alternations through parser-backed round-trip specs.
+src/ast/print.rs::test::print_assertion	partial	spec/ast_print_spec.cr	Direct AST printer assertion coverage now includes anchors, word boundaries, special boundary forms, and angle word-boundary aliases preserved by the current AST model.
+src/ast/print.rs::test::print_class	partial	spec/ast_print_spec.cr	Direct AST printer class coverage now includes nested bracketed classes, set binary ops, perl classes, the full ASCII class family exercised by vendored tests, and Unicode class queries supported by the current AST model.
+src/ast/print.rs::test::print_concat	partial	spec/ast_print_spec.cr	Direct AST printer concatenation coverage now includes short, long, and grouped concat output through parser-backed round-trip specs.
+src/ast/print.rs::test::print_dot	partial	spec/ast_print_spec.cr	Direct AST printer dot coverage added via parser-backed round-trip spec.
+src/ast/print.rs::test::print_flags	partial	spec/ast_print_spec.cr	Direct AST printer flag-set coverage now includes negation placement, grouped flag combinations, and the vendored `(?siUmux)` surface.
+src/ast/print.rs::test::print_group	partial	spec/ast_print_spec.cr	Direct AST printer group coverage now includes capture, named capture, angle-named capture normalization, and non-capturing groups.
+src/ast/print.rs::test::print_literal	partial	spec/ast_print_spec.cr	Direct AST printer literal coverage now includes verbatim, escaped, octal, fixed hex, brace hex, fixed-width `\u`/`\U`, brace Unicode, and special escaped literals preserved by the AST model.
+src/ast/print.rs::test::print_repetition	partial	spec/ast_print_spec.cr	Direct AST printer repetition coverage now includes greedy, nongreedy, exact, lower-bounded, and bounded ranges.
+src/error.rs::test::regression_464	partial	spec/error_spec.cr	Structured parser error formatting now covers the vendored multiline regression with divider-based output and cross-line span notes instead of only checking for non-panicking output.
+src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	partial	spec/error_spec.cr	Structured parser error formatting now covers the repetition-quantifier-valid-decimal caret message case derived from upstream, and auxiliary-span formatting is asserted separately through duplicate-flag coverage.
+src/hir/literal.rs::test::alternation	partial	spec/hir_literal_spec.cr	Direct extractor coverage now includes exact alternations, impossible branches, `mZ*o`-style inexact alternations, empty-branch preference ordering, nested alternation with repetition, and cartesian-product alternations through `(ab|cd)(ef|gh)(ij|kl)`; the full upstream alternation matrix is still larger.
+src/hir/literal.rs::test::anything	partial	spec/hir_literal_spec.cr	Direct extractor coverage now includes dot and over-limit classes becoming infinite plus mixed finite/infinite concatenation and alternation cases like `1[A-Z]`, `1[A-Z]2`, `[A-Z]+123`, `1|[A-Z]|3`, `1|2[A-Z]|3`, `1|[A-Z]2|3`, `(?:|1)[A-Z]2`, and `a.z`.
 src/hir/literal.rs::test::anything_small_limits	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for nested counted repetition under a small total limit and alternation blowing the total limit to infinity.
-src/hir/literal.rs::test::class	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for finite ASCII-digit and literal class expansion.
-src/hir/literal.rs::test::concat	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for exact concatenation through empty groups and class crossings.
+src/hir/literal.rs::test::class	partial	spec/hir_literal_spec.cr	Direct extractor coverage now includes finite ASCII and Unicode class expansion plus Unicode simple-fold class extraction for `(?i)[εδ]`.
+src/hir/literal.rs::test::concat	partial	spec/hir_literal_spec.cr	Direct extractor coverage now includes exact concatenation through captures, empty groups, impossible class intersections, and empty-class repetition collapse.
 src/hir/literal.rs::test::crazy_repeats	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for huge exact-count empty repetitions, chained exact-count empty repetitions, zero-count repetitions, and bounded long literal repetition under repeat and literal-length limits.
 src/hir/literal.rs::test::empty	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for empty/look-only sequences that yield exact empty literals.
 src/hir/literal.rs::test::holmes	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for the upstream Holmes case-insensitive prefix and suffix minimization literals, including Unicode simple-fold suffix variants with long s.
 src/hir/literal.rs::test::holmes_alt	partial	spec/hir_literal_spec.cr	Direct optimizer coverage added for the upstream case-insensitive Sherlock/Holmes alternation to ensure prefix optimization retains a finite non-empty literal set.
 src/hir/literal.rs::test::huge	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for the upstream huge byte-mode alternation shape, asserting finite prefix count 243 and infinite suffix extraction.
 src/hir/literal.rs::test::impossible	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for empty-intersection classes, impossible concatenations, and empty-class repetition collapsing to exact empty literals.
-src/hir/literal.rs::test::literal	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for exact ASCII, Unicode, and byte-mode literal extraction.
-src/hir/literal.rs::test::look	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for look assertions treated as empty during extraction.
-src/hir/literal.rs::test::odds_and_ends	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for dot-prefix/suffix infinite composition, anchored Sherlock Holmes alternation, and word-boundary plus finite class extraction; larger mixed-pattern cases still missing.
-src/hir/literal.rs::test::optimize	partial	spec/hir_literal_spec.cr	Direct optimizer coverage added for upstream common-prefix/common-suffix collapse, exact-prefix retention for sam/samwise, and poison-literal infinity behavior.
-src/hir/literal.rs::test::repetition	partial	spec/hir_literal_spec.cr	Direct extractor coverage added for ?, ??, +, exact counted, and bounded counted repetition exactness.
+src/hir/literal.rs::test::literal	partial	spec/hir_literal_spec.cr,spec/hir_literal_api_spec.cr	Direct extractor coverage now includes exact ASCII, Unicode, byte-mode literals, ASCII-only ignore-case literals with `(?i-u)`, Unicode simple-fold literals for `S/s/ſ`, and large exact Unicode literals; direct public literal API helpers are also covered separately.
+src/hir/literal.rs::test::look	partial	spec/hir_literal_spec.cr	Direct extractor coverage now includes start/end anchors, multi-line anchors, ASCII and Unicode word boundaries, and anchor-plus-repetition composition like `^aZ*b`.
+src/hir/literal.rs::test::odds_and_ends	partial	spec/hir_literal_spec.cr	Direct extractor coverage now includes dot-prefix/suffix infinite composition, anchored Sherlock Holmes alternation, word-boundary plus finite class extraction, the upstream Muammar/Gaddafi-style mixed affix case, `fn is_([A-Z]+)|fn as_([A-Z]+)`, and mixed infinite/fixed affix cases like `foo[A-Z]+bar[A-Z]+quux`.
+src/hir/literal.rs::test::optimize	partial	spec/hir_literal_spec.cr,spec/hir_literal_api_spec.cr	Direct optimizer coverage added for upstream common-prefix/common-suffix collapse, exact-prefix retention for sam/samwise, and poison-literal infinity behavior; public sequence constructor/predicate/builder coverage now supplements the behavioral matrix.
+src/hir/literal.rs::test::repetition	partial	spec/hir_literal_spec.cr	Direct extractor coverage now includes `*`, `*?`, `+`, nested plus, exact/bounded counts, zero-count normalization, optional groups, concatenation-sensitive cases like `aZ*b`, the longer star/plus matrix through `a*b*c*`, `ab*c`, `z*azb`, and finite class repeats `[ab]{3}` / `[ab]{3,4}`.
 src/hir/mod.rs::test::class_canonicalize_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class canonicalization coverage added via hir class operations block.
 src/hir/mod.rs::test::class_canonicalize_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class canonicalization coverage added via hir class operations block.
-src/hir/mod.rs::test::class_case_fold_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class simple case-fold coverage added via hir class operations block.
-src/hir/mod.rs::test::class_case_fold_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class simple case-fold coverage added via hir class operations block.
-src/hir/mod.rs::test::class_case_fold_unicode_disabled	missing	-	baseline
-src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	missing	-	baseline
+src/hir/mod.rs::test::class_case_fold_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class simple case-fold coverage now includes both case_fold_simple and try_case_fold_simple behavior via the public class helper surface.
+src/hir/mod.rs::test::class_case_fold_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class simple case-fold coverage now includes both case_fold_simple and try_case_fold_simple behavior via the public class helper surface.
+src/hir/mod.rs::test::class_case_fold_unicode_disabled	not_applicable	-	Vendored Rust only runs these when the compile-time `unicode-case` feature is disabled. Crystal exposes the upstream Unicode case-folding feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-case` feature is disabled. Crystal exposes the upstream Unicode case-folding feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
 src/hir/mod.rs::test::class_difference_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class difference coverage added via hir class operations block.
 src/hir/mod.rs::test::class_difference_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class difference coverage added via hir class operations block.
 src/hir/mod.rs::test::class_intersect_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class intersection coverage added via hir class operations block.
@@ -75,85 +75,85 @@ src/hir/mod.rs::test::class_symmetric_difference_bytes	partial	spec/regex-syntax
 src/hir/mod.rs::test::class_symmetric_difference_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class symmetric-difference coverage added via hir class operations block.
 src/hir/mod.rs::test::class_union_bytes	partial	spec/regex-syntax_spec.cr	Direct HIR byte class union coverage added via hir class operations block.
 src/hir/mod.rs::test::class_union_unicode	partial	spec/regex-syntax_spec.cr	Direct HIR unicode class union coverage added via hir class operations block.
-src/hir/mod.rs::test::look_set_debug	missing	-	baseline
-src/hir/mod.rs::test::look_set_iter	missing	-	baseline
-src/hir/mod.rs::test::no_stack_overflow_on_drop	missing	-	baseline
-src/hir/print.rs::test::print_alternation	missing	-	baseline
-src/hir/print.rs::test::print_anchor	missing	-	baseline
-src/hir/print.rs::test::print_class	missing	-	baseline
-src/hir/print.rs::test::print_group	missing	-	baseline
-src/hir/print.rs::test::print_literal	missing	-	baseline
-src/hir/print.rs::test::print_repetition	missing	-	baseline
-src/hir/print.rs::test::print_word_boundary	missing	-	baseline
-src/hir/print.rs::test::regression_alternation_concat	missing	-	baseline
-src/hir/print.rs::test::regression_repetition_alternation	missing	-	baseline
-src/hir/print.rs::test::regression_repetition_concat	missing	-	baseline
-src/hir/translate.rs::test::analysis_can_empty	partial	spec/regex-syntax_spec.cr	empty-match analysis covered for representative cases, not full upstream matrix
-src/hir/translate.rs::test::analysis_captures_len	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_all_assertions	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_alternation_literal	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_anchored	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_any_anchored	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_literal	missing	-	baseline
-src/hir/translate.rs::test::analysis_is_utf8	missing	-	baseline
-src/hir/translate.rs::test::analysis_look_set_prefix_any	missing	-	baseline
-src/hir/translate.rs::test::analysis_static_captures_len	missing	-	baseline
+src/hir/mod.rs::test::look_set_debug	partial	spec/regex-syntax_spec.cr	LookSet debug rendering now covers empty and full Rust-style glyph output through the public Crystal bitset wrapper
+src/hir/mod.rs::test::look_set_iter	partial	spec/regex-syntax_spec.cr	LookSet iteration now covers empty, full, singleton, and two-element public bitset cases, including direct LookSet.singleton/empty constructor usage on the public Crystal API
+src/hir/mod.rs::test::no_stack_overflow_on_drop	not_applicable	-	Vendored Rust checks a custom `Drop` implementation for recursive HIR values. Crystal uses GC-managed reference objects and does not expose an equivalent user-defined destructor path for this HIR surface.
+src/hir/print.rs::test::print_alternation	partial	spec/hir_print_spec.cr	Direct HIR printer alternation coverage now includes empty-branch alternations, singleton-class collapse, long literal alternations, and multi-literal alternation output.
+src/hir/print.rs::test::print_anchor	partial	spec/hir_print_spec.cr	Direct HIR printer anchor coverage now includes start/end and multiline anchor output for both ^/$ and printed \\A/\\z forms.
+src/hir/print.rs::test::print_class	partial	spec/hir_print_spec.cr	Direct HIR printer class coverage now includes normalized difference output, negated-class singleton collapse, meta-character escaping for Unicode and byte classes, Unicode range forms, byte range forms, and empty-class printing.
+src/hir/print.rs::test::print_group	partial	spec/hir_print_spec.cr	Direct HIR printer group coverage now includes empty captures, named empty captures, non-capturing simplification, and deeply nested capture output.
+src/hir/print.rs::test::print_literal	partial	spec/hir_print_spec.cr	Direct HIR printer literal coverage now includes ASCII, Unicode, raw byte-mode, and non-ASCII byte literal output.
+src/hir/print.rs::test::print_repetition	partial	spec/hir_print_spec.cr	Direct HIR printer repetition coverage now includes greedy/lazy forms, swap-greed output, exact/at-least/bounded normalization, and zero-count collapse to the empty regex for plain, grouped, and class expressions.
+src/hir/print.rs::test::print_word_boundary	partial	spec/hir_print_spec.cr	Direct HIR printer word-boundary coverage now includes Unicode and ASCII boundary forms for both positive and negated boundaries.
+src/hir/print.rs::test::regression_alternation_concat	partial	spec/hir_print_spec.cr	Direct HIR printer regression coverage now includes manual concat-with-alternation shapes that cannot arise from concrete syntax but must still print with correct grouping.
+src/hir/print.rs::test::regression_repetition_alternation	partial	spec/hir_print_spec.cr	Direct HIR printer regression coverage now includes repetition-over-alternation shapes, including zero-width assertion variants built through the smart constructor path.
+src/hir/print.rs::test::regression_repetition_concat	partial	spec/hir_print_spec.cr	Direct HIR printer regression coverage now includes repetition-over-concat shapes, including zero-width assertion variants built through the smart constructor path.
+src/hir/translate.rs::test::analysis_can_empty	partial	spec/regex-syntax_spec.cr	empty-match analysis now covers the vendored positive and negative core matrix for empty groups, zero-count/optional/starred repetitions, alternation-with-empty branches, anchors, word boundaries, consuming repetitions, and impossible classes; the broader upstream surface is still larger.
+src/hir/translate.rs::test::analysis_captures_len	partial	spec/regex-syntax_spec.cr	public HIR explicit capture count coverage now includes uncaptured groups, inline-flag noncaptures, empty captures, repeated captures, nested captures, class captures, concat, and alternation cases from the vendored matrix.
+src/hir/translate.rs::test::analysis_is_all_assertions	partial	spec/regex-syntax_spec.cr	public HIR all_assertions? coverage now includes vendored assertion-only concat, alternation, repetition, nested-capture, and consuming negative cases.
+src/hir/translate.rs::test::analysis_is_alternation_literal	partial	spec/regex-syntax_spec.cr	public HIR alternation_literal? coverage added for literal alternations, singleton classes, capture/repetition negatives, and class-collapsible singletons
+src/hir/translate.rs::test::analysis_is_anchored	partial	spec/regex-syntax_spec.cr	public HIR look_set_prefix/look_set_suffix coverage now includes vendored doubled anchors, alternation-edge anchors, word-boundary-adjacent anchors, multiline contamination cases, and quantified zero-width anchor negatives.
+src/hir/translate.rs::test::analysis_is_any_anchored	partial	spec/regex-syntax_spec.cr	public HIR look_set coverage added for absolute start/end assertions and multiline negatives
+src/hir/translate.rs::test::analysis_is_literal	partial	spec/regex-syntax_spec.cr	public HIR literal? coverage added for plain literals, singleton classes, and capture/repetition/alternation negatives
+src/hir/translate.rs::test::analysis_is_utf8	partial	spec/regex-syntax_spec.cr	public HIR utf8? coverage now includes the vendored positive/negative byte-mode matrix for default Unicode `\\xFF`/`[^a]` cases, raw byte-mode invalid UTF-8 literals and negated classes, byte dot/perl cases, assertion forms, Unicode classes, and valid raw-byte UTF-8 sequences.
+src/hir/translate.rs::test::analysis_look_set_prefix_any	partial	spec/regex-syntax_spec.cr	public HIR look_set_prefix_any coverage added for ASCII word-boundary prefix alternation under byte-mode ignore-case
+src/hir/translate.rs::test::analysis_static_captures_len	partial	spec/regex-syntax_spec.cr	public HIR static capture count coverage now includes vendored alternation-variation, repeated-capture, exact-zero repetition, lazy range, named-capture, and mixed optional-capture cases in addition to the basic concat/alternation matrix.
 src/hir/translate.rs::test::assertions	partial	spec/regex-syntax_spec.cr	word boundaries, special boundaries, angle boundaries, anchors, and CRLF-aware assertions covered
-src/hir/translate.rs::test::cat_alt	missing	-	baseline
-src/hir/translate.rs::test::cat_class_flattened	missing	-	baseline
-src/hir/translate.rs::test::class_ascii	missing	-	baseline
-src/hir/translate.rs::test::class_ascii_multiple	missing	-	baseline
-src/hir/translate.rs::test::class_bracketed	partial	spec/regex-syntax_spec.cr	bracketed classes, negation, escapes, perl/unicode items, and case-folded singleton cases covered
+src/hir/translate.rs::test::cat_alt	partial	spec/regex-syntax_spec.cr	look-only concat and alternation structure covered through public parse/HIR assertions
+src/hir/translate.rs::test::cat_class_flattened	partial	spec/regex-syntax_spec.cr	class-only alternation flattening is now covered for Unicode unions, byte unions, and mixed Unicode/non-UTF8 byte branches that must remain as alternation.
+src/hir/translate.rs::test::class_ascii	partial	spec/regex-syntax_spec.cr	ASCII class translation is now covered for positive, negated, ignore-case Unicode, byte-mode, and utf8-gated negated byte-mode cases.
+src/hir/translate.rs::test::class_ascii_multiple	partial	spec/regex-syntax_spec.cr	multiple ASCII classes in a single bracketed class are now covered for both Unicode and byte-mode translation.
+src/hir/translate.rs::test::class_bracketed	partial	spec/regex-syntax_spec.cr	bracketed classes, negation, escapes, perl/unicode items, case-folded singleton cases, utf8-gated byte-class invalid/success cases, and byte-class UnicodeNotAllowed literal checks covered
 src/hir/translate.rs::test::class_bracketed_difference	partial	spec/regex-syntax_spec.cr	main parser and overlapping difference cases covered
 src/hir/translate.rs::test::class_bracketed_intersect	partial	spec/regex-syntax_spec.cr	main parser intersection and unicode-property intersection cases covered
 src/hir/translate.rs::test::class_bracketed_intersect_negate	partial	spec/regex-syntax_spec.cr	bracketed unicode/perl double-negation cases covered
 src/hir/translate.rs::test::class_bracketed_nested	partial	spec/regex-syntax_spec.cr	nested bracketed unicode-property negation and binary-op cases covered
 src/hir/translate.rs::test::class_bracketed_symmetric_difference	partial	spec/regex-syntax_spec.cr	main parser and overlapping symmetric-difference cases covered
 src/hir/translate.rs::test::class_bracketed_union	partial	spec/regex-syntax_spec.cr	union of literals, unicode properties, and mixed bracketed items covered
-src/hir/translate.rs::test::class_perl_ascii	missing	-	baseline
-src/hir/translate.rs::test::class_perl_digit_disabled	missing	-	baseline
-src/hir/translate.rs::test::class_perl_space_disabled	missing	-	baseline
-src/hir/translate.rs::test::class_perl_unicode	missing	-	baseline
-src/hir/translate.rs::test::class_perl_word_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_perl_ascii	partial	spec/perl_class_unicode_spec.cr,spec/translator_spec.cr,spec/regex-syntax_spec.cr	ASCII perl classes covered across utf8-enabled rejection and utf8-disabled byte-mode translation paths
+src/hir/translate.rs::test::class_perl_digit_disabled	not_applicable	-	Vendored Rust only runs this when compile-time `unicode-perl` and `unicode-gencat` are both disabled. Crystal exposes those upstream feature surfaces as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::class_perl_space_disabled	not_applicable	-	Vendored Rust only runs this when compile-time `unicode-perl` and `unicode-bool` are both disabled. Crystal exposes those upstream feature surfaces as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::class_perl_unicode	partial	spec/regex-syntax_spec.cr	Unicode perl classes are now covered for \\d, \\s, \\w and representative ignore-case parity.
+src/hir/translate.rs::test::class_perl_word_disabled	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-perl` feature is disabled. Crystal exposes the upstream Unicode-perl feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
 src/hir/translate.rs::test::class_unicode_age	partial	spec/regex-syntax_spec.cr	positive age query and invalid age value covered
-src/hir/translate.rs::test::class_unicode_age_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_age_disabled	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-age` feature is disabled. Crystal exposes the upstream Unicode-age feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
 src/hir/translate.rs::test::class_unicode_any_empty	done	spec/regex-syntax_spec.cr	\\P{any} canonicalized to empty Unicode class
-src/hir/translate.rs::test::class_unicode_gencat	partial	spec/regex-syntax_spec.cr	one-letter, named, gc-op, any/assigned/ascii, negation, and error cases covered
-src/hir/translate.rs::test::class_unicode_gencat_disabled	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_gencat	partial	spec/regex-syntax_spec.cr	one-letter, named, gc-op, any/assigned/ascii, negation, invalid-property/value, and byte-mode UnicodeNotAllowed cases covered
+src/hir/translate.rs::test::class_unicode_gencat_disabled	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-gencat` feature is disabled. Crystal exposes the upstream Unicode general-category feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
 src/hir/translate.rs::test::class_unicode_script	partial	spec/regex-syntax_spec.cr	script, scx, aliases, ignore-case folding, and invalid value cases covered
-src/hir/translate.rs::test::class_unicode_script_disabled	missing	-	baseline
-src/hir/translate.rs::test::dot	missing	-	baseline
-src/hir/translate.rs::test::empty	missing	-	baseline
-src/hir/translate.rs::test::escape	missing	-	baseline
-src/hir/translate.rs::test::flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	scoped/global flags and translator flag effects covered
-src/hir/translate.rs::test::group	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	captures, named captures, and non-capturing groups covered
-src/hir/translate.rs::test::ignore_whitespace	missing	-	baseline
-src/hir/translate.rs::test::line_anchors	missing	-	baseline
-src/hir/translate.rs::test::literal	missing	-	baseline
-src/hir/translate.rs::test::literal_case_insensitive	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	ASCII and Unicode simple-fold literal/class behavior covered, but full upstream matrix still missing
-src/hir/translate.rs::test::regression_alt_empty_concat	missing	-	baseline
-src/hir/translate.rs::test::regression_empty_alt	missing	-	baseline
-src/hir/translate.rs::test::regression_fuzz_char_decrement1	missing	-	baseline
-src/hir/translate.rs::test::regression_fuzz_difference1	missing	-	baseline
-src/hir/translate.rs::test::regression_fuzz_match	missing	-	baseline
-src/hir/translate.rs::test::regression_singleton_alt	missing	-	baseline
-src/hir/translate.rs::test::repetition	missing	-	baseline
-src/hir/translate.rs::test::smart_alternation	missing	-	baseline
-src/hir/translate.rs::test::smart_concat	missing	-	baseline
-src/hir/translate.rs::test::smart_repetition	missing	-	baseline
-src/lib.rs::test::escape_meta	missing	-	baseline
-src/lib.rs::test::word_byte	missing	-	baseline
-src/lib.rs::test::word_char	missing	-	baseline
-src/lib.rs::test::word_char_disabled_error	missing	-	baseline
-src/lib.rs::test::word_char_disabled_panic	missing	-	baseline
-src/unicode.rs::test::range_contains	missing	-	baseline
-src/unicode.rs::test::regression_466	missing	-	baseline
-src/unicode.rs::test::simple_fold_a	missing	-	baseline
-src/unicode.rs::test::simple_fold_disabled	missing	-	baseline
-src/unicode.rs::test::simple_fold_k	missing	-	baseline
-src/unicode.rs::test::sym_normalize	missing	-	baseline
-src/unicode.rs::test::valid_utf8_symbolic	missing	-	baseline
-src/utf8.rs::test::bmp	missing	-	baseline
-src/utf8.rs::test::codepoints_no_surrogates	missing	-	baseline
-src/utf8.rs::test::reverse	missing	-	baseline
-src/utf8.rs::test::single_codepoint_one_sequence	missing	-	baseline
+src/hir/translate.rs::test::class_unicode_script_disabled	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-script` feature is disabled. Crystal exposes the upstream Unicode script feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::dot	partial	spec/regex-syntax_spec.cr	Unicode and byte dot kinds, dotall, CRLF byte-mode dot, and the vendored InvalidUtf8 flag combinations `(?-u).`, `(?R-u).`, `(?s-u).`, and `(?Rs-u).` are covered with structured HIR error spans.
+src/hir/translate.rs::test::empty	partial	spec/regex-syntax_spec.cr	empty regex, empty groups, named empty captures, and empty alternation branches covered
+src/hir/translate.rs::test::escape	partial	spec/regex-syntax_spec.cr	escaped metacharacter literal folding covered through merged-literal HIR assertions
+src/hir/translate.rs::test::flags	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	scoped/global flags, nested flag-group scoping, byte-mode `(?i-u:...)` translation, multiline/CRLF flag combinations, swap-greed behavior, nested scoped/reset flag interactions, and flag-driven InvalidUtf8 translator errors are now covered through direct HIR assertions.
+src/hir/translate.rs::test::group	partial	spec/parser_spec.cr,spec/regex-syntax_spec.cr	captures, named captures, named-empty captures, named-capture pairs, and non-capturing group elimination are covered directly; the full upstream matrix is still larger.
+src/hir/translate.rs::test::ignore_whitespace	partial	spec/regex-syntax_spec.cr	translator-facing ignore-whitespace coverage now includes octal, spaced hex escapes, and commented Unicode property escapes in verbose mode.
+src/hir/translate.rs::test::line_anchors	partial	spec/regex-syntax_spec.cr	start/end, \\A/\\z, multiline, `(?R)` non-multiline, and `(?Rm)` CRLF-aware line-anchor variants are covered directly.
+src/hir/translate.rs::test::literal	partial	spec/regex-syntax_spec.cr,spec/hir_literal_spec.cr	ASCII, Unicode, escaped, byte-mode raw-byte translation, and utf8-enabled invalid-byte rejection covered through public parser/translator path
+src/hir/translate.rs::test::literal_case_insensitive	partial	spec/flag_handling_spec.cr,spec/regex-syntax_spec.cr	Unicode and byte literal-casefold matrices now cover scoped/global toggles, punctuation preservation, Greek simple folding, byte-mode toggles, hex byte literals, raw `0xFF`, and valid non-ASCII UTF-8 byte-mode literals; only the remaining broader translator tail keeps this row partial.
+src/hir/translate.rs::test::regression_alt_empty_concat	done	spec/translator_spec.cr	Direct translator regression coverage now exists for alternation containing an empty concat and confirms it lowers to Hir::Empty.
+src/hir/translate.rs::test::regression_empty_alt	done	spec/translator_spec.cr	Direct translator regression coverage now exists for concat containing an empty alternation and confirms it lowers to Hir.fail.
+src/hir/translate.rs::test::regression_fuzz_char_decrement1	done	spec/translator_spec.cr	Direct no-panic regression coverage now exists for the vendored fuzz char decrement pattern.
+src/hir/translate.rs::test::regression_fuzz_difference1	done	spec/translator_spec.cr	Direct no-panic regression coverage now exists for the vendored fuzz difference pattern.
+src/hir/translate.rs::test::regression_fuzz_match	done	spec/translator_spec.cr	Direct translator regression coverage now exists for the vendored fuzz match pattern, including the expected concat shape.
+src/hir/translate.rs::test::regression_singleton_alt	done	spec/translator_spec.cr	Direct translator regression coverage now exists for concat containing a singleton alternation around dot.
+src/hir/translate.rs::test::repetition	partial	spec/regex-syntax_spec.cr	greedy and lazy repetition, grouped repetition, concat/alt repetition placement, and counted ranges covered
+src/hir/translate.rs::test::smart_alternation	partial	spec/regex-syntax_spec.cr	nested alternations now flatten through smart HIR alternation construction
+src/hir/translate.rs::test::smart_concat	partial	spec/regex-syntax_spec.cr	adjacent literals and nested concats now flatten and merge through smart HIR concat construction
+src/hir/translate.rs::test::smart_repetition	partial	spec/regex-syntax_spec.cr	a{0}, a{1}, and repeated zero-width assertions now simplify through smart HIR repetition construction
+src/lib.rs::test::escape_meta	partial	spec/lib_spec.cr	Top-level escape and escape_into helper coverage now includes the upstream meta-character escaping case through direct public API specs.
+src/lib.rs::test::word_byte	partial	spec/lib_spec.cr	Top-level ASCII word-byte helper coverage now exists through direct public API specs.
+src/lib.rs::test::word_char	partial	spec/lib_spec.cr	Top-level Unicode word-character helper coverage now exists through direct public API specs using the vendored Perl word table examples from upstream.
+src/lib.rs::test::word_char_disabled_error	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-perl` feature is disabled. Crystal exposes the upstream Unicode word-character feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/lib.rs::test::word_char_disabled_panic	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-perl` feature is disabled. Crystal exposes the upstream Unicode word-character feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/unicode.rs::test::range_contains	done	spec/unicode_spec.cr	Direct vendored SimpleCaseFolder overlap coverage now matches the upstream range_contains helper test.
+src/unicode.rs::test::regression_466	done	spec/unicode_spec.cr	Direct vendored OneLetter('C') general-category canonicalization coverage now exists through the Unicode.class query surface.
+src/unicode.rs::test::simple_fold_a	done	spec/unicode_spec.cr	Direct vendored SimpleCaseFolder ASCII a/A mapping coverage now exists.
+src/unicode.rs::test::simple_fold_disabled	not_applicable	-	Vendored Rust only runs this when the compile-time `unicode-case` feature is disabled. Crystal exposes the upstream Unicode case-folding feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/unicode.rs::test::simple_fold_k	done	spec/unicode_spec.cr	Direct vendored SimpleCaseFolder Kelvin-sign mapping coverage now exists.
+src/unicode.rs::test::sym_normalize	done	spec/unicode_spec.cr	Direct vendored symbolic-name normalization coverage now exists through the dedicated Unicode helper surface.
+src/unicode.rs::test::valid_utf8_symbolic	done	spec/unicode_spec.cr	Direct vendored symbolic-byte normalization coverage now exists and asserts valid UTF-8 output after dropping non-ASCII bytes.
+src/utf8.rs::test::bmp	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers the vendored BMP sequence decomposition
+src/utf8.rs::test::codepoints_no_surrogates	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers vendored surrogate-rejection behavior across representative scalar ranges
+src/utf8.rs::test::reverse	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers vendored sequence reversal behavior for lengths 1 through 4
+src/utf8.rs::test::single_codepoint_one_sequence	partial	spec/utf8_spec.cr	Dedicated Crystal utf8 module now covers the vendored one-sequence-per-scalar invariant across valid Unicode scalar values

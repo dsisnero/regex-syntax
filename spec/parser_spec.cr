@@ -225,11 +225,11 @@ describe Regex::Syntax::AstParser do
     it "rejects bracketed class regressions like Rust" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /invalid escape sequence in character class/) do
+      expect_parse_error(/invalid escape sequence in character class/) do
         parser.parse(%q([\b]))
       end
 
-      expect_raises(Regex::Syntax::ParseError, /invalid character class range/) do
+      expect_parse_error(/invalid character class range/) do
         parser.parse("[z-a]")
       end
 
@@ -266,7 +266,7 @@ describe Regex::Syntax::AstParser do
     it "rejects duplicate named captures" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /duplicate capture name/) do
+      expect_parse_error(/duplicate capture name/) do
         parser.parse("(?P<word>a)(?<word>b)")
       end
     end
@@ -274,19 +274,38 @@ describe Regex::Syntax::AstParser do
     it "rejects invalid named capture syntax" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /invalid capture name/) do
+      expect_parse_error(/invalid capture name/) do
         parser.parse("(?P<1word>a)")
       end
+    end
+
+    it "raises structured capture-name EOF errors like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameUnexpectedEof,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse("(?P<") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameUnexpectedEof,
+        Regex::Syntax::AST::Span.new(5, 5)
+      ) { parser.parse("(?P<a") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameUnexpectedEof,
+        Regex::Syntax::AST::Span.new(6, 6)
+      ) { parser.parse("(?P<ab") }
     end
 
     it "rejects unsupported backreferences" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /backreferences are not supported/) do
+      expect_parse_error(/backreferences are not supported/) do
         parser.parse(%q(\0))
       end
 
-      expect_raises(Regex::Syntax::ParseError, /backreferences are not supported/) do
+      expect_parse_error(/backreferences are not supported/) do
         parser.parse(%q(\9))
       end
     end
@@ -294,11 +313,11 @@ describe Regex::Syntax::AstParser do
     it "rejects unsupported look-behind groups" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /look-behind/) do
+      expect_parse_error(/look-behind/) do
         parser.parse("(?<=a)b")
       end
 
-      expect_raises(Regex::Syntax::ParseError, /look-behind/) do
+      expect_parse_error(/look-behind/) do
         parser.parse("(?<!a)b")
       end
     end
@@ -308,14 +327,23 @@ describe Regex::Syntax::AstParser do
 
       x = parser.parse(%q(\x41)).root.as(Regex::Syntax::AST::Literal)
       x.kind.should eq(Regex::Syntax::AST::Literal::Kind::Hex)
+      x.form.should eq(Regex::Syntax::AST::Literal::Form::Fixed)
+      x.fixed_digits.should eq(2)
+      x.escape_prefix.should eq('x')
       x.c.should eq('A')
 
       u = parser.parse(%q(\u03A9)).root.as(Regex::Syntax::AST::Literal)
       u.kind.should eq(Regex::Syntax::AST::Literal::Kind::Unicode)
+      u.form.should eq(Regex::Syntax::AST::Literal::Form::Fixed)
+      u.fixed_digits.should eq(4)
+      u.escape_prefix.should eq('u')
       u.c.should eq('Ω')
 
       long = parser.parse(%q(\U0001F600)).root.as(Regex::Syntax::AST::Literal)
       long.kind.should eq(Regex::Syntax::AST::Literal::Kind::Unicode)
+      long.form.should eq(Regex::Syntax::AST::Literal::Form::Fixed)
+      long.fixed_digits.should eq(8)
+      long.escape_prefix.should eq('U')
       long.c.should eq('😀')
     end
 
@@ -324,35 +352,57 @@ describe Regex::Syntax::AstParser do
 
       x = parser.parse(%q(\x{26C4})).root.as(Regex::Syntax::AST::Literal)
       x.kind.should eq(Regex::Syntax::AST::Literal::Kind::Hex)
+      x.form.should eq(Regex::Syntax::AST::Literal::Form::Brace)
+      x.escape_prefix.should eq('x')
       x.c.should eq('⛄')
 
       u = parser.parse(%q(\u{26c4})).root.as(Regex::Syntax::AST::Literal)
       u.kind.should eq(Regex::Syntax::AST::Literal::Kind::Unicode)
+      u.form.should eq(Regex::Syntax::AST::Literal::Form::Brace)
+      u.escape_prefix.should eq('u')
       u.c.should eq('⛄')
 
       long = parser.parse(%q(\U{10FFFF})).root.as(Regex::Syntax::AST::Literal)
       long.kind.should eq(Regex::Syntax::AST::Literal::Kind::Unicode)
+      long.form.should eq(Regex::Syntax::AST::Literal::Form::Brace)
+      long.escape_prefix.should eq('U')
       long.c.should eq('\u{10FFFF}')
     end
 
     it "rejects invalid fixed-width and brace hex escapes" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /unexpected end of pattern in hex escape/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeUnexpectedEof,
+        Regex::Syntax::AST::Span.new(3, 3)
+      ) do
         parser.parse(%q(\xF))
       end
+      err.raw_message.should match(/unexpected end of pattern in hex escape/)
 
-      expect_raises(Regex::Syntax::ParseError, /invalid hex digit in escape/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeHexInvalidDigit,
+        Regex::Syntax::AST::Span.new(5, 6)
+      ) do
         parser.parse(%q(\uFFFG))
       end
+      err.raw_message.should match(/invalid hex digit in escape/)
 
-      expect_raises(Regex::Syntax::ParseError, /empty hex escape/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeHexEmpty,
+        Regex::Syntax::AST::Span.new(3, 4)
+      ) do
         parser.parse(%q(\x{}))
       end
+      err.raw_message.should match(/empty hex escape/)
 
-      expect_raises(Regex::Syntax::ParseError, /invalid hex escape/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeHexInvalid,
+        Regex::Syntax::AST::Span.new(8, 8)
+      ) do
         parser.parse(%q(\x{D800}))
       end
+      err.raw_message.should match(/invalid hex escape/)
     end
 
     it "parses primitive literals, Perl classes, and special escapes like Rust" do
@@ -389,6 +439,87 @@ describe Regex::Syntax::AstParser do
         literal.kind.should eq(Regex::Syntax::AST::Literal::Kind::Escaped)
         literal.c.should eq(expected)
       end
+    end
+
+    it "parses perl classes followed by literals like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      ast = parser.parse(%q(\dz))
+      ast.root.should be_a(Regex::Syntax::AST::Concat)
+      concat = ast.root.as(Regex::Syntax::AST::Concat)
+      concat.children.size.should eq(2)
+      perl = concat.children[0].as(Regex::Syntax::AST::ClassPerl)
+      perl.span.should eq(Regex::Syntax::AST::Span.new(0, 2))
+      perl.kind.should eq(Regex::Syntax::AST::ClassPerl::Kind::Digit)
+      concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("z".to_slice)
+    end
+
+    it "raises structured unicode class parse errors with vendored spans" do
+      parser = Regex::Syntax::AstParser.new
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeUnexpectedEof,
+        Regex::Syntax::AST::Span.new(2, 2)
+      ) { parser.parse(%q(\p)) }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeUnexpectedEof,
+        Regex::Syntax::AST::Span.new(3, 3)
+      ) { parser.parse(%q(\p{)) }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeUnexpectedEof,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse(%q(\p{N)) }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::EscapeUnexpectedEof,
+        Regex::Syntax::AST::Span.new(8, 8)
+      ) { parser.parse(%q(\p{Greek)) }
+    end
+
+    it "parses unicode classes followed by literals like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      short = parser.parse(%q(\pNz))
+      short.root.should be_a(Regex::Syntax::AST::Concat)
+      short_concat = short.root.as(Regex::Syntax::AST::Concat)
+      short_concat.children.size.should eq(2)
+      short_class = short_concat.children[0].as(Regex::Syntax::AST::ClassUnicode)
+      short_class.span.should eq(Regex::Syntax::AST::Span.new(0, 3))
+      short_class.negated?.should be_false
+      short_class.name.should eq("N")
+      short_concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("z".to_slice)
+
+      named = parser.parse(%q(\p{Greek}z))
+      named.root.should be_a(Regex::Syntax::AST::Concat)
+      named_concat = named.root.as(Regex::Syntax::AST::Concat)
+      named_concat.children.size.should eq(2)
+      named_class = named_concat.children[0].as(Regex::Syntax::AST::ClassUnicode)
+      named_class.span.should eq(Regex::Syntax::AST::Span.new(0, 9))
+      named_class.negated?.should be_false
+      named_class.name.should eq("Greek")
+      named_concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("z".to_slice)
+    end
+
+    it "rejects malformed unicode class escapes like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::UnicodeClassInvalid,
+        Regex::Syntax::AST::Span.new(2, 3)
+      ) do
+        parser.parse(%q(\p\{))
+      end
+      err.raw_message.should match(/invalid Unicode property/)
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::UnicodeClassInvalid,
+        Regex::Syntax::AST::Span.new(2, 3)
+      ) do
+        parser.parse(%q(\P\{))
+      end
+      err.raw_message.should match(/invalid Unicode property/)
     end
 
     it "parses newlines as verbatim literals between dots like Rust" do
@@ -445,7 +576,7 @@ describe Regex::Syntax::AstParser do
     it "rejects non-octal escapes when octal mode is enabled" do
       parser = Regex::Syntax::AstParser.new(octal: true)
 
-      expect_raises(Regex::Syntax::ParseError, /unrecognized escape sequence/) do
+      expect_parse_error(/unrecognized escape sequence/) do
         parser.parse(%q(\8))
       end
     end
@@ -546,7 +677,7 @@ describe Regex::Syntax::AstParser do
       concat.children[0].should be_a(Regex::Syntax::AST::Empty)
       concat.children[1].should be_a(Regex::Syntax::AST::Repetition)
 
-      expect_raises(Regex::Syntax::ParseError, /repetition operator not preceded by expression/) do
+      expect_parse_error(/repetition operator not preceded by expression/) do
         parser.parse("*")
       end
     end
@@ -571,11 +702,11 @@ describe Regex::Syntax::AstParser do
       reluctant = parser.parse("a{5}?").root.as(Regex::Syntax::AST::Repetition)
       reluctant.greedy?.should be_false
 
-      expect_raises(Regex::Syntax::ParseError, /invalid repetition range/) do
+      expect_parse_error(/invalid repetition range/) do
         parser.parse("a{2,1}")
       end
 
-      expect_raises(Regex::Syntax::ParseError, /invalid decimal/) do
+      expect_parse_error(/invalid decimal/) do
         parser.parse("a{9999999999}")
       end
     end
@@ -604,17 +735,86 @@ describe Regex::Syntax::AstParser do
       parser.parse("a{0}").root.as(Regex::Syntax::AST::Repetition).op.min.should eq(0)
       parser.parse("a{01}").root.as(Regex::Syntax::AST::Repetition).op.min.should eq(1)
 
-      expect_raises(Regex::Syntax::ParseError, /empty repetition count/) do
+      expect_parse_error(/empty repetition count/) do
         parser.parse("a{-1}")
       end
 
-      expect_raises(Regex::Syntax::ParseError, /empty repetition count/) do
+      expect_parse_error(/empty repetition count/) do
         parser.parse("a{}")
       end
 
-      expect_raises(Regex::Syntax::ParseError, /invalid decimal/) do
+      expect_parse_error(/invalid decimal/) do
         parser.parse("a{9999999999}")
       end
+    end
+
+    it "raises structured decimal repetition errors with representative spans" do
+      parser = Regex::Syntax::AstParser.new
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountDecimalEmpty,
+        Regex::Syntax::AST::Span.new(2, 2)
+      ) do
+        parser.parse("a{}")
+      end
+      err.raw_message.should match(/empty repetition count/)
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountDecimalEmpty,
+        Regex::Syntax::AST::Span.new(2, 2)
+      ) do
+        parser.parse("a{-1}")
+      end
+      err.raw_message.should match(/empty repetition count/)
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::DecimalInvalid,
+        Regex::Syntax::AST::Span.new(2, 12)
+      ) do
+        parser.parse("a{9999999999}")
+      end
+      err.raw_message.should match(/invalid decimal/)
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::DecimalInvalid,
+        Regex::Syntax::AST::Span.new(4, 14)
+      ) do
+        parser.parse("a{9,9999999999}")
+      end
+      err.raw_message.should match(/invalid decimal/)
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountUnclosed,
+        Regex::Syntax::AST::Span.new(1, 2)
+      ) { parser.parse("a{") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountUnclosed,
+        Regex::Syntax::AST::Span.new(1, 3)
+      ) { parser.parse("a{9") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountUnclosed,
+        Regex::Syntax::AST::Span.new(1, 4)
+      ) { parser.parse("a{9,") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountInvalid,
+        Regex::Syntax::AST::Span.new(1, 6)
+      ) { parser.parse("a{2,1}") }
+    end
+
+    it "raises structured duplicate capture errors with auxiliary spans" do
+      parser = Regex::Syntax::AstParser.new
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameDuplicate,
+        Regex::Syntax::AST::Span.new(12, 13),
+        Regex::Syntax::AST::Span.new(4, 5)
+      ) do
+        parser.parse("(?P<a>a)(?P<a>b)")
+      end
+      err.raw_message.should match(/duplicate capture name/)
     end
 
     it "captures comments via parse_with_comments like Rust" do
@@ -676,6 +876,42 @@ describe Regex::Syntax::AstParser do
       repetition.child.as(Regex::Syntax::AST::Assertion).kind.should eq(
         Regex::Syntax::AST::Assertion::Kind::WordBoundary
       )
+    end
+
+    it "raises structured special word boundary errors like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::SpecialWordOrRepetitionUnexpectedEof,
+        Regex::Syntax::AST::Span.new(0, 3)
+      ) do
+        parser.parse(%q(\b{))
+      end
+      err.raw_message.should match(/special word boundary or repetition/)
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::SpecialWordBoundaryUnclosed,
+        Regex::Syntax::AST::Span.new(2, 6)
+      ) do
+        parser.parse(%q(\b{foo))
+      end
+      err.raw_message.should match(/special word boundary unclosed/)
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::SpecialWordBoundaryUnclosed,
+        Regex::Syntax::AST::Span.new(2, 6)
+      ) do
+        parser.parse(%q(\b{foo!}))
+      end
+      err.raw_message.should match(/special word boundary unclosed/)
+
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::SpecialWordBoundaryUnrecognized,
+        Regex::Syntax::AST::Span.new(3, 6)
+      ) do
+        parser.parse(%q(\b{foo}))
+      end
+      err.raw_message.should match(/unrecognized special word boundary assertion/)
     end
   end
 end

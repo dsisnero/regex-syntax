@@ -106,35 +106,49 @@ describe "Flag handling in AST parser" do
     it "rejects duplicate flags" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /duplicate flag/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagDuplicate,
+        Regex::Syntax::AST::Span.new(3, 4),
+        Regex::Syntax::AST::Span.new(2, 3)
+      ) do
         parser.parse("(?ii:ab)")
       end
+      err.raw_message.should match(/duplicate flag/)
     end
 
     it "rejects repeated negation" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /repeated flag negation/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagRepeatedNegation,
+        Regex::Syntax::AST::Span.new(4, 5),
+        Regex::Syntax::AST::Span.new(3, 4)
+      ) do
         parser.parse("(?i--m:ab)")
       end
+      err.raw_message.should match(/repeated flag negation/)
     end
 
     it "rejects dangling negation" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /dangling flag negation/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagDanglingNegation,
+        Regex::Syntax::AST::Span.new(3, 4)
+      ) do
         parser.parse("(?i-)")
       end
+      err.raw_message.should match(/dangling flag negation/)
     end
 
     it "rejects unrecognized flags" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /unrecognized flag/) do
+      expect_parse_error(/unrecognized flag/) do
         parser.parse("(?ia:ab)")
       end
 
-      expect_raises(Regex::Syntax::ParseError, /unrecognized flag/) do
+      expect_parse_error(/unrecognized flag/) do
         parser.parse("(?☃:ab)")
       end
     end
@@ -142,7 +156,7 @@ describe "Flag handling in AST parser" do
     it "rejects unexpected eof in flag syntax like Rust" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_raises(Regex::Syntax::ParseError, /unexpected end/) do
+      expect_parse_error(/unexpected end/) do
         parser.parse("(?isU")
       end
     end
