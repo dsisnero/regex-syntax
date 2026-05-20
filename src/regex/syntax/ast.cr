@@ -35,6 +35,18 @@ module Regex::Syntax::AST
     def inspect(io)
       to_s(io)
     end
+
+    def one_line? : Bool
+      @start.offset <= @end.offset
+    end
+
+    def with_start(start : Position) : Span
+      Span.new(start, @end)
+    end
+
+    def with_end(finish : Position) : Span
+      Span.new(@start, finish)
+    end
   end
 
   # Base class for all AST nodes
@@ -88,12 +100,26 @@ module Regex::Syntax::AST
       Octal    # '\177' (deprecated)
     end
 
+    enum Form
+      Fixed
+      Brace
+    end
+
     getter span : Span
     getter kind : Kind
     getter c : Char?      # For single character literals
     getter bytes : Bytes? # For byte literals
+    getter form : Form?
+    getter fixed_digits : Int32?
+    getter escape_prefix : Char?
 
-    def initialize(@span : Span, @kind : Kind, @c : Char? = nil, @bytes : Bytes? = nil)
+    def initialize(@span : Span, @kind : Kind, @c : Char? = nil, @bytes : Bytes? = nil, @form : Form? = nil, @fixed_digits : Int32? = nil, @escape_prefix : Char? = nil)
+    end
+
+    def byte : UInt8?
+      return nil unless bytes = @bytes
+      return nil unless bytes.size == 1
+      bytes[0]
     end
   end
 
@@ -250,6 +276,12 @@ module Regex::Syntax::AST
 
     def initialize(@span : Span, @start : Literal, @end : Literal)
     end
+
+    def valid? : Bool
+      return false unless start_char = @start.c
+      return false unless end_char = @end.c
+      start_char <= end_char
+    end
   end
 
   # A character class set item.
@@ -284,6 +316,11 @@ module Regex::Syntax::AST
     def empty? : Bool
       @items.empty?
     end
+
+    def push(item : ClassSetItem) : self
+      @items << item
+      self
+    end
   end
 
   # A character class set.
@@ -299,6 +336,26 @@ module Regex::Syntax::AST
     getter binary_op : ClassSetBinaryOp?
 
     def initialize(@span : Span, @kind : Kind, @item : ClassSetItem? = nil, @binary_op : ClassSetBinaryOp? = nil)
+    end
+
+    def union(item : ClassSetItem) : self
+      union_items = [] of ClassSetItem
+      case @kind
+      when Kind::Item
+        if existing = @item
+          union_items << existing
+        end
+        union_items << item
+      when Kind::BinaryOp
+        current_item = ClassSetItem.new(@span, ClassSetItem::Kind::Bracketed, ClassBracketed.new(@span, false, self))
+        union_items << current_item
+        union_items << item
+      end
+      union = ClassSetUnion.new(@span, union_items)
+      @kind = Kind::Item
+      @item = ClassSetItem.new(@span, ClassSetItem::Kind::Union, union)
+      @binary_op = nil
+      self
     end
   end
 
@@ -362,6 +419,13 @@ module Regex::Syntax::AST
 
     def initialize(@kind : Kind, @min : UInt32? = nil, @max : UInt32? = nil)
     end
+
+    def valid? : Bool
+      return true unless @kind.range?
+      return false unless min = @min
+      max = @max
+      max.nil? || min <= max
+    end
   end
 
   # A flag item in a flag group.
@@ -376,6 +440,10 @@ module Regex::Syntax::AST
     getter flag : Char?
 
     def initialize(@span : Span, @kind : Kind, @flag : Char? = nil)
+    end
+
+    def negation? : Bool
+      @kind.negation?
     end
   end
 
@@ -402,6 +470,11 @@ module Regex::Syntax::AST
       end
       nil
     end
+
+    def add_item(item : FlagsItem) : self
+      @items << item
+      self
+    end
   end
 
   # A grouped regular expression
@@ -425,6 +498,10 @@ module Regex::Syntax::AST
 
     def initialize(@span : Span, @kind : Kind, @child : Node, @capture_index : Int32? = nil, @name : String? = nil, @flags : Flags? = nil)
     end
+
+    def capturing? : Bool
+      @kind.capture?
+    end
   end
 
   # An alternation of regular expressions
@@ -434,6 +511,10 @@ module Regex::Syntax::AST
 
     def initialize(@span : Span, @children : Array(Node))
     end
+
+    def into_ast : Ast
+      Ast.new(self)
+    end
   end
 
   # A concatenation of regular expressions
@@ -442,6 +523,10 @@ module Regex::Syntax::AST
     getter children : Array(Node)
 
     def initialize(@span : Span, @children : Array(Node))
+    end
+
+    def into_ast : Ast
+      Ast.new(self)
     end
   end
 
@@ -454,6 +539,14 @@ module Regex::Syntax::AST
 
     def span : Span
       @root.span
+    end
+
+    def self.empty : Ast
+      Ast.new(Empty.new(Span.new(0, 0)))
+    end
+
+    def kind : Node
+      @root
     end
   end
 end

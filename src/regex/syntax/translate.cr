@@ -2,10 +2,77 @@ require "./hir"
 require "./unicode"
 
 module Regex::Syntax
+  class TranslatorBuilder
+    def initialize
+      @utf8 = true
+      @line_terminator = '\n'.ord.to_u8
+      @ignore_case = false
+      @multi_line = false
+      @dot_matches_new_line = false
+      @swap_greed = false
+      @unicode = true
+      @crlf = false
+    end
+
+    def build : Translator
+      Translator.new(
+        unicode: @unicode,
+        utf8: @utf8,
+        ignore_case: @ignore_case,
+        multi_line: @multi_line,
+        dot_matches_new_line: @dot_matches_new_line,
+        swap_greed: @swap_greed,
+        crlf: @crlf,
+        line_terminator: @line_terminator
+      )
+    end
+
+    def utf8(yes : Bool) : self
+      @utf8 = yes
+      self
+    end
+
+    def line_terminator(byte : UInt8) : self
+      @line_terminator = byte
+      self
+    end
+
+    def case_insensitive(yes : Bool) : self
+      @ignore_case = yes
+      self
+    end
+
+    def multi_line(yes : Bool) : self
+      @multi_line = yes
+      self
+    end
+
+    def dot_matches_new_line(yes : Bool) : self
+      @dot_matches_new_line = yes
+      self
+    end
+
+    def crlf(yes : Bool) : self
+      @crlf = yes
+      self
+    end
+
+    def swap_greed(yes : Bool) : self
+      @swap_greed = yes
+      self
+    end
+
+    def unicode(yes : Bool) : self
+      @unicode = yes
+      self
+    end
+  end
+
   # Translates AST nodes to HIR nodes using the same staged pipeline as Rust:
   # AST parsing first, semantic lowering second.
   class Translator
     @unicode : Bool
+    @utf8 : Bool
     @ignore_case : Bool
     @multi_line : Bool
     @dot_matches_new_line : Bool
@@ -13,17 +80,21 @@ module Regex::Syntax
     @ignore_whitespace : Bool
     @crlf : Bool
     @nest_limit : Int32?
+    @line_terminator : UInt8
 
     def initialize(*,
                    unicode : Bool = true,
+                   utf8 : Bool = true,
                    ignore_case : Bool = false,
                    multi_line : Bool = false,
                    dot_matches_new_line : Bool = false,
                    swap_greed : Bool = false,
                    ignore_whitespace : Bool = false,
                    crlf : Bool = false,
-                   nest_limit : Int32? = nil)
+                   nest_limit : Int32? = nil,
+                   line_terminator : UInt8 = '\n'.ord.to_u8)
       @unicode = unicode
+      @utf8 = utf8
       @ignore_case = ignore_case
       @multi_line = multi_line
       @dot_matches_new_line = dot_matches_new_line
@@ -31,6 +102,7 @@ module Regex::Syntax
       @ignore_whitespace = ignore_whitespace
       @crlf = crlf
       @nest_limit = nest_limit
+      @line_terminator = line_terminator
     end
 
     # Translate an AST node to HIR node
@@ -67,16 +139,18 @@ module Regex::Syntax
 
     private def translate_literal(literal : AST::Literal) : Hir::Node
       if bytes = literal.bytes
+        ensure_valid_utf8_bytes!(bytes, literal.span) if @utf8 && !@unicode
         if @ignore_case
           @unicode ? Hir.case_fold_unicode(Hir::Hir.new(Hir::Literal.new(bytes))).node : translate_case_folded_bytes(bytes)
         else
           Hir::Literal.new(bytes)
         end
       elsif c = literal.c
+        bytes = char_to_utf8_bytes(c)
         if @ignore_case
-          @unicode ? Hir.case_fold_unicode(Hir::Hir.new(Hir::Literal.new(char_to_utf8_bytes(c)))).node : translate_case_folded_char(c)
+          @unicode ? Hir.case_fold_unicode(Hir::Hir.new(Hir::Literal.new(bytes))).node : translate_case_folded_char(c)
         else
-          Hir::Literal.new(@unicode ? char_to_utf8_bytes(c) : Bytes.new(1) { c.ord.to_u8 })
+          Hir::Literal.new(bytes)
         end
       else
         Hir::Empty.new
@@ -117,6 +191,7 @@ module Regex::Syntax
       when AST::ClassPerl::Kind::Digit, AST::ClassPerl::Kind::DigitNeg
         ranges = [('0'.ord.to_u8)..('9'.ord.to_u8)]
         negated = class_perl.kind.digit_neg?
+        validate_utf8_byte_intervals!(ranges, class_perl.span, negated: negated)
         Hir::CharClass.new(negated, ranges)
       when AST::ClassPerl::Kind::Word, AST::ClassPerl::Kind::WordNeg
         ranges = [
@@ -126,6 +201,7 @@ module Regex::Syntax
           '_'.ord.to_u8..'_'.ord.to_u8,
         ]
         negated = class_perl.kind.word_neg?
+        validate_utf8_byte_intervals!(ranges, class_perl.span, negated: negated)
         Hir::CharClass.new(negated, ranges)
       when AST::ClassPerl::Kind::Space, AST::ClassPerl::Kind::SpaceNeg
         ranges = [
@@ -137,6 +213,7 @@ module Regex::Syntax
           '\v'.ord.to_u8..'\v'.ord.to_u8,
         ]
         negated = class_perl.kind.space_neg?
+        validate_utf8_byte_intervals!(ranges, class_perl.span, negated: negated)
         Hir::CharClass.new(negated, ranges)
       else
         Hir::CharClass.new
@@ -144,6 +221,8 @@ module Regex::Syntax
     end
 
     private def translate_class_unicode(class_unicode : AST::ClassUnicode) : Hir::Node
+      raise ParseError.new("Unicode not allowed") unless @unicode
+
       if @ignore_case
         base_class = Unicode.property_class(class_unicode.name, false)
         folded = Hir.case_fold_unicode(Hir::Hir.new(base_class)).node.as(Hir::UnicodeClass)
@@ -160,20 +239,42 @@ module Regex::Syntax
       if @unicode
         if single_class_item?(class_set) && (item = class_set.item) && single_class_item_negated?(item)
           negated = class_bracketed.negated? ^ single_class_item_negated?(item)
-          Hir::UnicodeClass.new(negated, translate_single_class_item_unicode_base(item))
+          build_unicode_class(translate_single_class_item_unicode_base(item), negated)
         else
           intervals = translate_class_set_unicode(class_set)
-          Hir::UnicodeClass.new(class_bracketed.negated?, intervals)
+          build_unicode_class(intervals, class_bracketed.negated?)
         end
       else
         if single_class_item?(class_set) && (item = class_set.item) && single_class_item_negated?(item)
           negated = class_bracketed.negated? ^ single_class_item_negated?(item)
-          Hir::CharClass.new(negated, translate_single_class_item_bytes_base(item))
+          build_byte_class(translate_single_class_item_bytes_base(item), negated, class_bracketed.span)
         else
           intervals = translate_class_set_bytes(class_set)
-          Hir::CharClass.new(class_bracketed.negated?, intervals)
+          build_byte_class(intervals, class_bracketed.negated?, class_bracketed.span)
         end
       end
+    end
+
+    private def build_unicode_class(intervals : Array(Range(UInt32, UInt32)), negated : Bool) : Hir::UnicodeClass
+      folded = if @ignore_case
+                 Hir::UnicodeClass.new(false, intervals).case_fold_simple.intervals
+               else
+                 intervals
+               end
+      klass = Hir::UnicodeClass.new(negated, folded)
+      klass
+    end
+
+    private def build_byte_class(intervals : Array(Range(UInt8, UInt8)), negated : Bool, span : AST::Span) : Hir::CharClass
+      validate_utf8_byte_intervals!(intervals, span, negated: negated)
+      folded = if @ignore_case
+                 Hir::CharClass.new(false, intervals).case_fold_simple.intervals
+               else
+                 intervals
+               end
+      klass = Hir::CharClass.new(negated, folded)
+      validate_utf8_byte_intervals!(klass.intervals, span, negated: klass.negated?)
+      klass
     end
 
     private def single_class_item?(class_set : AST::ClassSet) : Bool
@@ -443,6 +544,8 @@ module Regex::Syntax
 
       start_char = start_literal.c
       end_char = end_literal.c
+      start_byte = single_byte_literal(start_literal)
+      end_byte = single_byte_literal(end_literal)
 
       if start_char && end_char
         # In byte mode (non-Unicode), only ASCII characters are allowed
@@ -464,6 +567,8 @@ module Regex::Syntax
         else
           [(start_char.ord.to_u8..end_char.ord.to_u8)]
         end
+      elsif start_byte && end_byte
+        [(start_byte..end_byte)]
       else
         [] of Range(UInt8, UInt8)
       end
@@ -498,18 +603,24 @@ module Regex::Syntax
     end
 
     private def translate_literal_to_range_bytes(literal : AST::Literal) : Array(Range(UInt8, UInt8))
+      if bytes = literal.bytes
+        return [] of Range(UInt8, UInt8) unless bytes.size == 1
+
+        byte = bytes[0]
+        return [(byte..byte)] unless @ignore_case && byte.chr.ascii?
+
+        lower = byte.chr.downcase.ord.to_u8
+        upper = byte.chr.upcase.ord.to_u8
+        return lower == upper ? [(lower..lower)] : [(lower..lower), (upper..upper)]
+      end
+
       if c = literal.c
-        return [] of Range(UInt8, UInt8) if c.ord > 0xFF
+        raise ParseError.new("Unicode not allowed") unless c.ascii?
 
         if @ignore_case
           # For case-insensitive matching, include both cases
-          if c.ascii?
-            lower = c.downcase.ord.to_u8
-            upper = c.upcase.ord.to_u8
-          else
-            lower = c.ord.to_u8
-            upper = c.ord.to_u8
-          end
+          lower = c.downcase.ord.to_u8
+          upper = c.upcase.ord.to_u8
           if lower == upper
             [(lower..lower)]
           else
@@ -543,6 +654,14 @@ module Regex::Syntax
       end
     end
 
+    private def single_byte_literal(literal : AST::Literal) : UInt8?
+      if bytes = literal.bytes
+        bytes.size == 1 ? bytes[0] : nil
+      else
+        nil
+      end
+    end
+
     private def char_to_utf8_bytes(c : Char) : Bytes
       string = c.to_s
       slice = string.to_slice
@@ -550,28 +669,61 @@ module Regex::Syntax
     end
 
     private def translate_dot(dot : AST::Dot) : Hir::Node
-      kind = if @unicode
-               if @dot_matches_new_line
-                 Hir::Dot::AnyChar
-               else
-                 if @crlf
-                   Hir::Dot::AnyCharExceptCRLF
-                 else
-                   Hir::Dot::AnyCharExceptLF
-                 end
-               end
-             else
-               if @dot_matches_new_line
-                 Hir::Dot::AnyByte
-               else
-                 if @crlf
-                   Hir::Dot::AnyByteExceptCRLF
-                 else
-                   Hir::Dot::AnyByteExceptLF
-                 end
-               end
-             end
-      Hir::DotNode.new(kind)
+      if @utf8 && (!@unicode || @line_terminator > 0x7F)
+        raise ParseError.new("invalid UTF-8", :invalid_utf8, dot.span)
+      end
+
+      if @dot_matches_new_line
+        kind = @unicode ? Hir::Dot::AnyChar : Hir::Dot::AnyByte
+        ensure_valid_utf8_dot!(kind)
+        return Hir::DotNode.new(kind)
+      end
+
+      if @unicode
+        if @crlf
+          kind = Hir::Dot::AnyCharExceptCRLF
+          ensure_valid_utf8_dot!(kind)
+          Hir::DotNode.new(kind)
+        else
+          raise ParseError.new("invalid line terminator", :invalid_line_terminator, dot.span) unless @line_terminator <= 0x7F
+          if @line_terminator == '\n'.ord.to_u8
+            kind = Hir::Dot::AnyCharExceptLF
+            ensure_valid_utf8_dot!(kind)
+            Hir::DotNode.new(kind)
+          else
+            Hir::UnicodeClass.new(false, dot_unicode_intervals(@line_terminator.chr))
+          end
+        end
+      else
+        if @crlf
+          kind = Hir::Dot::AnyByteExceptCRLF
+          ensure_valid_utf8_dot!(kind)
+          Hir::DotNode.new(kind)
+        else
+          if @line_terminator == '\n'.ord.to_u8
+            kind = Hir::Dot::AnyByteExceptLF
+            ensure_valid_utf8_dot!(kind)
+            Hir::DotNode.new(kind)
+          else
+            Hir::CharClass.new(false, dot_byte_intervals(@line_terminator))
+          end
+        end
+      end
+    end
+
+    private def dot_unicode_intervals(line_terminator : Char) : Array(Range(UInt32, UInt32))
+      codepoint = line_terminator.ord.to_u32
+      intervals = [] of Range(UInt32, UInt32)
+      intervals << (0_u32..(codepoint - 1).to_u32) if codepoint > 0
+      intervals << ((codepoint + 1).to_u32..0x10FFFF_u32) if codepoint < 0x10FFFF
+      intervals
+    end
+
+    private def dot_byte_intervals(line_terminator : UInt8) : Array(Range(UInt8, UInt8))
+      intervals = [] of Range(UInt8, UInt8)
+      intervals << (0_u8..(line_terminator - 1).to_u8) if line_terminator > 0
+      intervals << ((line_terminator + 1).to_u8..255_u8) if line_terminator < 255
+      intervals
     end
 
     private def translate_concat(concat : AST::Concat) : Hir::Node
@@ -584,7 +736,7 @@ module Regex::Syntax
       when 1
         filtered.first
       else
-        Hir::Concat.new(filtered)
+        Regex::Syntax::Hir::Hir.concat(filtered).node
       end
     end
 
@@ -593,11 +745,11 @@ module Regex::Syntax
       # Don't filter out empty nodes from alternations - empty branches are valid
       case children.size
       when 0
-        Hir::Empty.new
+        Regex::Syntax::Hir::Hir.fail.node
       when 1
         children.first
       else
-        Hir::Alternation.new(children)
+        Regex::Syntax::Hir::Hir.alternation(children).node
       end
     end
 
@@ -650,21 +802,26 @@ module Regex::Syntax
 
     private def translate_repetition(repetition : AST::Repetition) : Hir::Node
       child = translate(repetition.child)
+      if repetition.op.kind == AST::RepetitionOp::Kind::Range &&
+         repetition.op.min == 0_u32 &&
+         repetition.op.max == 0_u32
+        return Hir::Empty.new
+      end
 
       case repetition.op.kind
       when AST::RepetitionOp::Kind::ZeroOrOne
-        Hir::Repetition.new(child, 0_u32, 1_u32, greedy: repetition.greedy?)
+        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, 1_u32, greedy: repetition.greedy?).node
       when AST::RepetitionOp::Kind::ZeroOrMore
-        Hir::Repetition.new(child, 0_u32, nil, greedy: repetition.greedy?)
+        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, nil, greedy: repetition.greedy?).node
       when AST::RepetitionOp::Kind::OneOrMore
-        Hir::Repetition.new(child, 1_u32, nil, greedy: repetition.greedy?)
+        Regex::Syntax::Hir::Hir.repetition(child, 1_u32, nil, greedy: repetition.greedy?).node
       when AST::RepetitionOp::Kind::Range
-        Hir::Repetition.new(
+        Regex::Syntax::Hir::Hir.repetition(
           child,
           repetition.op.min || 0_u32,
           repetition.op.max,
           greedy: repetition.greedy?
-        )
+        ).node
       else
         child
       end
@@ -679,8 +836,10 @@ module Regex::Syntax
         return translator.translate(group.child)
       end
 
-      # For other groups, translate child normally
-      child = translate(group.child)
+      # Inline flag-setting nodes inside any group should not leak out past
+      # that group's boundary, so every non-flag-group child translation gets
+      # an isolated translator snapshot.
+      child = with_modified_flags(Hash(String, Bool).new).translate(group.child)
 
       case group.kind
       when AST::Group::Kind::Capture
@@ -706,7 +865,7 @@ module Regex::Syntax
         upper = (c.ord - 32).to_u8
         Hir::CharClass.new(false, [lower..lower, upper..upper])
       else
-        Hir::Literal.new(Bytes.new(1) { c.ord.to_u8 })
+        Hir::Literal.new(char_to_utf8_bytes(c))
       end
     end
 
@@ -735,7 +894,7 @@ module Regex::Syntax
       when 1
         nodes.first
       else
-        Hir::Concat.new(nodes)
+        Regex::Syntax::Hir::Hir.concat(nodes).node
       end
     end
 
@@ -1240,6 +1399,7 @@ module Regex::Syntax
 
       Translator.new(
         unicode: unicode,
+        utf8: @utf8,
         ignore_case: ignore_case,
         multi_line: multi_line,
         dot_matches_new_line: dot_matches_new_line,
@@ -1248,6 +1408,30 @@ module Regex::Syntax
         crlf: crlf,
         nest_limit: @nest_limit
       )
+    end
+
+    private def ensure_valid_utf8_bytes!(bytes : Bytes, span : AST::Span) : Nil
+      string = String.new(bytes)
+      raise ParseError.new("invalid UTF-8", :invalid_utf8, span) unless string.valid_encoding?
+    end
+
+    private def validate_utf8_byte_intervals!(intervals : Array(Range(UInt8, UInt8)), span : AST::Span, *, negated : Bool) : Nil
+      return unless @utf8
+
+      effective = negated ? invert_byte_intervals(intervals) : canonicalize_intervals(intervals)
+      effective.each do |range|
+        raise ParseError.new("invalid UTF-8", :invalid_utf8, span) if range.end > 0x7F_u8
+      end
+    end
+
+    private def ensure_valid_utf8_dot!(kind : Hir::Dot) : Nil
+      return unless @utf8
+
+      case kind
+      when Hir::Dot::AnyByte, Hir::Dot::AnyByteExceptLF, Hir::Dot::AnyByteExceptCRLF
+        raise ParseError.new("invalid UTF-8")
+      else
+      end
     end
   end
 end

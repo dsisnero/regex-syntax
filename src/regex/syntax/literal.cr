@@ -51,6 +51,14 @@ module Regex::Syntax::Hir::LiteralExtraction
       self.class.new(bytes.dup, exact: exact?)
     end
 
+    def as_bytes : Array(UInt8)
+      bytes
+    end
+
+    def into_bytes : Array(UInt8)
+      bytes
+    end
+
     def len : Int32
       bytes.size
     end
@@ -140,22 +148,23 @@ module Regex::Syntax::Hir::LiteralExtraction
       return unless pair
       lits1, lits2 = pair
 
-      self_literals = lits1.map(&.clone)
-      new_literals = [] of Literal
+      self_literals = lits1.clone
+      current_literals = [] of Literal
+      @literals = current_literals
       self_literals.each do |self_literal|
         unless self_literal.exact?
-          new_literals << self_literal
+          current_literals << self_literal
           next
         end
 
         lits2.each do |other_literal|
-          combined = self_literal.clone
+          combined = Literal.exact([] of UInt8)
+          combined.extend(self_literal)
           combined.extend(other_literal)
           combined.make_inexact unless other_literal.exact?
-          new_literals << combined
+          current_literals << combined
         end
       end
-      @literals = new_literals
       other.clear_finite_literals
       dedup
     end
@@ -165,22 +174,23 @@ module Regex::Syntax::Hir::LiteralExtraction
       return unless pair
       lits1, lits2 = pair
 
-      self_literals = lits1.map(&.clone)
-      new_literals = [] of Literal
+      self_literals = lits1.clone
+      current_literals = [] of Literal
+      @literals = current_literals
       lits2.each_with_index do |other_literal, i|
         self_literals.each do |self_literal|
           unless self_literal.exact?
-            new_literals << self_literal.clone if i == 0
+            current_literals << self_literal.clone if i == 0
             next
           end
 
-          combined = other_literal.clone
+          combined = Literal.exact([] of UInt8)
+          combined.extend(other_literal)
           combined.extend(self_literal)
           combined.make_inexact unless other_literal.exact?
-          new_literals << combined
+          current_literals << combined
         end
       end
-      @literals = new_literals
       other.clear_finite_literals
       dedup
     end
@@ -195,6 +205,28 @@ module Regex::Syntax::Hir::LiteralExtraction
 
       lits1.concat(lits2.map(&.clone))
       other.clear_finite_literals
+      dedup
+    end
+
+    def union_into_empty(other : Seq) : Nil
+      other_literals = other.literals.try(&.map(&.clone))
+      other.clear_finite_literals if other.literals
+
+      return unless lits1 = @literals
+
+      first_empty = lits1.index(&.empty?)
+      return unless first_empty
+
+      unless other_literals
+        @literals = nil
+        return
+      end
+
+      lits1.reject!(&.empty?)
+      inserts = other_literals.map(&.clone)
+      inserts.each_with_index do |literal, offset|
+        lits1.insert(first_empty + offset, literal)
+      end
       dedup
     end
 
