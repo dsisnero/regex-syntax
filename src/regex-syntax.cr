@@ -961,7 +961,7 @@ module Regex::Syntax
                      when 'r' then '\r'
                      when 't' then '\t'
                      when 'v' then '\v'
-                     when '\\', '-', ']', '^', '['
+                     when '\\', '-', ']', '^', '[', '&'
                        c
                      else
                        raise ParseError.new("invalid escape sequence in character class")

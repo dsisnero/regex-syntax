@@ -449,7 +449,8 @@ module Regex::Syntax
         end
       when AST::ClassSetItem::Kind::Bracketed
         if bracketed = item.item.as?(AST::ClassBracketed)
-          translate_class_bracketed(bracketed).as(Hir::CharClass).intervals
+          node = translate_class_bracketed(bracketed).as(Hir::CharClass)
+          node.negated? ? invert_byte_intervals(node.intervals) : node.intervals
         else
           [] of Range(UInt8, UInt8)
         end
@@ -509,10 +510,12 @@ module Regex::Syntax
         if bracketed = item.item.as?(AST::ClassBracketed)
           node = translate_class_bracketed(bracketed)
           if node.is_a?(Hir::UnicodeClass)
-            node.intervals
+            node.negated? ? invert_unicode_intervals(node.intervals) : node.intervals
           else
             # Convert byte ranges to Unicode ranges
-            node.as(Hir::CharClass).intervals.map { |rng| rng.begin.to_u32..rng.end.to_u32 }
+            byte_node = node.as(Hir::CharClass)
+            intervals = byte_node.intervals.map { |rng| rng.begin.to_u32..rng.end.to_u32 }
+            byte_node.negated? ? invert_unicode_intervals(intervals) : intervals
           end
         else
           [] of Range(UInt32, UInt32)

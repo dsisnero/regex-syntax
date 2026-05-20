@@ -41,14 +41,14 @@ Rules for this file:
 
 ### Translator and HIR Semantic Closure
 
-- [] Finish the remaining vendored `src/hir/translate.rs` and `src/hir/mod.rs` parity as one combined semantics pass.
-  This bucket includes the remaining translator matrix, remaining HIR analysis/property rows, the last look/anchor/literal/property edge cases, and any remaining behavior where the inventories still say `partial` because the long-tail upstream matrix is not fully locked down yet.
+- [x] Finish the remaining vendored `src/hir/translate.rs` and `src/hir/mod.rs` parity as one combined semantics pass.
+  The remaining translator and HIR semantic matrices are now locked down with direct vendored-style coverage in [spec/regex-syntax_spec.cr](/Volumes/extreme_ssd/repos/github.com/dsisnero/regex-syntax/spec/regex-syntax_spec.cr) and [spec/hir_semantic_parity_spec.cr](/Volumes/extreme_ssd/repos/github.com/dsisnero/regex-syntax/spec/hir_semantic_parity_spec.cr). This closure pass also fixed the remaining real semantic bugs that surfaced under that matrix: `\\&` inside class-set operations, nested bracketed-class negation/intersection lowering, and Unicode-class negation across the surrogate boundary.
 
 - [x] The heavy semantic substrate is already in place.
   Unicode/property translation, byte-vs-Unicode behavior, UTF-8 gating, class flattening, group-local flag scoping, swap-greed behavior, smart concat/alternation/repetition, interval algebra, literal extraction/optimization, and the public HIR property surface all already exist. The vendored literal case-fold and scoped-flag matrices are now substantially covered too, including byte-mode toggles, hex/raw byte literals, punctuation preservation, and structured InvalidUtf8 translator spans.
 
 - [x] Core HIR helper/API reconciliation is already done.
-  The public HIR wrapper, `LookSet`, class helpers, constructor helpers, properties wrapper, and the broad AST/HIR API surface have already been brought close to Rust and documented in the inventories.
+  The public HIR wrapper, `LookSet`, class helpers, constructor helpers, properties wrapper, and the broad AST/HIR API surface have already been brought close to Rust and documented in the inventories. The remaining `partial` source rows in this area are now documented Crystal model-shape differences rather than open semantic drift.
 
 ### Error and Diagnostics Closure
 

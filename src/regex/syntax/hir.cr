@@ -66,11 +66,11 @@ module Regex::Syntax::Hir
       next_start = 0_u32
       canonical.each do |range|
         if next_start < range.begin
-          result << (next_start..(range.begin - 1).to_u32)
+          append_scalar_gap(result, next_start, (range.begin - 1).to_u32)
         end
         next_start = range.end == 0x10FFFF_u32 ? 0x10FFFF_u32 : (range.end + 1).to_u32
       end
-      result << (next_start..0x10FFFF_u32) if canonical.last.end < 0x10FFFF_u32
+      append_scalar_gap(result, next_start, 0x10FFFF_u32) if canonical.last.end < 0x10FFFF_u32
       result
     end
 
@@ -214,6 +214,18 @@ module Regex::Syntax::Hir
 
     private def canonical_range(range : Range(UInt32, UInt32)) : Range(UInt32, UInt32)
       range.begin <= range.end ? range : (range.end..range.begin)
+    end
+
+    private def append_scalar_gap(result : Array(Range(UInt32, UInt32)), start_codepoint : UInt32, end_codepoint : UInt32) : Nil
+      return if start_codepoint > end_codepoint
+
+      if end_codepoint < 0xD800_u32 || start_codepoint > 0xDFFF_u32
+        result << (start_codepoint..end_codepoint)
+        return
+      end
+
+      result << (start_codepoint..0xD7FF_u32) if start_codepoint < 0xD800_u32
+      result << (0xE000_u32..end_codepoint) if end_codepoint > 0xDFFF_u32
     end
 
     def case_fold_ascii(intervals : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))

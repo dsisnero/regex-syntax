@@ -582,7 +582,11 @@ describe Regex::Syntax do
     it "negates and combines unicode classes like Rust" do
       negated = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x61_u32])
       negated.negate
-      negated.intervals.should eq([0x00_u32..0x60_u32, 0x62_u32..0x10FFFF_u32])
+      negated.intervals.should eq([
+        0x00_u32..0x60_u32,
+        0x62_u32..0xD7FF_u32,
+        0xE000_u32..0x10FFFF_u32,
+      ])
 
       union = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x67_u32, 0x6D_u32..0x74_u32, 0x41_u32..0x43_u32])
       union.union(Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x7A_u32]))
