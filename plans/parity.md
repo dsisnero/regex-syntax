@@ -30,8 +30,8 @@ Rules for this file:
 
 ### Parser and AST Closure
 
-- [] Finish the remaining vendored `src/ast/parse.rs` parity as one closure pass.
-  This bucket includes the rest of the AST parser matrix, remaining parser regressions, the last structured parser error kind/span gaps, and any remaining AST-facing edge behavior that is still only partially evidenced in `rust_test_parity.tsv`.
+- [x] Finish the remaining vendored `src/ast/parse.rs` parity as one closure pass.
+  The remaining real parser behavior gaps in repetitions, capture-name errors, verbose counted repetitions, and flag/repetition interaction are now closed. The parser rows still marked `partial` in the inventories are there because of intentional AST-shape coalescing, simplified Position/Span modeling, or internal-helper surfaces that Crystal does not expose separately, not because of open parser semantics.
 
 - [x] The parser foundation underneath that closure pass is already in place.
   The public parser/builders, direct AST parser/builders, `parse_with_comments`, scoped/global flag parsing, capture handling, octal support, special boundaries, and structured parser errors are all already present and exercised.

@@ -274,9 +274,24 @@ describe Regex::Syntax::AstParser do
     it "rejects invalid named capture syntax" do
       parser = Regex::Syntax::AstParser.new
 
-      expect_parse_error(/invalid capture name/) do
-        parser.parse("(?P<1word>a)")
-      end
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameInvalid,
+        Regex::Syntax::AST::Span.new(4, 5)
+      ) { parser.parse("(?P<1word>a)") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameInvalid,
+        Regex::Syntax::AST::Span.new(4, 5)
+      ) { parser.parse("(?P<~a>a)") }
+    end
+
+    it "rejects empty named captures like Rust" do
+      parser = Regex::Syntax::AstParser.new
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameEmpty,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse("(?P<>z)") }
     end
 
     it "raises structured capture-name EOF errors like Rust" do
@@ -669,17 +684,78 @@ describe Regex::Syntax::AstParser do
       star.op.kind.should eq(Regex::Syntax::AST::RepetitionOp::Kind::ZeroOrMore)
       star.greedy?.should be_true
 
+      plus = parser.parse("a+").root.as(Regex::Syntax::AST::Repetition)
+      plus.op.kind.should eq(Regex::Syntax::AST::RepetitionOp::Kind::OneOrMore)
+      plus.greedy?.should be_true
+
+      optional = parser.parse("a?").root.as(Regex::Syntax::AST::Repetition)
+      optional.op.kind.should eq(Regex::Syntax::AST::RepetitionOp::Kind::ZeroOrOne)
+      optional.greedy?.should be_true
+
       reluctant = parser.parse("a??").root.as(Regex::Syntax::AST::Repetition)
       reluctant.op.kind.should eq(Regex::Syntax::AST::RepetitionOp::Kind::ZeroOrOne)
       reluctant.greedy?.should be_false
 
-      concat = parser.parse("|a?").root.as(Regex::Syntax::AST::Alternation)
-      concat.children[0].should be_a(Regex::Syntax::AST::Empty)
-      concat.children[1].should be_a(Regex::Syntax::AST::Repetition)
+      concat = parser.parse("a?b").root.as(Regex::Syntax::AST::Concat)
+      concat.children.size.should eq(2)
+      concat.children[0].should be_a(Regex::Syntax::AST::Repetition)
+      concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("b".to_slice)
+
+      reluctant_concat = parser.parse("a??b").root.as(Regex::Syntax::AST::Concat)
+      reluctant_concat.children.size.should eq(2)
+      reluctant_concat.children[0].as(Regex::Syntax::AST::Repetition).greedy?.should be_false
+      reluctant_concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("b".to_slice)
+
+      trailing = parser.parse("ab?").root.as(Regex::Syntax::AST::Concat)
+      trailing.children.size.should eq(2)
+      trailing.children[0].as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
+      trailing.children[1].should be_a(Regex::Syntax::AST::Repetition)
+
+      grouped = parser.parse("(ab)?").root.as(Regex::Syntax::AST::Repetition)
+      grouped.child.should be_a(Regex::Syntax::AST::Group)
+
+      alt = parser.parse("|a?").root.as(Regex::Syntax::AST::Alternation)
+      alt.children[0].should be_a(Regex::Syntax::AST::Empty)
+      alt.children[1].should be_a(Regex::Syntax::AST::Repetition)
 
       expect_parse_error(/repetition operator not preceded by expression/) do
         parser.parse("*")
       end
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse("(?i)*") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(1, 1)
+      ) { parser.parse("(*)") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(3, 3)
+      ) { parser.parse("(?:?)") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(0, 0)
+      ) { parser.parse("+") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(0, 0)
+      ) { parser.parse("?") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(1, 1)
+      ) { parser.parse("(?)") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(1, 1)
+      ) { parser.parse("|+") }
     end
 
     it "parses counted repetitions like Rust" do
@@ -701,6 +777,42 @@ describe Regex::Syntax::AstParser do
 
       reluctant = parser.parse("a{5}?").root.as(Regex::Syntax::AST::Repetition)
       reluctant.greedy?.should be_false
+
+      concat = parser.parse("ab{5}").root.as(Regex::Syntax::AST::Concat)
+      concat.children.size.should eq(2)
+      concat.children[0].as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
+      concat.children[1].should be_a(Regex::Syntax::AST::Repetition)
+
+      concat_tail = parser.parse("ab{5}c").root.as(Regex::Syntax::AST::Concat)
+      concat_tail.children.size.should eq(3)
+      concat_tail.children[2].as(Regex::Syntax::AST::Literal).bytes.should eq("c".to_slice)
+
+      spaced = parser.parse("a{ 5 }").root.as(Regex::Syntax::AST::Repetition)
+      spaced.op.min.should eq(5)
+      spaced.op.max.should eq(5)
+
+      spaced_bounded = parser.parse("a{ 5 , 9 }").root.as(Regex::Syntax::AST::Repetition)
+      spaced_bounded.op.min.should eq(5)
+      spaced_bounded.op.max.should eq(9)
+
+      empty_min = Regex::Syntax::AstParser.new(empty_min_range: true)
+      empty_min_ast = empty_min.parse("a{,9}").root.as(Regex::Syntax::AST::Repetition)
+      empty_min_ast.op.min.should eq(0)
+      empty_min_ast.op.max.should eq(9)
+
+      spaced_reluctant = Regex::Syntax::AstParser.new(ignore_whitespace: true)
+      spaced_reluctant_ast = spaced_reluctant.parse("a{5,9} ?").root.as(Regex::Syntax::AST::Repetition)
+      spaced_reluctant_ast.op.min.should eq(5)
+      spaced_reluctant_ast.op.max.should eq(9)
+      spaced_reluctant_ast.greedy?.should be_false
+
+      word_boundary_repeat = parser.parse(%q(\b{5,9})).root.as(Regex::Syntax::AST::Repetition)
+      word_boundary_repeat.child.should be_a(Regex::Syntax::AST::Assertion)
+      word_boundary_repeat.child.as(Regex::Syntax::AST::Assertion).kind.should eq(
+        Regex::Syntax::AST::Assertion::Kind::WordBoundary
+      )
+      word_boundary_repeat.op.min.should eq(5)
+      word_boundary_repeat.op.max.should eq(9)
 
       expect_parse_error(/invalid repetition range/) do
         parser.parse("a{2,1}")
@@ -799,9 +911,49 @@ describe Regex::Syntax::AstParser do
       ) { parser.parse("a{9,") }
 
       expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountDecimalEmpty,
+        Regex::Syntax::AST::Span.new(2, 2)
+      ) { parser.parse("a{]}") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountDecimalEmpty,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse("a{1,]}") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountDecimalEmpty,
+        Regex::Syntax::AST::Span.new(2, 2)
+      ) { parser.parse("a{a") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionCountDecimalEmpty,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse("a{9,a") }
+
+      expect_ast_error(
         Regex::Syntax::AST::ErrorKind::RepetitionCountInvalid,
         Regex::Syntax::AST::Span.new(1, 6)
       ) { parser.parse("a{2,1}") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse("(?i){0}") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(4, 4)
+      ) { parser.parse("(?m){1,1}") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(0, 0)
+      ) { parser.parse("{5}") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::RepetitionMissing,
+        Regex::Syntax::AST::Span.new(1, 1)
+      ) { parser.parse("|{5}") }
     end
 
     it "raises structured duplicate capture errors with auxiliary spans" do

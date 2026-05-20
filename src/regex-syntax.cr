@@ -306,6 +306,9 @@ module Regex::Syntax
     private def parse_atom : AST::Node
       node = parse_primary
       while repetition_operator_start?
+        if node.is_a?(AST::SetFlags)
+          raise ParseError.new("repetition operator not preceded by expression", nil, AST::Span.new(@pos, @pos))
+        end
         node = parse_repetition(node)
       end
       node
@@ -341,7 +344,7 @@ module Regex::Syntax
       when ')'
         raise ParseError.new("unmatched ')'")
       when '*', '+', '?', '{'
-        raise ParseError.new("repetition operator not preceded by expression")
+        raise ParseError.new("repetition operator not preceded by expression", nil, AST::Span.new(@pos, @pos))
       when '|'
         AST::Empty.new(AST::Span.new(@pos, @pos))
       else
@@ -1115,7 +1118,7 @@ module Regex::Syntax
       raise ParseError.new("unclosed capture group name", nil, AST::Span.new(@pos, @pos)) if eof?
 
       name = @input[name_start...@pos]
-      raise ParseError.new("empty capture name") if name.empty?
+      raise ParseError.new("empty capture name", nil, AST::Span.new(@pos, @pos)) if name.empty?
       name_span = AST::Span.new(name_start, @pos)
       if original = @capture_names[name]?
         raise ParseError.new("duplicate capture name", :group_name_duplicate, name_span, original)
@@ -1159,6 +1162,9 @@ module Regex::Syntax
     private def parse_unknown_flag_group(start : Int32) : AST::Node
       flags_start = @pos
       flags_items = parse_flags_items
+      if flags_items.empty?
+        raise ParseError.new("repetition operator not preceded by expression", nil, AST::Span.new(start + 1, start + 1))
+      end
 
       if current_char == ':'
         old_ignore_whitespace = @ignore_whitespace
@@ -1265,6 +1271,7 @@ module Regex::Syntax
       # Parse {n}, {n,}, {n,m}
       repetition_start = @pos
       advance # skip '{'
+      bump_repetition_space
 
       if eof?
         raise ParseError.new("unclosed repetition count", nil, AST::Span.new(repetition_start, @pos))
@@ -1279,6 +1286,7 @@ module Regex::Syntax
             else
               parse_repetition_decimal
             end
+      bump_repetition_space
 
       if eof?
         raise ParseError.new("unclosed repetition count", nil, AST::Span.new(repetition_start, @pos))
@@ -1292,6 +1300,7 @@ module Regex::Syntax
         AST::Repetition.new(AST::Span.new(start, @pos), op, greedy, expr)
       elsif current_char == ','
         advance # skip ','
+        bump_repetition_space
 
         if eof?
           raise ParseError.new("unclosed repetition count", nil, AST::Span.new(repetition_start, @pos))
@@ -1305,6 +1314,7 @@ module Regex::Syntax
           AST::Repetition.new(AST::Span.new(start, @pos), op, greedy, expr)
         else
           max = parse_repetition_decimal
+          bump_repetition_space
 
           if eof? || current_char != '}'
             raise ParseError.new("unclosed repetition count", nil, AST::Span.new(repetition_start, @pos))
@@ -1322,12 +1332,19 @@ module Regex::Syntax
     end
 
     private def parse_repetition_greediness : Bool
+      bump_space if @ignore_whitespace
       greedy = !@swap_greed
       if current_char == '?'
         advance
         greedy = !greedy
       end
       greedy
+    end
+
+    private def bump_repetition_space : Nil
+      while !eof? && current_char.ascii_whitespace?
+        advance
+      end
     end
 
     private def parse_decimal : UInt32
