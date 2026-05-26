@@ -528,6 +528,246 @@ module Regex::Syntax::Hir
     end
   end
 
+  class Class
+    enum Kind
+      Unicode
+      Bytes
+    end
+
+    getter kind : Kind
+    getter unicode : UnicodeClass?
+    getter bytes : CharClass?
+
+    def initialize(@unicode : UnicodeClass)
+      @kind = Kind::Unicode
+      @bytes = nil
+    end
+
+    def initialize(@bytes : CharClass)
+      @kind = Kind::Bytes
+      @unicode = nil
+    end
+
+    def self.unicode(value : UnicodeClass) : self
+      new(value)
+    end
+
+    def self.bytes(value : CharClass) : self
+      new(value)
+    end
+
+    def case_fold_simple : self
+      case @kind
+      when Kind::Unicode
+        if unicode = @unicode
+          unicode.case_fold_simple
+        else
+          raise "unreachable"
+        end
+      when Kind::Bytes
+        if bytes = @bytes
+          bytes.case_fold_simple
+        else
+          raise "unreachable"
+        end
+      else
+        raise "unreachable"
+      end
+      self
+    end
+
+    def try_case_fold_simple : self
+      case_fold_simple
+    end
+
+    def negate : self
+      case @kind
+      when Kind::Unicode
+        if unicode = @unicode
+          unicode.negate
+        else
+          raise "unreachable"
+        end
+      when Kind::Bytes
+        if bytes = @bytes
+          bytes.negate
+        else
+          raise "unreachable"
+        end
+      else
+        raise "unreachable"
+      end
+      self
+    end
+
+    def utf8? : Bool
+      case @kind
+      when Kind::Unicode
+        true
+      when Kind::Bytes
+        if bytes = @bytes
+          bytes.ascii?
+        else
+          raise "unreachable"
+        end
+      else
+        raise "unreachable"
+      end
+    end
+
+    def minimum_len : Int32?
+      case @kind
+      when Kind::Unicode
+        if unicode = @unicode
+          unicode.minimum_len
+        else
+          raise "unreachable"
+        end
+      when Kind::Bytes
+        if bytes = @bytes
+          bytes.minimum_len
+        else
+          raise "unreachable"
+        end
+      else
+        raise "unreachable"
+      end
+    end
+
+    def maximum_len : Int32?
+      case @kind
+      when Kind::Unicode
+        if unicode = @unicode
+          unicode.maximum_len
+        else
+          raise "unreachable"
+        end
+      when Kind::Bytes
+        if bytes = @bytes
+          bytes.maximum_len
+        else
+          raise "unreachable"
+        end
+      else
+        raise "unreachable"
+      end
+    end
+
+    def empty? : Bool
+      case @kind
+      when Kind::Unicode
+        if unicode = @unicode
+          unicode.ranges.empty?
+        else
+          raise "unreachable"
+        end
+      when Kind::Bytes
+        if bytes = @bytes
+          bytes.ranges.empty?
+        else
+          raise "unreachable"
+        end
+      else
+        raise "unreachable"
+      end
+    end
+
+    def literal : Bytes?
+      case @kind
+      when Kind::Unicode
+        if unicode = @unicode
+          unicode.literal
+        else
+          raise "unreachable"
+        end
+      when Kind::Bytes
+        if bytes = @bytes
+          bytes.literal
+        else
+          raise "unreachable"
+        end
+      else
+        raise "unreachable"
+      end
+    end
+  end
+
+  struct ClassBytesRange
+    getter start : UInt8
+    getter end : UInt8
+
+    def initialize(start : UInt8, finish : UInt8)
+      if start <= finish
+        @start = start
+        @end = finish
+      else
+        @start = finish
+        @end = start
+      end
+    end
+
+    def len : Int32
+      (@end - @start + 1).to_i32
+    end
+
+    def to_range : Range(UInt8, UInt8)
+      @start..@end
+    end
+  end
+
+  class ClassBytesIter
+    include Iterator(ClassBytesRange)
+
+    def initialize(@ranges : Array(Range(UInt8, UInt8)), @index : Int32 = 0)
+    end
+
+    def next
+      return stop if @index >= @ranges.size
+
+      range = @ranges[@index]
+      @index += 1
+      ClassBytesRange.new(range.begin, range.end)
+    end
+  end
+
+  struct ClassUnicodeRange
+    getter start : UInt32
+    getter end : UInt32
+
+    def initialize(start : UInt32, finish : UInt32)
+      if start <= finish
+        @start = start
+        @end = finish
+      else
+        @start = finish
+        @end = start
+      end
+    end
+
+    def len : Int32
+      (@end - @start + 1).to_i32
+    end
+
+    def to_range : Range(UInt32, UInt32)
+      @start..@end
+    end
+  end
+
+  class ClassUnicodeIter
+    include Iterator(ClassUnicodeRange)
+
+    def initialize(@ranges : Array(Range(UInt32, UInt32)), @index : Int32 = 0)
+    end
+
+    def next
+      return stop if @index >= @ranges.size
+
+      range = @ranges[@index]
+      @index += 1
+      ClassUnicodeRange.new(range.begin, range.end)
+    end
+  end
+
   # Character class
   class CharClass < Node
     getter? negated : Bool
@@ -567,6 +807,10 @@ module Regex::Syntax::Hir
 
     def ranges : Array(Range(UInt8, UInt8))
       @intervals
+    end
+
+    def iter : ClassBytesIter
+      ClassBytesIter.new(@intervals)
     end
 
     def ascii? : Bool
@@ -693,6 +937,10 @@ module Regex::Syntax::Hir
 
     def ranges : Array(Range(UInt32, UInt32))
       @intervals
+    end
+
+    def iter : ClassUnicodeIter
+      ClassUnicodeIter.new(@intervals)
     end
 
     def ascii? : Bool
@@ -1004,6 +1252,11 @@ module Regex::Syntax::Hir
       self
     end
 
+    # ameba:disable Naming/AccessorMethodName
+    def set_insert(kind : Look::Kind) : self
+      insert!(kind)
+    end
+
     def remove(kind : Look::Kind) : LookSet
       LookSet.new(@bits & ~self.class.bit_for(kind))
     end
@@ -1011,6 +1264,11 @@ module Regex::Syntax::Hir
     def remove!(kind : Look::Kind) : self
       @bits &= ~self.class.bit_for(kind)
       self
+    end
+
+    # ameba:disable Naming/AccessorMethodName
+    def set_remove(kind : Look::Kind) : self
+      remove!(kind)
     end
 
     def subtract(other : LookSet) : LookSet
@@ -1022,6 +1280,11 @@ module Regex::Syntax::Hir
       self
     end
 
+    # ameba:disable Naming/AccessorMethodName
+    def set_subtract(other : LookSet) : self
+      subtract!(other)
+    end
+
     def union(other : LookSet) : LookSet
       LookSet.new(@bits | other.bits)
     end
@@ -1029,6 +1292,11 @@ module Regex::Syntax::Hir
     def union!(other : LookSet) : self
       @bits |= other.bits
       self
+    end
+
+    # ameba:disable Naming/AccessorMethodName
+    def set_union(other : LookSet) : self
+      union!(other)
     end
 
     def intersect(other : LookSet) : LookSet
@@ -1039,6 +1307,13 @@ module Regex::Syntax::Hir
       @bits &= other.bits
       self
     end
+
+    # ameba:disable Naming/AccessorMethodName
+    def set_intersect(other : LookSet) : self
+      intersect!(other)
+    end
+
+    # ameba:enable Naming/AccessorMethodName
 
     def self.read_repr(slice : Bytes) : LookSet
       raise IndexError.new if slice.size < 4
@@ -1056,6 +1331,10 @@ module Regex::Syntax::Hir
       self.class.ordered_kinds.each do |kind|
         yield kind if contains(kind)
       end
+    end
+
+    def iter : LookSetIter
+      LookSetIter.new(self)
     end
 
     def inspect(io : IO) : Nil
@@ -1181,6 +1460,22 @@ module Regex::Syntax::Hir
       else
         raise "unreachable look kind: #{kind}"
       end
+    end
+  end
+
+  class LookSetIter
+    include Iterator(Look::Kind)
+
+    def initialize(look_set : LookSet, @index : Int32 = 0)
+      @kinds = look_set.to_a
+    end
+
+    def next
+      return stop if @index >= @kinds.size
+
+      kind = @kinds[@index]
+      @index += 1
+      kind
     end
   end
 
@@ -1528,6 +1823,18 @@ module Regex::Syntax::Hir
 
     def self.capture(capture : Capture) : Hir
       Hir.new(capture)
+    end
+
+    def self.literal(literal : Literal) : Hir
+      literal(literal.bytes)
+    end
+
+    def self.concat(children : Array(Hir)) : Hir
+      concat(children.map(&.node))
+    end
+
+    def self.alternation(children : Array(Hir)) : Hir
+      alternation(children.map(&.node))
     end
 
     def self.concat(children : Array(Node)) : Hir

@@ -1959,6 +1959,32 @@ describe Regex::Syntax do
       unicode_word.contains_word_unicode.should be_true
       unicode_word.contains_word_ascii.should be_false
     end
+
+    it "exposes mutating set_* aliases and iter like Rust" do
+      set = Regex::Syntax::Hir::LookSet.empty
+      set.set_insert(Regex::Syntax::Hir::Look::Kind::StartText)
+      set.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_true
+
+      other = Regex::Syntax::Hir::LookSet.empty
+      other.set_insert(Regex::Syntax::Hir::Look::Kind::WordUnicode)
+      set.set_union(other)
+      set.contains_word_unicode.should be_true
+
+      iterated = set.iter.to_a
+      iterated.should contain(Regex::Syntax::Hir::Look::Kind::StartText)
+      iterated.should contain(Regex::Syntax::Hir::Look::Kind::WordUnicode)
+
+      set.set_intersect(Regex::Syntax::Hir::LookSet.singleton(Regex::Syntax::Hir::Look::Kind::StartText))
+      set.to_a.should eq([Regex::Syntax::Hir::Look::Kind::StartText])
+
+      set.set_remove(Regex::Syntax::Hir::Look::Kind::StartText)
+      set.empty?.should be_true
+
+      set.set_insert(Regex::Syntax::Hir::Look::Kind::StartLF)
+      set.set_insert(Regex::Syntax::Hir::Look::Kind::WordAscii)
+      set.set_subtract(Regex::Syntax::Hir::LookSet.singleton(Regex::Syntax::Hir::Look::Kind::StartLF))
+      set.to_a.should eq([Regex::Syntax::Hir::Look::Kind::WordAscii])
+    end
   end
 
   describe "look helper parity" do
@@ -2043,6 +2069,54 @@ describe Regex::Syntax do
       foldable = Regex::Syntax::Hir::UnicodeClass.empty.push('K'.ord.to_u32..'K'.ord.to_u32)
       foldable.try_case_fold_simple.ranges.should contain('k'.ord.to_u32..'k'.ord.to_u32)
     end
+
+    it "exposes class range wrappers and iterators like Rust" do
+      byte_range = Regex::Syntax::Hir::ClassBytesRange.new(0x63_u8, 0x61_u8)
+      byte_range.start.should eq(0x61_u8)
+      byte_range.end.should eq(0x63_u8)
+      byte_range.len.should eq(3)
+      byte_range.to_range.should eq(0x61_u8..0x63_u8)
+
+      unicode_range = Regex::Syntax::Hir::ClassUnicodeRange.new('z'.ord.to_u32, 'x'.ord.to_u32)
+      unicode_range.start.should eq('x'.ord.to_u32)
+      unicode_range.end.should eq('z'.ord.to_u32)
+      unicode_range.len.should eq(3)
+      unicode_range.to_range.should eq('x'.ord.to_u32..'z'.ord.to_u32)
+
+      bytes = Regex::Syntax::Hir::CharClass.empty.push(0x61_u8..0x63_u8).iter.to_a
+      bytes.size.should eq(1)
+      bytes.first.start.should eq(0x61_u8)
+      bytes.first.end.should eq(0x63_u8)
+
+      unicode = Regex::Syntax::Hir::UnicodeClass.empty.push('a'.ord.to_u32..'c'.ord.to_u32).iter.to_a
+      unicode.size.should eq(1)
+      unicode.first.start.should eq('a'.ord.to_u32)
+      unicode.first.end.should eq('c'.ord.to_u32)
+    end
+
+    it "exposes a class dispatcher wrapper like Rust" do
+      byte_class = Regex::Syntax::Hir::Class.bytes(
+        Regex::Syntax::Hir::CharClass.empty.push(0x41_u8..0x41_u8)
+      )
+      byte_class.kind.should eq(Regex::Syntax::Hir::Class::Kind::Bytes)
+      byte_class.utf8?.should be_true
+      byte_class.minimum_len.should eq(1)
+      byte_class.maximum_len.should eq(1)
+      byte_class.literal.should eq(Bytes[0x41_u8])
+      byte_class.case_fold_simple
+      byte_class.bytes.should_not be_nil
+      byte_class.bytes.as(Regex::Syntax::Hir::CharClass).ranges.should eq([0x41_u8..0x41_u8, 0x61_u8..0x61_u8])
+
+      unicode_class = Regex::Syntax::Hir::Class.unicode(
+        Regex::Syntax::Hir::UnicodeClass.empty.push('K'.ord.to_u32..'K'.ord.to_u32)
+      )
+      unicode_class.kind.should eq(Regex::Syntax::Hir::Class::Kind::Unicode)
+      unicode_class.try_case_fold_simple
+      unicode_class.unicode.should_not be_nil
+      unicode_class.unicode.as(Regex::Syntax::Hir::UnicodeClass).ranges.should contain('k'.ord.to_u32..'k'.ord.to_u32)
+      unicode_class.negate
+      unicode_class.empty?.should be_false
+    end
   end
 
   describe "hir constructor parity" do
@@ -2064,6 +2138,20 @@ describe Regex::Syntax do
     it "normalizes empty literals and empty alternations like Rust" do
       Regex::Syntax::Hir::Hir.literal(Bytes.empty).node.should be_a(Regex::Syntax::Hir::Empty)
       Regex::Syntax::Hir::Hir.alternation([] of Regex::Syntax::Hir::Node).node.should be_a(Regex::Syntax::Hir::CharClass)
+    end
+
+    it "accepts HIR wrapper overloads for literal, concat, and alternation" do
+      literal = Regex::Syntax::Hir::Literal.new("ab".to_slice)
+      Regex::Syntax::Hir::Hir.literal(literal).node.should be_a(Regex::Syntax::Hir::Literal)
+
+      left = Regex::Syntax::Hir::Hir.literal("a".to_slice)
+      right = Regex::Syntax::Hir::Hir.literal("b".to_slice)
+      concat = Regex::Syntax::Hir::Hir.concat([left, right])
+      concat.node.should be_a(Regex::Syntax::Hir::Literal)
+      String.new(concat.node.as(Regex::Syntax::Hir::Literal).bytes).should eq("ab")
+
+      alternation = Regex::Syntax::Hir::Hir.alternation([left, right])
+      alternation.node.should be_a(Regex::Syntax::Hir::Alternation)
     end
 
     it "builds look HIR values directly like Rust" do

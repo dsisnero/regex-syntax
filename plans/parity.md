@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `576 done`, `1 not_applicable`, `301 partial`
+- `rust_source_parity.tsv`: `616 done`, `1 not_applicable`, `261 partial`
 
 Interpretation:
 
@@ -64,6 +64,16 @@ Interpretation:
   capture metadata, non-capturing groups with explicit empty `Flags`, and
   Rust-style empty/singleton collapsing for `Alternation#into_ast` and
   `Concat#into_ast`.
+
+- [x] HIR class and look-set compatibility layer
+  The Crystal HIR now exposes a larger Rust-shaped compatibility surface for
+  class dispatch and look-set APIs instead of leaving those rows as pure
+  documentation drift: dedicated `Hir::Class`, `ClassBytesRange`,
+  `ClassUnicodeRange`, `ClassBytesIter`, `ClassUnicodeIter`, and
+  `LookSetIter` wrappers, exact `LookSet#set_insert` / `set_remove` /
+  `set_union` / `set_intersect` / `set_subtract` aliases, explicit `iter`
+  wrappers, direct start/end/len range helpers, and HIR constructor overloads
+  for `literal`, `concat`, and `alternation` on HIR wrapper values.
 
 ### Semantics Closure
 
