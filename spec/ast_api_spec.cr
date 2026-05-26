@@ -47,6 +47,12 @@ describe Regex::Syntax::AST do
   it "exposes repetition and flags helpers" do
     op = Regex::Syntax::AST::RepetitionOp.new(Regex::Syntax::AST::RepetitionOp::Kind::Range, 1_u32, 2_u32)
     op.valid?.should be_true
+    if range = op.range
+      range.kind.bounded?.should be_true
+      range.valid?.should be_true
+    else
+      fail "expected range"
+    end
 
     flag_item = Regex::Syntax::AST::FlagsItem.new(
       Regex::Syntax::AST::Span.new(0, 1),
@@ -55,7 +61,18 @@ describe Regex::Syntax::AST do
     flag_item.negation?.should be_true
 
     flags = Regex::Syntax::AST::Flags.new(Regex::Syntax::AST::Span.new(0, 0))
-    flags.add_item(flag_item).items.size.should eq(1)
+    flags.add_item(flag_item).should be_nil
+    flags.items.size.should eq(1)
+
+    positive_i = Regex::Syntax::AST::FlagsItem.new(
+      Regex::Syntax::AST::Span.new(1, 2),
+      Regex::Syntax::AST::FlagsItem::Kind::Flag,
+      'i'
+    )
+    positive_i.flag_enum.should eq(Regex::Syntax::AST::Flag::CaseInsensitive)
+    flags.add_item(positive_i).should be_nil
+    flags.flag_state(Regex::Syntax::AST::Flag::CaseInsensitive).should be_false
+    flags.add_item(positive_i).should eq(1)
   end
 
   it "exposes group and ast wrapper helpers" do
@@ -68,13 +85,85 @@ describe Regex::Syntax::AST do
       capture_index: 1
     )
     group.capturing?.should be_true
+    group.capture_name.should be_nil
 
     concat = Regex::Syntax::AST::Concat.new(Regex::Syntax::AST::Span.new(0, 0), children)
-    concat.into_ast.kind.should be_a(Regex::Syntax::AST::Concat)
+    concat.into_ast.kind.should be_a(Regex::Syntax::AST::Empty)
 
     alt = Regex::Syntax::AST::Alternation.new(Regex::Syntax::AST::Span.new(0, 0), children)
-    alt.into_ast.kind.should be_a(Regex::Syntax::AST::Alternation)
+    alt.into_ast.kind.should be_a(Regex::Syntax::AST::Empty)
 
-    Regex::Syntax::AST::Ast.empty.kind.should be_a(Regex::Syntax::AST::Empty)
+    ast = Regex::Syntax::AST::Ast.empty
+    ast.kind.should be_a(Regex::Syntax::AST::Empty)
+    ast.empty?.should be_true
+    Regex::Syntax::AST::Ast.dot(Regex::Syntax::AST::Span.new(1, 2)).kind.should be_a(Regex::Syntax::AST::Dot)
+  end
+
+  it "exposes unicode, literal, and capture compatibility helpers" do
+    escaped = Regex::Syntax::AST::Literal.new(
+      Regex::Syntax::AST::Span.new(0, 2),
+      Regex::Syntax::AST::Literal::Kind::Escaped,
+      c: '\n'
+    )
+    escaped.special_kind.should eq(Regex::Syntax::AST::Literal::SpecialLiteralKind::LineFeed)
+
+    hex = Regex::Syntax::AST::Literal.new(
+      Regex::Syntax::AST::Span.new(0, 4),
+      Regex::Syntax::AST::Literal::Kind::Unicode,
+      c: 'A',
+      form: Regex::Syntax::AST::Literal::Form::Fixed,
+      fixed_digits: 4,
+      escape_prefix: 'u'
+    )
+    hex.hex_kind.should eq(Regex::Syntax::AST::Literal::HexLiteralKind::UnicodeShort)
+    if hex_kind = hex.hex_kind
+      hex_kind.digits.should eq(4_u32)
+    else
+      fail "expected hex_kind"
+    end
+
+    unicode = Regex::Syntax::AST::ClassUnicode.new(
+      Regex::Syntax::AST::Span.new(0, 14),
+      true,
+      "scx!=Katakana"
+    )
+    unicode.kind.kind.named_value?.should be_true
+    unicode.kind.op.should eq(Regex::Syntax::AST::ClassUnicode::ClassUnicodeOpKind::NotEqual)
+    unicode.kind.property_name.should eq("scx")
+    unicode.kind.property_value.should eq("Katakana")
+    unicode.is_negated.should be_false
+
+    named_group = Regex::Syntax::AST::Group.new(
+      Regex::Syntax::AST::Span.new(0, 8),
+      Regex::Syntax::AST::Group::Kind::Capture,
+      Regex::Syntax::AST::Empty.new(Regex::Syntax::AST::Span.new(7, 7)),
+      capture_index: 2,
+      name: "word",
+      starts_with_p: true
+    )
+    named_group.starts_with_p?.should be_true
+    if capture_name = named_group.capture_name
+      capture_name.name.should eq("word")
+      capture_name.index.should eq(2_u32)
+    else
+      fail "expected capture_name"
+    end
+  end
+
+  it "exposes set-flags and ast constructors" do
+    item = Regex::Syntax::AST::FlagsItem.new(
+      Regex::Syntax::AST::Span.new(2, 3),
+      Regex::Syntax::AST::FlagsItem::Kind::Flag,
+      'm'
+    )
+    set_flags = Regex::Syntax::AST::SetFlags.new(Regex::Syntax::AST::Span.new(0, 4), [item])
+    set_flags.flags.flag_state(Regex::Syntax::AST::Flag::MultiLine).should be_true
+
+    literal = Regex::Syntax::AST::Literal.new(
+      Regex::Syntax::AST::Span.new(0, 1),
+      Regex::Syntax::AST::Literal::Kind::Verbatim,
+      c: 'a'
+    )
+    Regex::Syntax::AST::Ast.literal(literal).kind.should be_a(Regex::Syntax::AST::Literal)
   end
 end

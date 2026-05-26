@@ -6,76 +6,76 @@ src/ast/mod.rs::enum::ClassPerlKind	partial	src/regex/syntax/ast.cr	Perl class k
 src/ast/mod.rs::enum::ClassSet	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Crystal models class-set expressions as AST::ClassSet with an inner Kind enum instead of a top-level enum.
 src/ast/mod.rs::enum::ClassSetBinaryOpKind	partial	src/regex/syntax/ast.cr	Character class binary operation kinds are exposed through AST::ClassSetBinaryOp::Kind.
 src/ast/mod.rs::enum::ClassSetItem	partial	src/regex/syntax/ast.cr	Character class set item kinds are exposed through AST::ClassSetItem::Kind on the Crystal node model.
-src/ast/mod.rs::enum::ClassUnicodeKind	partial	src/regex/syntax/ast.cr	Crystal models Unicode class queries directly on ClassUnicode nodes with a normalized name string instead of separate Rust query-kind enums.
-src/ast/mod.rs::enum::ClassUnicodeOpKind	partial	src/regex/syntax/ast.cr	Crystal models Unicode class query operators through the normalized ClassUnicode query string instead of a separate Rust operator enum.
+src/ast/mod.rs::enum::ClassUnicodeKind	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	AST::ClassUnicode now exposes a dedicated ClassUnicodeKind compatibility wrapper with one-letter, named, and named-value forms.
+src/ast/mod.rs::enum::ClassUnicodeOpKind	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	AST::ClassUnicode::ClassUnicodeOpKind now exists with equality-op helper coverage.
 src/ast/mod.rs::enum::ErrorKind	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Structured AST::ErrorKind now exists with Rust-backed parser error variants including DecimalInvalid, GroupNameUnexpectedEof, and SpecialWordOrRepetitionUnexpectedEof plus formatter coverage.
-src/ast/mod.rs::enum::Flag	partial	src/regex/syntax/ast.cr	Rust's dedicated flag enum is intentionally modeled as raw Char values on FlagsItem in Crystal.
+src/ast/mod.rs::enum::Flag	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	AST::Flag now exists directly with char conversion and enum-based flag-state coverage.
 src/ast/mod.rs::enum::FlagsItemKind	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flag item kinds are exposed through AST::FlagsItem::Kind with negation helper coverage.
 src/ast/mod.rs::enum::GroupKind	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Group kinds are exposed through AST::Group::Kind with capturing helper coverage.
-src/ast/mod.rs::enum::HexLiteralKind	partial	src/regex/syntax/ast.cr	Crystal folds Rust's dedicated hex-literal kind surface into AST::Literal::Kind::Hex and ::Unicode instead of a separate enum.
+src/ast/mod.rs::enum::HexLiteralKind	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	AST::Literal::HexLiteralKind now exists directly with digit-count helper coverage.
 src/ast/mod.rs::enum::LiteralKind	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Literal kinds are exposed directly through AST::Literal::Kind, including byte helper coverage.
 src/ast/mod.rs::enum::RepetitionKind	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Repetition operator kinds are exposed through AST::RepetitionOp::Kind on the Crystal AST node model.
-src/ast/mod.rs::enum::RepetitionRange	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Crystal models repetition ranges through AST::RepetitionOp min/max fields plus valid? instead of a separate range enum.
-src/ast/mod.rs::enum::SpecialLiteralKind	partial	src/regex/syntax/ast.cr	Crystal folds Rust's dedicated special-literal kind surface into AST::Literal::Kind plus the stored literal char/bytes instead of a separate enum.
-src/ast/mod.rs::func::add_item	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flags exposes add_item on the public Crystal AST API.
-src/ast/mod.rs::func::alternation	partial	src/regex/syntax/ast.cr	Alternation is represented directly by the Alternation node constructor and into_ast helper instead of a top-level enum constructor function.
+src/ast/mod.rs::enum::RepetitionRange	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	AST::RepetitionRange now exists directly with exactly/at-least/bounded constructors and validity coverage.
+src/ast/mod.rs::enum::SpecialLiteralKind	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	AST::Literal::SpecialLiteralKind now exists directly with escaped-literal compatibility coverage.
+src/ast/mod.rs::func::add_item	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flags.add_item now matches the Rust-style duplicate-detection return surface.
+src/ast/mod.rs::func::alternation	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.alternation now exists as a direct top-level AST constructor helper.
 src/ast/mod.rs::func::assertion	partial	src/regex/syntax/ast.cr	Assertion is represented directly by the Assertion node constructor instead of a top-level enum constructor function.
 src/ast/mod.rs::func::auxiliary_span	partial	src/regex/syntax/error.cr	Primary and auxiliary span reporting are modeled on the structured error layer instead of a standalone AST helper function.
 src/ast/mod.rs::func::byte	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Literal exposes byte for singleton byte literals on the public Crystal AST API.
-src/ast/mod.rs::func::capture_index	partial	src/regex/syntax/ast.cr	Capture index metadata is stored directly on Group nodes instead of being exposed through a separate AST helper function.
-src/ast/mod.rs::func::class_bracketed	partial	src/regex/syntax/ast.cr	ClassBracketed is represented directly by the ClassBracketed node constructor instead of a top-level enum constructor function.
-src/ast/mod.rs::func::class_perl	partial	src/regex/syntax/ast.cr	ClassPerl is represented directly by the ClassPerl node constructor instead of a top-level enum constructor function.
-src/ast/mod.rs::func::class_unicode	partial	src/regex/syntax/ast.cr	ClassUnicode is represented directly by the ClassUnicode node constructor instead of a top-level enum constructor function.
-src/ast/mod.rs::func::concat	partial	src/regex/syntax/ast.cr	Concat is represented directly by the Concat node constructor and into_ast helper instead of a top-level enum constructor function.
-src/ast/mod.rs::func::digits	partial	src/regex/syntax/ast.cr	Hex/octal digit payload is represented by the parsed literal payload on Literal nodes instead of a dedicated AST helper function.
-src/ast/mod.rs::func::dot	partial	src/regex/syntax/ast.cr	Dot is represented directly by the Dot node constructor instead of a top-level enum constructor function.
-src/ast/mod.rs::func::empty	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.empty exists as a public Crystal helper.
-src/ast/mod.rs::func::flag_state	partial	src/regex/syntax/ast.cr	Flags exposes flag_state on the public Crystal AST API.
-src/ast/mod.rs::func::flags	partial	src/regex/syntax/ast.cr	Group exposes flags directly on the Crystal AST node model.
+src/ast/mod.rs::func::capture_index	done	src/regex/syntax/ast.cr;spec/parser_spec.cr	Group.capture_index and Group.capture_name now expose the Rust capture metadata surface directly on the Crystal AST.
+src/ast/mod.rs::func::class_bracketed	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.class_bracketed now exists as a direct top-level AST constructor helper.
+src/ast/mod.rs::func::class_perl	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.class_perl now exists as a direct top-level AST constructor helper.
+src/ast/mod.rs::func::class_unicode	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.class_unicode now exists as a direct top-level AST constructor helper.
+src/ast/mod.rs::func::concat	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.concat now exists as a direct top-level AST constructor helper.
+src/ast/mod.rs::func::digits	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	AST::Literal::HexLiteralKind now exposes the Rust digit-count helper directly.
+src/ast/mod.rs::func::dot	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.dot now exists as a direct top-level AST constructor helper.
+src/ast/mod.rs::func::empty	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.empty now accepts the Rust-shaped span constructor form in addition to the default helper.
+src/ast/mod.rs::func::flag_state	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flags.flag_state now accepts the dedicated AST::Flag enum directly.
+src/ast/mod.rs::func::flags	done	src/regex/syntax/ast.cr;spec/parser_spec.cr;spec/ast_api_spec.cr	SetFlags#flags and Group#flags now expose the Rust-shaped flags wrapper surface directly.
 src/ast/mod.rs::func::from_name	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassAscii::Kind exposes from_name on the public Crystal AST API.
-src/ast/mod.rs::func::group	partial	src/regex/syntax/ast.cr	Group is represented directly by the Group node constructor instead of a top-level enum constructor function.
+src/ast/mod.rs::func::group	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.group now exists as a direct top-level AST constructor helper.
 src/ast/mod.rs::func::into_ast	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Alternation and Concat expose into_ast on the Crystal AST node model.
 src/ast/mod.rs::func::into_item	partial	src/regex/syntax/ast.cr	Crystal models class-set wrappers directly through ClassSetItem and ClassSet constructors instead of a separate into_item helper.
 src/ast/mod.rs::func::is_capturing	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Group exposes capturing? on the public Crystal AST API.
-src/ast/mod.rs::func::is_empty	partial	src/regex/syntax/ast.cr	Crystal exposes emptiness through concrete node helpers such as Ast.empty and ClassSetUnion#empty? instead of a single shared AST helper.
+src/ast/mod.rs::func::is_empty	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.empty? now exists directly on the Crystal AST wrapper.
 src/ast/mod.rs::func::is_equal	partial	src/regex/syntax/ast.cr	Rust's equality helpers are covered by Crystal value/reference equality on the concrete AST node model instead of dedicated AST helper methods.
 src/ast/mod.rs::func::is_negated	partial	src/regex/syntax/ast.cr	Negation state is exposed directly on ClassAscii, ClassUnicode, ClassBracketed, and ClassPerl kinds instead of a single shared AST helper.
 src/ast/mod.rs::func::is_negation	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	FlagsItem exposes negation? on the public Crystal AST API.
 src/ast/mod.rs::func::is_one_line	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span exposes one_line? on the public Crystal AST API.
 src/ast/mod.rs::func::is_valid	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSetRange and RepetitionOp expose valid? on the public Crystal AST API.
 src/ast/mod.rs::func::kind	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast exposes kind on the public Crystal AST wrapper.
-src/ast/mod.rs::func::literal	partial	src/regex/syntax/ast.cr	Literal is represented directly by the Literal node constructor instead of a top-level enum constructor function.
+src/ast/mod.rs::func::literal	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.literal now exists as a direct top-level AST constructor helper.
 src/ast/mod.rs::func::new	partial	src/regex/syntax/ast.cr	Crystal exposes direct initializers on the concrete AST node classes instead of Rust-style free constructor helpers.
 src/ast/mod.rs::func::pattern	partial	src/regex/syntax/ast.cr	Crystal models the parsed pattern as AST::Ast over a root node instead of a separate Rust Pattern helper surface.
 src/ast/mod.rs::func::push	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSetUnion exposes push on the public Crystal AST API.
-src/ast/mod.rs::func::repetition	partial	src/regex/syntax/ast.cr	Repetition is represented directly by the Repetition node constructor instead of a top-level enum constructor function.
+src/ast/mod.rs::func::repetition	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.repetition now exists as a direct top-level AST constructor helper.
 src/ast/mod.rs::func::span	partial	src/regex/syntax/ast.cr	Span access is exposed directly on Node and value types instead of a standalone AST helper function.
 src/ast/mod.rs::func::splat	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span.splat exists on the public Crystal AST API with direct helper coverage.
 src/ast/mod.rs::func::union	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSet exposes union on the public Crystal AST API.
 src/ast/mod.rs::func::with_end	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span exposes with_end on the public Crystal AST API.
 src/ast/mod.rs::func::with_start	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span exposes with_start on the public Crystal AST API.
-src/ast/mod.rs::method::Alternation.into_ast	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Alternation.into_ast now exists with direct API coverage.
-src/ast/mod.rs::method::Ast.empty	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.empty now exists with direct API coverage.
+src/ast/mod.rs::method::Alternation.into_ast	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Alternation.into_ast now matches the Rust empty/singleton collapsing behavior.
+src/ast/mod.rs::method::Ast.empty	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.empty now exists with both zero-arg and span-taking helper coverage.
 src/ast/mod.rs::method::ClassAsciiKind.from_name	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassAscii::Kind.from_name now exists with direct API coverage.
 src/ast/mod.rs::method::ClassSet.union	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSet.union now exists with direct API coverage.
 src/ast/mod.rs::method::ClassSetItem.span	partial	src/regex/syntax/ast.cr	ClassSetItem inherits a direct span getter through the Crystal AST node model.
 src/ast/mod.rs::method::ClassSetRange.is_valid	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSetRange.valid? now exists with direct API coverage.
 src/ast/mod.rs::method::ClassSetUnion.push	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSetUnion.push now exists with direct API coverage.
-src/ast/mod.rs::method::ClassUnicode.is_negated	partial	src/regex/syntax/ast.cr	ClassUnicode exposes negated? directly on the Crystal AST node model.
-src/ast/mod.rs::method::ClassUnicodeOpKind.is_equal	partial	src/regex/syntax/ast.cr	Rust's dedicated Unicode class operator equality helper is not separate in Crystal because the query/operator surface is collapsed into direct node state.
-src/ast/mod.rs::method::Concat.into_ast	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Concat.into_ast now exists with direct API coverage.
+src/ast/mod.rs::method::ClassUnicode.is_negated	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassUnicode.is_negated now exists directly with vendored `!=` negation semantics.
+src/ast/mod.rs::method::ClassUnicodeOpKind.is_equal	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassUnicodeOpKind.is_equal now exists directly with API coverage.
+src/ast/mod.rs::method::Concat.into_ast	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Concat.into_ast now matches the Rust empty/singleton collapsing behavior.
 src/ast/mod.rs::method::Error.kind	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Structured AST::Error exposes kind directly with parser error coverage.
-src/ast/mod.rs::method::Flags.add_item	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flags.add_item now exists with direct API coverage.
+src/ast/mod.rs::method::Flags.add_item	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flags.add_item now returns the duplicate item index like Rust.
 src/ast/mod.rs::method::FlagsItemKind.is_negation	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	FlagsItem::Kind negation behavior is exposed through FlagsItem#negation? on the public Crystal AST API.
-src/ast/mod.rs::method::Group.flags	partial	src/regex/syntax/ast.cr	Group exposes flags directly on the Crystal AST node model.
-src/ast/mod.rs::method::HexLiteralKind.digits	partial	src/regex/syntax/ast.cr	Hex digit payload is represented on Literal node content instead of through a dedicated HexLiteralKind.digits helper.
+src/ast/mod.rs::method::Group.flags	done	src/regex/syntax/ast.cr;spec/parser_spec.cr	Group.flags now yields an empty Flags set for plain non-capturing groups, matching the Rust surface more closely.
+src/ast/mod.rs::method::HexLiteralKind.digits	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	HexLiteralKind.digits now exists directly with API coverage.
 src/ast/mod.rs::method::Literal.byte	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Literal.byte now exists with direct API coverage.
 src/ast/mod.rs::method::Position.new	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Position.new now exists with direct API coverage.
-src/ast/mod.rs::method::RepetitionRange.is_valid	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Crystal models repetition ranges through RepetitionOp.valid? instead of a separate range type.
+src/ast/mod.rs::method::RepetitionRange.is_valid	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	RepetitionRange.valid? now exists directly with API coverage.
 src/ast/mod.rs::method::Span.new	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span.new overloads now exist with direct API coverage.
 src/ast/mod.rs::struct::Alternation	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Alternation exists as a concrete Crystal AST node with into_ast coverage.
 src/ast/mod.rs::struct::Assertion	partial	src/regex/syntax/ast.cr	Assertion exists as a concrete Crystal AST node.
-src/ast/mod.rs::struct::CaptureName	partial	src/regex/syntax/ast.cr	Capture names are stored directly as Group#name strings instead of a dedicated CaptureName wrapper struct.
+src/ast/mod.rs::struct::CaptureName	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr;spec/parser_spec.cr	CaptureName now exists directly with parser-backed capture-name metadata coverage.
 src/ast/mod.rs::struct::ClassAscii	partial	src/regex/syntax/ast.cr	AST::ClassAscii exists as a concrete Crystal AST node.
 src/ast/mod.rs::struct::ClassBracketed	partial	src/regex/syntax/ast.cr	AST::ClassBracketed exists as a concrete Crystal AST node.
 src/ast/mod.rs::struct::ClassPerl	partial	src/regex/syntax/ast.cr	AST::ClassPerl exists as a concrete Crystal AST node.
@@ -86,14 +86,14 @@ src/ast/mod.rs::struct::ClassUnicode	partial	src/regex/syntax/ast.cr	AST::ClassU
 src/ast/mod.rs::struct::Comment	partial	src/regex/syntax/ast.cr	AST::Comment exists as part of parse_with_comments support.
 src/ast/mod.rs::struct::Concat	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Concat exists as a concrete Crystal AST node with into_ast coverage.
 src/ast/mod.rs::struct::Error	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Structured AST::Error exists as a dedicated Crystal parse error type.
-src/ast/mod.rs::struct::Flags	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flags exists with flag_state and add_item on the public Crystal AST API.
+src/ast/mod.rs::struct::Flags	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Flags now exists with Rust-shaped duplicate detection and enum-based flag-state helpers.
 src/ast/mod.rs::struct::FlagsItem	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	FlagsItem exists with negation helper coverage on the public Crystal AST API.
 src/ast/mod.rs::struct::Group	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Group exists with capturing and flags access on the public Crystal AST API.
 src/ast/mod.rs::struct::Literal	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Literal exists with direct byte helper coverage on the public Crystal AST API.
 src/ast/mod.rs::struct::Position	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Position exists as a concrete Crystal AST value object.
 src/ast/mod.rs::struct::Repetition	partial	src/regex/syntax/ast.cr	Repetition exists as a concrete Crystal AST node.
 src/ast/mod.rs::struct::RepetitionOp	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	RepetitionOp exists with direct valid? coverage on the public Crystal AST API.
-src/ast/mod.rs::struct::SetFlags	partial	src/regex/syntax/ast.cr	SetFlags exists as a concrete Crystal AST node.
+src/ast/mod.rs::struct::SetFlags	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	SetFlags now exposes a direct Flags wrapper like the Rust AST surface.
 src/ast/mod.rs::struct::Span	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span exists as a concrete Crystal AST value object with constructor and replacement helper coverage.
 src/ast/mod.rs::struct::WithComments	partial	src/regex/syntax/ast.cr	WithComments exists as part of parse_with_comments support.
 src/ast/parse.rs::func::build	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParserBuilder.build over the direct AST parser surface.

@@ -1031,7 +1031,7 @@ module Regex::Syntax
           if peek_char == '<'
             advance # skip 'P'
             advance # skip '<'
-            parse_named_capture_group(start)
+            parse_named_capture_group(start, starts_with_p: true)
           else
             raise ParseError.new("unsupported group syntax")
           end
@@ -1043,7 +1043,7 @@ module Regex::Syntax
             raise ParseError.new("look-behind groups not supported")
           else
             advance # skip '<'
-            parse_named_capture_group(start)
+            parse_named_capture_group(start, starts_with_p: false)
           end
         when ':'
           # Non-capturing group: (?:...)
@@ -1055,7 +1055,8 @@ module Regex::Syntax
           AST::Group.new(
             AST::Span.new(start, current_position),
             AST::Group::Kind::NonCapture,
-            child
+            child,
+            flags: AST::Flags.new(AST::Span.new(start, current_position))
           )
         when 'i', 'm', 's', 'u', 'x', 'R', 'U', '-'
           # Parse flags for (?i...) or (?-i...)
@@ -1137,7 +1138,7 @@ module Regex::Syntax
       end
     end
 
-    private def parse_named_capture_group(start : AST::Position) : AST::Node
+    private def parse_named_capture_group(start : AST::Position, *, starts_with_p : Bool) : AST::Node
       name_start = @pos
       name_start_pos = current_position
       first = true
@@ -1169,7 +1170,8 @@ module Regex::Syntax
         AST::Group::Kind::Capture,
         child,
         capture_index: capture_index,
-        name: name
+        name: name,
+        starts_with_p: starts_with_p
       )
     end
 

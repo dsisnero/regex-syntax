@@ -302,6 +302,39 @@ describe Regex::Syntax::AstParser do
       group.kind.should eq(Regex::Syntax::AST::Group::Kind::Capture)
       group.capture_index.should eq(1)
       group.name.should eq("word")
+      group.starts_with_p?.should be_true
+      if capture_name = group.capture_name
+        capture_name.name.should eq("word")
+        capture_name.index.should eq(1_u32)
+      else
+        fail "expected capture_name"
+      end
+    end
+
+    it "preserves angle-bracket named capture style separately from ?P form" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("(?<word>a)")
+
+      group = ast.root.as(Regex::Syntax::AST::Group)
+      group.starts_with_p?.should be_false
+      if capture_name = group.capture_name
+        capture_name.name.should eq("word")
+      else
+        fail "expected capture_name"
+      end
+    end
+
+    it "treats plain non-capturing groups as having an empty flags set" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("(?:a)")
+
+      group = ast.root.as(Regex::Syntax::AST::Group)
+      group.kind.should eq(Regex::Syntax::AST::Group::Kind::NonCapture)
+      if flags = group.flags
+        flags.items.should be_empty
+      else
+        fail "expected flags"
+      end
     end
 
     it "rejects duplicate named captures" do

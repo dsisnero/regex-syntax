@@ -29,13 +29,13 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `542 done`, `1 not_applicable`, `335 partial`
+- `rust_source_parity.tsv`: `576 done`, `1 not_applicable`, `301 partial`
 
 Interpretation:
 
 - The remaining test partials are narrow `src/ast/parse.rs` helper-surface rows,
   not broad semantic drift.
-- The remaining source partials are overwhelmingly API/model-shape mappings:
+- The remaining source partials are still mostly API/model-shape mappings:
   Crystal class hierarchies, wrapper objects, builder-style APIs, and
   idiomatic replacements for Rust enums, traits, and free functions.
 - Broad semantic parity is no longer being driven by generated-manifest
@@ -53,6 +53,17 @@ Interpretation:
   exists for multibyte literal spans, multibyte capture-name error spans,
   non-ASCII flag error spans, multiline comment spans, and multibyte
   class-range spans.
+
+- [x] AST source/API compatibility layer
+  The Crystal AST now exposes a larger Rust-shaped compatibility surface
+  instead of leaving those rows as pure documentation drift: dedicated
+  `Flag`, `CaptureName`, `ClassUnicodeKind`, `ClassUnicodeOpKind`,
+  `HexLiteralKind`, `SpecialLiteralKind`, and `RepetitionRange` wrappers,
+  Rust-like `Ast.*` constructor helpers, enum-based `Flags.flag_state`,
+  duplicate-detecting `Flags.add_item`, `SetFlags#flags`, parser-backed named
+  capture metadata, non-capturing groups with explicit empty `Flags`, and
+  Rust-style empty/singleton collapsing for `Alternation#into_ast` and
+  `Concat#into_ast`.
 
 ### Semantics Closure
 
