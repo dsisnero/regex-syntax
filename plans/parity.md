@@ -1,87 +1,155 @@
-# Regex Syntax Parity Checklist
+# Regex Syntax Parity Plan
 
-This is the live high-level checklist for finishing Rust `regex-syntax` parity in Crystal.
+This file is the curated parity roadmap for the Crystal port of Rust
+`regex-syntax`.
 
-Rules for this file:
+It follows the `cross-language-crystal-parity` workflow:
 
-- `[x]` means the feature area is complete enough that it should no longer drive day-to-day parity work.
-- `[]` means there is still verified remaining work in that feature area.
-- This file tracks closure-sized feature buckets, not individual upstream test rows or one-off fixes.
-- Detailed evidence lives in `vendor/regex-syntax/` and the inventories under `plans/inventory/`.
+- `plans/parity.md` decides sequence.
+- `plans/inventory/rust_port_inventory.tsv` is the curated day-to-day ledger.
+- `plans/inventory/rust_source_parity.tsv` and
+  `plans/inventory/rust_test_parity.tsv` are evidence manifests, not the roadmap.
+- Work closes by feature bucket, not by helper method.
 
-## Completed Foundation
+Checklist rules:
 
-- [x] Canonical architecture is in place.
-  Crystal now runs a single staged `source -> AST -> HIR` pipeline, duplicate parser paths are gone, and public parsing uses the same canonical AST-to-HIR flow.
+- `[x]` means the whole feature bucket is closed enough that it should no
+  longer drive active parity work.
+- `[]` means there is still verified remaining work in that bucket.
+- Buckets here should stay branch-sized and user-visible. Detailed row-by-row
+  drift belongs in the inventories.
 
-- [x] Rust feature scope is established and enforced.
-  Rust feature surfaces are treated as always-on parity targets in Crystal unless the upstream behavior only exists as a Cargo compile-time feature-absent branch or depends on Rust-specific layout/runtime behavior that Crystal cannot expose in the same form.
+## Evidence Sources
 
-- [x] Core parse/translate surface is broadly ported.
-  This includes captures, flags, class-set operators, octal mode, special word boundaries, verbose mode, repetition forms, Unicode/property classes, UTF-8 gating, class algebra, smart HIR construction, interval algebra, and capture metadata.
+- Upstream source of truth: `vendor/regex-syntax/`
+- Curated working ledger: `plans/inventory/rust_port_inventory.tsv`
+- Generated source manifest: `plans/inventory/rust_source_parity.tsv`
+- Generated test manifest: `plans/inventory/rust_test_parity.tsv`
 
-- [x] Dedicated module structure exists for the major upstream subsystems.
-  Crystal now has dedicated modules for UTF-8 handling, interval sets, AST/HIR printers, AST/HIR visitors, structured errors, and HIR literal extraction/optimization instead of burying those behaviors in ad hoc helpers.
+## Current State
 
-- [x] Inventory discipline is in place.
-  The source, test, and port inventories are reconciled, no longer contain baseline `missing` noise, and are suitable as evidence-backed parity manifests instead of aspirational lists.
+- `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
+- `rust_source_parity.tsv`: `542 done`, `1 not_applicable`, `335 partial`
 
-## Remaining Feature Buckets
+Interpretation:
 
-### Parser and AST Closure
+- The remaining test partials are narrow `src/ast/parse.rs` helper-surface rows,
+  not broad semantic drift.
+- The remaining source partials are overwhelmingly API/model-shape mappings:
+  Crystal class hierarchies, wrapper objects, builder-style APIs, and
+  idiomatic replacements for Rust enums, traits, and free functions.
+- Broad semantic parity is no longer being driven by generated-manifest
+  `missing` rows. The manifests are now mostly documentation of intentional
+  cross-language shape differences.
 
-- [x] Finish the remaining vendored `src/ast/parse.rs` parity as one closure pass.
-  The remaining real parser behavior gaps in repetitions, capture-name errors, verbose counted repetitions, and flag/repetition interaction are now closed. The parser rows still marked `partial` in the inventories are there because of intentional AST-shape coalescing, simplified Position/Span modeling, or internal-helper surfaces that Crystal does not expose separately, not because of open parser semantics.
+## Feature Buckets
 
-- [x] The parser foundation underneath that closure pass is already in place.
-  The public parser/builders, direct AST parser/builders, `parse_with_comments`, scoped/global flag parsing, capture handling, octal support, special boundaries, and structured parser errors are all already present and exercised.
+### Active Work
 
-- [x] AST API shape differences are already reconciled.
-  Remaining AST source rows are documented as explicit Crystal model differences where applicable instead of being treated as accidental drift.
+- [x] Parser and AST span/position fidelity
+  AST `Position` and `Span` now track vendored Rust byte offsets while
+  preserving line/column tracking and parser backtracking. The parser cursor
+  model now keeps scan position and byte offset separate, and direct coverage
+  exists for multibyte literal spans, multibyte capture-name error spans,
+  non-ASCII flag error spans, multiline comment spans, and multibyte
+  class-range spans.
 
-### Translator and HIR Semantic Closure
+### Semantics Closure
 
-- [x] Finish the remaining vendored `src/hir/translate.rs` and `src/hir/mod.rs` parity as one combined semantics pass.
-  The remaining translator and HIR semantic matrices are now locked down with direct vendored-style coverage in [spec/regex-syntax_spec.cr](/Volumes/extreme_ssd/repos/github.com/dsisnero/regex-syntax/spec/regex-syntax_spec.cr) and [spec/hir_semantic_parity_spec.cr](/Volumes/extreme_ssd/repos/github.com/dsisnero/regex-syntax/spec/hir_semantic_parity_spec.cr). This closure pass also fixed the remaining real semantic bugs that surfaced under that matrix: `\\&` inside class-set operations, nested bracketed-class negation/intersection lowering, and Unicode-class negation across the surrogate boundary.
+- [x] Parser and AST semantics are closed as a feature bucket.
+  This includes captures, flags, class parsing, verbose mode, octal mode,
+  special word boundaries, Unicode property parsing, repetition forms,
+  structured parser errors, comment capture, and direct AST behavior across the
+  vendored parser matrix.
 
-- [x] The heavy semantic substrate is already in place.
-  Unicode/property translation, byte-vs-Unicode behavior, UTF-8 gating, class flattening, group-local flag scoping, swap-greed behavior, smart concat/alternation/repetition, interval algebra, literal extraction/optimization, and the public HIR property surface all already exist. The vendored literal case-fold and scoped-flag matrices are now substantially covered too, including byte-mode toggles, hex/raw byte literals, punctuation preservation, and structured InvalidUtf8 translator spans.
+- [x] Translator and HIR semantics are closed as a feature bucket.
+  This includes AST-to-HIR lowering, Unicode and byte behavior, UTF-8 gating,
+  class-set algebra, smart concat/alternation/repetition construction,
+  look/anchor handling, line terminator behavior, case folding, and the
+  vendored translator regression matrix.
 
-- [x] Core HIR helper/API reconciliation is already done.
-  The public HIR wrapper, `LookSet`, class helpers, constructor helpers, properties wrapper, and the broad AST/HIR API surface have already been brought close to Rust and documented in the inventories. The remaining `partial` source rows in this area are now documented Crystal model-shape differences rather than open semantic drift.
+- [x] Unicode and character-class parity are closed as a feature bucket.
+  This includes vendored Unicode tables, property aliasing, `gc` / `sc` / `scx`
+  / `age` / `wb` / `gcb` / `sb` queries, Perl classes, ASCII classes, Unicode
+  word behavior, simple case folding, and byte-vs-Unicode class behavior.
 
-### Error and Diagnostics Closure
+### Support Module Closure
 
-- [x] Finish structured error parity end-to-end.
-  Parser-side kind/span coverage is dense, translator-originated structured diagnostics now include exact formatter assertions for InvalidUtf8 and InvalidLineTerminator, and the remaining source-level difference in this area is the intentional Crystal AST/HIR subclass split instead of a single Rust enum wrapper.
+- [x] Dedicated support modules are closed as a feature bucket.
+  The Crystal port now has dedicated subsystems for structured errors,
+  interval sets, UTF-8 helpers, AST printers, HIR printers, AST visitors, HIR
+  visitors, and HIR literal extraction/optimization instead of leaving those
+  behaviors embedded in ad hoc parser or translator helpers.
 
-- [x] The structured error model and formatter foundation already exist.
-  Crystal now has dedicated AST and HIR structured error types, formatter output comparable to upstream for the currently covered cases, duplicate-span handling, multiline span rendering, and real parser-side kind/span assertions for many vendored cases.
+- [x] Public parser, AST, HIR, and helper APIs are closed as a feature bucket.
+  The public surface now includes the staged parser/builders, top-level helper
+  APIs, HIR properties and look-set analysis, class helpers, literal-extractor
+  APIs, and the direct AST/HIR helper surface needed for vendored-style
+  behavioral coverage.
 
-### Print, Visitor, and Module Round-Trip Closure
+### Diagnostics and Round-Trip Closure
 
-- [x] Finish the remaining round-trip and helper parity for dedicated modules as one closure pass.
-  Dedicated AST/HIR printer coverage now closes the vendored print matrices, UTF-8 helper coverage closes the vendored utf8 tests, and the remaining source-level partial rows in this area are documented intentional API/model differences such as Crystal trait/enum shaping rather than missing behavior.
+- [x] Error and diagnostics behavior is closed as a feature bucket.
+  Structured AST and HIR errors exist, parser and translator errors have
+  vendored-style kind/span coverage, and formatter behavior is exercised for
+  representative multiline and structured-diagnostic cases.
 
-- [x] Most of this surface is already ported.
-  Dedicated AST/HIR printers, AST/HIR visitors, interval sets, UTF-8 helpers, and the HIR literal subsystem are already present with broad upstream-backed coverage.
+- [x] Print, visitor, and round-trip behavior is closed as a feature bucket.
+  AST/HIR printers, AST/HIR visitors, escape-form preservation, and the
+  vendored print/visitor regression matrices are covered closely enough that
+  they no longer drive active parity work.
 
-### Final Reconciliation and Done Pass
+### Reconciliation Closure
 
-- [x] Do one final parity closeout pass across all manifests and broad buckets.
-  The manifests now distinguish between real semantic coverage and intentional model-shape differences. Remaining `partial` rows are limited to documented AST/source/API shape differences, simplified Position/Span modeling, or internal helper surfaces Crystal intentionally does not expose separately; they no longer represent open semantic drift.
+- [x] Manifest and ledger reconciliation is closed as a feature bucket.
+  The inventories are no longer aspirational. They distinguish implemented
+  behavior, compile-time Rust-only `not_applicable` rows, and intentional
+  Crystal model differences instead of mixing those states together.
 
-- [x] The project is already in a strong closeout state.
-  Quality gates pass, inventories are synced, the parity scope is documented, and the remaining work is concentrated in a few large semantic closure passes instead of scattered foundational debt.
+- [x] Broad parity work is fully closed.
+  Semantic closure now includes the AST span/position fidelity pass. The
+  remaining `partial` rows are helper-surface or API-shape differences, not an
+  open implementation bucket.
+
+## What Still Shows As `partial`
+
+These do not justify separate helper-sized buckets by themselves:
+
+- Narrow parser-helper rows in `rust_test_parity.tsv`
+  `parse_decimal`, `parse_flag`, `parse_primitive_non_escape`,
+  `parse_set_class`, and `parse_set_class_open` remain partial because Crystal
+  does not expose those helpers as separate entry points even though the
+  corresponding parser behavior is covered through the real public or AST parser
+  surfaces.
+
+- Source-level API-shape rows in `rust_source_parity.tsv`
+  Most remaining partial rows are deliberate language-model differences:
+  Crystal uses concrete node classes instead of Rust enums, direct initializers
+  instead of free constructor functions, wrapper objects instead of sum types,
+  and idiomatic predicates or builders instead of one-for-one method names.
+
+## If Parity Work Resumes
+
+Use the inventories to choose scope, then reopen only one broad bucket at a
+time:
+
+1. Source/API shape reconciliation
+   Only if we want to mirror more Rust surface area one-for-one instead of
+   keeping documented Crystal-native wrappers.
+2. New upstream refresh
+   If `vendor/regex-syntax` moves, regenerate manifests intentionally, update
+   the port inventory, and reopen the smallest closure-sized bucket affected by
+   that upstream delta.
+3. Adversarial verification pass
+   Use the existing inventories plus quality gates as the base for an
+   independent signoff pass after any future upstream refresh.
 
 ## Project-Level Done Criteria
 
-- [x] Every former `missing` row is now either implemented, explicitly marked `not_applicable`, or documented as an intentional API difference.
-
-- [x] All remaining open feature buckets above are closed.
-  No broad parity workstream is still being driven by open semantic drift; only documented intentional shape differences remain in the inventories.
-
-- [x] Verified gates continue to pass after each slice:
-  `make format`, `make lint`, `make test`.
-
-- [x] New parity work remains tied to vendored Rust code and vendored Rust tests instead of local invention.
+- [x] No generated parity manifest is still carrying baseline `missing` drift.
+- [x] Broad semantic parity and AST fidelity are both closed.
+- [x] Remaining `partial` rows are documented and evidence-backed.
+- [x] Quality gates continue to pass:
+  `make format`, `make lint`, `make test`
+- [x] New parity changes stay anchored to vendored Rust code and vendored Rust
+  tests instead of local invention.

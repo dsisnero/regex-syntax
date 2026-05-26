@@ -50,7 +50,7 @@ src/ast/mod.rs::func::pattern	partial	src/regex/syntax/ast.cr	Crystal models the
 src/ast/mod.rs::func::push	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSetUnion exposes push on the public Crystal AST API.
 src/ast/mod.rs::func::repetition	partial	src/regex/syntax/ast.cr	Repetition is represented directly by the Repetition node constructor instead of a top-level enum constructor function.
 src/ast/mod.rs::func::span	partial	src/regex/syntax/ast.cr	Span access is exposed directly on Node and value types instead of a standalone AST helper function.
-src/ast/mod.rs::func::splat	partial	src/regex/syntax/ast.cr	Crystal uses Span.new(start, end) or Span.new(offset, offset) directly instead of Rust's Span::splat helper.
+src/ast/mod.rs::func::splat	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span.splat exists on the public Crystal AST API with direct helper coverage.
 src/ast/mod.rs::func::union	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSet exposes union on the public Crystal AST API.
 src/ast/mod.rs::func::with_end	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span exposes with_end on the public Crystal AST API.
 src/ast/mod.rs::func::with_start	partial	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span exposes with_start on the public Crystal AST API.

@@ -15,26 +15,28 @@ describe "Flag handling in AST parser" do
         flags.flag_state('i').should be_true
       end
 
-      # The child should be a literal with bytes "ab"
-      group.child.should be_a(Regex::Syntax::AST::Literal)
-      literal = group.child.as(Regex::Syntax::AST::Literal)
-      literal.bytes.should eq(Bytes[97, 98]) # "ab"
+      group.child.should be_a(Regex::Syntax::AST::Concat)
+      child = group.child.as(Regex::Syntax::AST::Concat)
+      child.children.size.should eq(2)
+      child.children[0].as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
+      child.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("b".to_slice)
     end
 
     it "parses (?i) global flags" do
       parser = Regex::Syntax::AstParser.new
       ast = parser.parse("(?i)ab")
 
-      # (?i) should produce a SetFlags node followed by "ab"
+      # (?i) should produce a SetFlags node followed by "a" and "b"
       ast.root.should be_a(Regex::Syntax::AST::Concat)
       concat = ast.root.as(Regex::Syntax::AST::Concat)
-      concat.children.size.should eq(2)
+      concat.children.size.should eq(3)
       concat.children[0].should be_a(Regex::Syntax::AST::SetFlags)
       set_flags = concat.children[0].as(Regex::Syntax::AST::SetFlags)
       set_flags.items.size.should eq(1)
       set_flags.items[0].kind.should eq(Regex::Syntax::AST::FlagsItem::Kind::Flag)
       set_flags.items[0].flag.should eq('i')
-      concat.children[1].should be_a(Regex::Syntax::AST::Literal) # "ab"
+      concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
+      concat.children[2].as(Regex::Syntax::AST::Literal).bytes.should eq("b".to_slice)
     end
 
     it "parses multiple flags (?im:...)" do
@@ -148,9 +150,16 @@ describe "Flag handling in AST parser" do
         parser.parse("(?ia:ab)")
       end
 
-      expect_parse_error(/unrecognized flag/) do
+      err = expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::FlagUnrecognized,
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(2, 1, 3),
+          Regex::Syntax::AST::Position.new(5, 1, 4)
+        )
+      ) do
         parser.parse("(?☃:ab)")
       end
+      err.raw_message.should match(/unrecognized flag/)
     end
 
     it "rejects unexpected eof in flag syntax like Rust" do

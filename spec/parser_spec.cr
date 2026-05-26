@@ -238,6 +238,47 @@ describe Regex::Syntax::AstParser do
       end
     end
 
+    it "tracks multibyte class range spans with byte offsets like Rust" do
+      parser = Regex::Syntax::AstParser.new
+      ast = parser.parse("[☃-⛄]")
+
+      ast.root.should be_a(Regex::Syntax::AST::ClassBracketed)
+      bracketed = ast.root.as(Regex::Syntax::AST::ClassBracketed)
+      bracketed.span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(0, 1, 1),
+          Regex::Syntax::AST::Position.new(9, 1, 6)
+        )
+      )
+
+      set = bracketed.kind
+      set.kind.should eq(Regex::Syntax::AST::ClassSet::Kind::Item)
+      item = set.item.as(Regex::Syntax::AST::ClassSetItem)
+      item.kind.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Range)
+
+      range = item.item.as(Regex::Syntax::AST::ClassSetRange)
+      range.span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(1, 1, 2),
+          Regex::Syntax::AST::Position.new(8, 1, 5)
+        )
+      )
+      range.start.span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(1, 1, 2),
+          Regex::Syntax::AST::Position.new(4, 1, 3)
+        )
+      )
+      range.end.span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(5, 1, 4),
+          Regex::Syntax::AST::Position.new(8, 1, 5)
+        )
+      )
+      range.start.c.should eq('☃')
+      range.end.c.should eq('⛄')
+    end
+
     it "assigns sequential capture indices" do
       parser = Regex::Syntax::AstParser.new
       ast = parser.parse("(a)(b)")
@@ -283,6 +324,22 @@ describe Regex::Syntax::AstParser do
         Regex::Syntax::AST::ErrorKind::GroupNameInvalid,
         Regex::Syntax::AST::Span.new(4, 5)
       ) { parser.parse("(?P<~a>a)") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameInvalid,
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(4, 1, 5),
+          Regex::Syntax::AST::Position.new(7, 1, 6)
+        )
+      ) { parser.parse("(?P<☃>)") }
+
+      expect_ast_error(
+        Regex::Syntax::AST::ErrorKind::GroupNameInvalid,
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(5, 1, 6),
+          Regex::Syntax::AST::Position.new(8, 1, 7)
+        )
+      ) { parser.parse("(?P<a☃>)") }
     end
 
     it "rejects empty named captures like Rust" do
@@ -423,11 +480,32 @@ describe Regex::Syntax::AstParser do
     it "parses primitive literals, Perl classes, and special escapes like Rust" do
       parser = Regex::Syntax::AstParser.new
 
-      parser.parse(".").root.should be_a(Regex::Syntax::AST::Dot)
-      parser.parse("^").root.should be_a(Regex::Syntax::AST::Assertion)
-      parser.parse("$").root.should be_a(Regex::Syntax::AST::Assertion)
-      parser.parse("a").root.as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
-      parser.parse("☃").root.as(Regex::Syntax::AST::Literal).bytes.should eq("☃".to_slice)
+      dot = parser.parse(".").root.as(Regex::Syntax::AST::Dot)
+      dot.span.should eq(Regex::Syntax::AST::Span.new(0, 1))
+
+      start_line = parser.parse("^").root.as(Regex::Syntax::AST::Assertion)
+      start_line.span.should eq(Regex::Syntax::AST::Span.new(0, 1))
+      start_line.kind.should eq(Regex::Syntax::AST::Assertion::Kind::Start)
+
+      end_line = parser.parse("$").root.as(Regex::Syntax::AST::Assertion)
+      end_line.span.should eq(Regex::Syntax::AST::Span.new(0, 1))
+      end_line.kind.should eq(Regex::Syntax::AST::Assertion::Kind::End)
+
+      verbatim = parser.parse("a").root.as(Regex::Syntax::AST::Literal)
+      verbatim.span.should eq(Regex::Syntax::AST::Span.new(0, 1))
+      verbatim.kind.should eq(Regex::Syntax::AST::Literal::Kind::Verbatim)
+      verbatim.bytes.should eq("a".to_slice)
+
+      snowman = parser.parse("☃").root.as(Regex::Syntax::AST::Literal)
+      snowman.span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(0, 1, 1),
+          Regex::Syntax::AST::Position.new(3, 1, 2)
+        )
+      )
+      snowman.kind.should eq(Regex::Syntax::AST::Literal::Kind::Verbatim)
+      snowman.c.should eq('☃')
+      snowman.bytes.should eq("☃".to_slice)
 
       parser.parse(%q(\d)).root.as(Regex::Syntax::AST::ClassPerl).kind.should eq(
         Regex::Syntax::AST::ClassPerl::Kind::Digit
@@ -545,8 +623,26 @@ describe Regex::Syntax::AstParser do
       concat = ast.root.as(Regex::Syntax::AST::Concat)
       concat.children.size.should eq(3)
       concat.children[0].should be_a(Regex::Syntax::AST::Dot)
+      concat.children[0].span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(0, 1, 1),
+          Regex::Syntax::AST::Position.new(1, 1, 2)
+        )
+      )
       concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("\n".to_slice)
+      concat.children[1].span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(1, 1, 2),
+          Regex::Syntax::AST::Position.new(2, 2, 1)
+        )
+      )
       concat.children[2].should be_a(Regex::Syntax::AST::Dot)
+      concat.children[2].span.should eq(
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(2, 2, 1),
+          Regex::Syntax::AST::Position.new(3, 2, 2)
+        )
+      )
     end
 
     it "parses holistic escaped metacharacter cases like Rust" do
@@ -977,11 +1073,15 @@ describe Regex::Syntax::AstParser do
 
       ast_with_comments.ast.root.should be_a(Regex::Syntax::AST::Concat)
       concat = ast_with_comments.ast.root.as(Regex::Syntax::AST::Concat)
-      concat.children.size.should eq(3)
+      concat.children.size.should eq(7)
 
       concat.children[0].should be_a(Regex::Syntax::AST::SetFlags)
-      concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("foo".to_slice)
-      concat.children[2].as(Regex::Syntax::AST::Literal).bytes.should eq("bar".to_slice)
+      concat.children[1].as(Regex::Syntax::AST::Literal).bytes.should eq("f".to_slice)
+      concat.children[2].as(Regex::Syntax::AST::Literal).bytes.should eq("o".to_slice)
+      concat.children[3].as(Regex::Syntax::AST::Literal).bytes.should eq("o".to_slice)
+      concat.children[4].as(Regex::Syntax::AST::Literal).bytes.should eq("b".to_slice)
+      concat.children[5].as(Regex::Syntax::AST::Literal).bytes.should eq("a".to_slice)
+      concat.children[6].as(Regex::Syntax::AST::Literal).bytes.should eq("r".to_slice)
 
       ast_with_comments.comments.map(&.comment).should eq([
         " This is comment 1.",
@@ -991,10 +1091,22 @@ describe Regex::Syntax::AstParser do
       ])
 
       ast_with_comments.comments.map(&.span).should eq([
-        Regex::Syntax::AST::Span.new(5, 26),
-        Regex::Syntax::AST::Span.new(30, 51),
-        Regex::Syntax::AST::Span.new(53, 74),
-        Regex::Syntax::AST::Span.new(78, 98),
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(5, 2, 1),
+          Regex::Syntax::AST::Position.new(26, 3, 1)
+        ),
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(30, 3, 5),
+          Regex::Syntax::AST::Position.new(51, 4, 1)
+        ),
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(53, 4, 3),
+          Regex::Syntax::AST::Position.new(74, 5, 1)
+        ),
+        Regex::Syntax::AST::Span.new(
+          Regex::Syntax::AST::Position.new(78, 6, 1),
+          Regex::Syntax::AST::Position.new(98, 6, 21)
+        ),
       ])
     end
 

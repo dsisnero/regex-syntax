@@ -6,6 +6,16 @@ describe Regex::Syntax::AST do
     span.one_line?.should be_true
     span.with_start(Regex::Syntax::AST::Position.new(1)).start.offset.should eq(1)
     span.with_end(Regex::Syntax::AST::Position.new(9)).end.offset.should eq(9)
+    span.empty?.should be_false
+
+    position = Regex::Syntax::AST::Position.new(7, 3, 2)
+    position.offset.should eq(7)
+    position.line.should eq(3)
+    position.column.should eq(2)
+
+    splat = Regex::Syntax::AST::Span.splat(position)
+    splat.start.should eq(position)
+    splat.end.should eq(position)
   end
 
   it "exposes literal and range helper methods" do

@@ -1,17 +1,25 @@
 module Regex::Syntax::AST
   # A position in a regular expression pattern
   struct Position
-    getter offset : Int32 # byte offset in the pattern string
+    getter offset : Int32
+    getter line : Int32
+    getter column : Int32
 
-    def initialize(@offset : Int32)
+    def initialize(@offset : Int32, @line : Int32, @column : Int32)
+    end
+
+    def initialize(offset : Int32)
+      @offset = offset
+      @line = 1
+      @column = offset + 1
     end
 
     def to_s(io)
-      io << offset
+      io << "Position(o: #{offset}, l: #{line}, c: #{column})"
     end
 
     def inspect(io)
-      io << "Position(#{offset})"
+      to_s(io)
     end
   end
 
@@ -29,7 +37,7 @@ module Regex::Syntax::AST
     end
 
     def to_s(io)
-      io << "Span(#{start.offset}, #{end.offset})"
+      io << "Span(#{start}, #{end})"
     end
 
     def inspect(io)
@@ -37,7 +45,11 @@ module Regex::Syntax::AST
     end
 
     def one_line? : Bool
-      @start.offset <= @end.offset
+      @start.line == @end.line
+    end
+
+    def empty? : Bool
+      @start.offset == @end.offset
     end
 
     def with_start(start : Position) : Span
@@ -46,6 +58,10 @@ module Regex::Syntax::AST
 
     def with_end(finish : Position) : Span
       Span.new(@start, finish)
+    end
+
+    def self.splat(pos : Position) : Span
+      Span.new(pos, pos)
     end
   end
 
