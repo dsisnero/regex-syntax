@@ -15,6 +15,10 @@ module Regex::Syntax::Hir
       self
     end
 
+    def clone : self
+      self.class.new(@ranges.dup)
+    end
+
     def each(& : Range(B, B) ->) : Nil
       @ranges.each { |range| yield range }
     end
@@ -33,12 +37,20 @@ module Regex::Syntax::Hir
       self
     end
 
+    def case_fold_simple : self
+      clone.case_fold_simple!
+    end
+
     def union!(other : IntervalSet(B)) : self
       return self if other.intervals.empty? || @ranges == other.intervals
 
       @ranges = union_ranges(@ranges, other.intervals)
       @folded = @folded && other.folded?
       self
+    end
+
+    def union(other : IntervalSet(B)) : self
+      clone.union!(other)
     end
 
     def intersect!(other : IntervalSet(B)) : self
@@ -55,12 +67,20 @@ module Regex::Syntax::Hir
       self
     end
 
+    def intersect(other : IntervalSet(B)) : self
+      clone.intersect!(other)
+    end
+
     def difference!(other : IntervalSet(B)) : self
       return self if @ranges.empty? || other.intervals.empty?
 
       @ranges = difference_ranges(@ranges, other.intervals)
       @folded = @folded && other.folded?
       self
+    end
+
+    def difference(other : IntervalSet(B)) : self
+      clone.difference!(other)
     end
 
     def symmetric_difference!(other : IntervalSet(B)) : self
@@ -71,10 +91,18 @@ module Regex::Syntax::Hir
       self
     end
 
+    def symmetric_difference(other : IntervalSet(B)) : self
+      clone.symmetric_difference!(other)
+    end
+
     def negate! : self
       @ranges = invert_ranges(@ranges)
       @folded = true if full_domain?(@ranges)
       self
+    end
+
+    def negate : self
+      clone.negate!
     end
 
     def ==(other : self) : Bool

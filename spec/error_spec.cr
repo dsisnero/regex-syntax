@@ -77,6 +77,7 @@ TEXT
 
     err.kind.should eq(Regex::Syntax::Hir::ErrorKind::UnicodeNotAllowed)
     err.pattern.should eq(%q(\pZ))
+    err.span.should eq(Regex::Syntax::AST::Span.new(0, 3))
     err.to_s.should contain("error: Unicode not allowed here")
   end
 

@@ -15,6 +15,100 @@ describe Regex::Syntax do
     parser.should be_a(Regex::Syntax::Parser)
   end
 
+  it "exposes direct HIR constructors and wrapper introspection like Rust" do
+    dot = Regex::Syntax::Hir.dot(Regex::Syntax::Hir::Dot::AnyChar)
+    dot.node.should be_a(Regex::Syntax::Hir::DotNode)
+    dot.kind.should be_a(Regex::Syntax::Hir::DotNode)
+    dot.into_kind.should be_a(Regex::Syntax::Hir::DotNode)
+
+    empty = Regex::Syntax::Hir::Hir.empty
+    empty.node.should be_a(Regex::Syntax::Hir::Empty)
+
+    fail_hir = Regex::Syntax::Hir::Hir.fail
+    fail_hir.node.should be_a(Regex::Syntax::Hir::CharClass)
+    fail_hir.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([] of Range(UInt8, UInt8))
+
+    look = Regex::Syntax::Hir::Hir.look(Regex::Syntax::Hir::Look::Kind::StartText)
+    look.node.should be_a(Regex::Syntax::Hir::Look)
+    look.node.as(Regex::Syntax::Hir::Look).kind.should eq(Regex::Syntax::Hir::Look::Kind::StartText)
+  end
+
+  it "exposes direct HIR properties and look sets like Rust" do
+    hir = Regex::Syntax.parse("(?m)^a|b")
+    props = hir.properties
+
+    props.should be_a(Regex::Syntax::Hir::Properties)
+    props.minimum_len.should eq(1)
+    props.maximum_len.should eq(1)
+    props.explicit_captures_len.should eq(0)
+    props.static_explicit_captures_len.should eq(0)
+    props.utf8?.should be_true
+    props.memory_usage.should be > 0
+
+    hir.look_set.should be_a(Regex::Syntax::Hir::LookSet)
+    hir.look_set_prefix.should be_a(Regex::Syntax::Hir::LookSet)
+    hir.look_set_prefix_any.should be_a(Regex::Syntax::Hir::LookSet)
+    hir.look_set_suffix.should be_a(Regex::Syntax::Hir::LookSet)
+    hir.look_set_suffix_any.should be_a(Regex::Syntax::Hir::LookSet)
+    hir.literal?.should be_false
+    hir.alternation_literal?.should be_false
+  end
+
+  it "exposes look set constructors and subtraction helpers like Rust" do
+    empty = Regex::Syntax::Hir::LookSet.empty
+    empty.empty?.should be_true
+
+    singleton = Regex::Syntax::Hir::LookSet.singleton(Regex::Syntax::Hir::Look::Kind::StartText)
+    singleton.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_true
+
+    both = singleton.union(
+      Regex::Syntax::Hir::LookSet.singleton(Regex::Syntax::Hir::Look::Kind::EndText)
+    )
+    removed = both.subtract(singleton)
+    removed.contains(Regex::Syntax::Hir::Look::Kind::StartText).should be_false
+    removed.contains(Regex::Syntax::Hir::Look::Kind::EndText).should be_true
+  end
+
+  it "exposes class helper operations like Rust" do
+    bytes = Regex::Syntax::Hir::CharClass.new(false, [1_u8..3_u8])
+    bytes.push(5_u8..5_u8)
+    bytes.ranges.should eq([1_u8..3_u8, 5_u8..5_u8])
+    bytes.union(Regex::Syntax::Hir::CharClass.new(false, [3_u8..6_u8]))
+    bytes.ranges.should eq([1_u8..6_u8])
+    bytes.difference(Regex::Syntax::Hir::CharClass.new(false, [2_u8..4_u8]))
+    bytes.ranges.should eq([1_u8..1_u8, 5_u8..6_u8])
+    bytes.symmetric_difference(Regex::Syntax::Hir::CharClass.new(false, [1_u8..1_u8]))
+    bytes.ranges.should eq([5_u8..6_u8])
+    bytes.to_unicode_class.should_not be_nil
+    bytes.try_case_fold_simple.should be_a(Regex::Syntax::Hir::CharClass)
+
+    unicode = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x63_u32])
+    unicode.push(0x65_u32..0x65_u32)
+    unicode.ranges.should eq([0x61_u32..0x63_u32, 0x65_u32..0x65_u32])
+    unicode.union(Regex::Syntax::Hir::UnicodeClass.new(false, [0x63_u32..0x66_u32]))
+    unicode.ranges.should eq([0x61_u32..0x66_u32])
+    unicode.difference(Regex::Syntax::Hir::UnicodeClass.new(false, [0x62_u32..0x64_u32]))
+    unicode.ranges.should eq([0x61_u32..0x61_u32, 0x65_u32..0x66_u32])
+    unicode.symmetric_difference(Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x61_u32]))
+    unicode.ranges.should eq([0x65_u32..0x66_u32])
+    unicode.to_byte_class.should_not be_nil
+    unicode.try_case_fold_simple.should be_a(Regex::Syntax::Hir::UnicodeClass)
+  end
+
+  it "exposes repetition replacement helpers like Rust" do
+    rep = Regex::Syntax::Hir::Repetition.new(
+      Regex::Syntax::Hir::Literal.new("a".to_slice),
+      1_u32,
+      3_u32,
+      greedy: false
+    )
+    replaced = rep.with(Regex::Syntax::Hir::Literal.new("b".to_slice))
+    String.new(replaced.sub.as(Regex::Syntax::Hir::Literal).bytes).should eq("b")
+    replaced.min.should eq(1_u32)
+    replaced.max.should eq(3_u32)
+    replaced.greedy?.should be_false
+  end
+
   it "routes Parser through the same AST-to-HIR pipeline as Regex::Syntax.parse" do
     parser_hir = Regex::Syntax::Parser.new.parse("[[:alpha:]&&a-z]")
     api_hir = Regex::Syntax.parse("[[:alpha:]&&a-z]")

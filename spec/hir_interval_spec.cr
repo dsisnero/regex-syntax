@@ -18,6 +18,17 @@ describe Regex::Syntax::Hir::IntervalSet do
     Regex::Syntax::Hir::IntervalSet(UInt8).new([1_u8..5_u8, 10_u8..12_u8]).symmetric_difference!(right).intervals.should eq([1_u8..2_u8, 5_u8..5_u8, 8_u8..9_u8, 11_u8..12_u8])
   end
 
+  it "exposes non-mutating set operations like Rust" do
+    left = Regex::Syntax::Hir::IntervalSet(UInt8).new([1_u8..5_u8, 10_u8..12_u8])
+    right = Regex::Syntax::Hir::IntervalSet(UInt8).new([3_u8..4_u8, 8_u8..10_u8])
+
+    left.union(right).intervals.should eq([1_u8..5_u8, 8_u8..12_u8])
+    left.intersect(right).intervals.should eq([3_u8..4_u8, 10_u8..10_u8])
+    left.difference(right).intervals.should eq([1_u8..2_u8, 5_u8..5_u8, 11_u8..12_u8])
+    left.symmetric_difference(right).intervals.should eq([1_u8..2_u8, 5_u8..5_u8, 8_u8..9_u8, 11_u8..12_u8])
+    left.intervals.should eq([1_u8..5_u8, 10_u8..12_u8])
+  end
+
   it "supports negation and push for byte intervals" do
     set = Regex::Syntax::Hir::IntervalSet(UInt8).new
     set.push(1_u8..3_u8).push(5_u8..5_u8)
@@ -25,6 +36,19 @@ describe Regex::Syntax::Hir::IntervalSet do
 
     set.negate!
     set.intervals.should eq([0_u8..0_u8, 4_u8..4_u8, 6_u8..255_u8])
+  end
+
+  it "exposes non-mutating negate and case folding like Rust" do
+    set = Regex::Syntax::Hir::IntervalSet(UInt8).new([0_u8..0_u8, 2_u8..3_u8])
+    negated = set.negate
+    negated.intervals.should eq([1_u8..1_u8, 4_u8..255_u8])
+    set.intervals.should eq([0_u8..0_u8, 2_u8..3_u8])
+
+    unicode = Regex::Syntax::Hir::IntervalSet(UInt32).new([0x61_u32..0x61_u32])
+    folded = unicode.case_fold_simple
+    folded.intervals.should contain(0x41_u32..0x41_u32)
+    folded.intervals.should contain(0x61_u32..0x61_u32)
+    unicode.intervals.should eq([0x61_u32..0x61_u32])
   end
 
   it "supports unicode interval operations and case folding" do

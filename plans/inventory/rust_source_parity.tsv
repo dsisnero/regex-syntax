@@ -115,17 +115,17 @@ src/ast/visitor.rs::trait::Visitor	partial	src/regex/syntax/ast_visitor.cr;spec/
 src/either.rs::enum::Either	not_applicable	-	Rust's internal Either helper is not needed in the Crystal port because the corresponding surfaces are modeled with direct unions, overloads, and concrete node classes instead of a shared sum helper enum.
 src/error.rs::enum::Error	done	src/regex/syntax/error.cr;spec/error_spec.cr	Crystal now exposes the dedicated structured error surface for parse and translate failures; the AST/HIR subclass split is an intentional API shaping difference rather than missing error behavior.
 src/error.rs::struct::Formatter	done	src/regex/syntax/error.cr;spec/error_spec.cr	Dedicated shared formatter now renders parser and translator errors with exact single-line, multiline, auxiliary-span, InvalidUtf8, and InvalidLineTerminator coverage.
-src/hir/interval.rs::func::case_fold_simple	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	Dedicated Crystal interval-set module now exposes in-place simple case folding over byte and Unicode interval domains by delegating to the verified interval algebra
-src/hir/interval.rs::func::difference	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#difference! now exists with direct byte interval behavior coverage
-src/hir/interval.rs::func::intersect	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#intersect! now exists with direct byte and Unicode interval behavior coverage
-src/hir/interval.rs::func::intervals	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#intervals now exposes canonicalized intervals directly
-src/hir/interval.rs::func::iter	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#iter and IntervalSetIter now exist with direct iteration coverage
-src/hir/interval.rs::func::negate	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#negate! now exists with byte-domain complement coverage
-src/hir/interval.rs::func::push	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#push now exists with canonicalization coverage
-src/hir/interval.rs::func::symmetric_difference	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#symmetric_difference! now exists with direct byte interval behavior coverage
-src/hir/interval.rs::func::union	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#union! now exists with direct byte interval behavior coverage
-src/hir/interval.rs::struct::IntervalSet	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	Dedicated Crystal generic interval-set wrapper now exists over the verified interval operations
-src/hir/interval.rs::struct::IntervalSetIter	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	Dedicated Crystal interval iterator now exists
+src/hir/interval.rs::func::case_fold_simple	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet now exposes vendored non-mutating and mutating simple case-folding helpers with direct byte and Unicode coverage.
+src/hir/interval.rs::func::difference	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet now exposes vendored non-mutating and mutating difference helpers with direct coverage.
+src/hir/interval.rs::func::intersect	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet now exposes vendored non-mutating and mutating intersection helpers with direct byte and Unicode coverage.
+src/hir/interval.rs::func::intervals	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet exposes canonicalized intervals directly with public API coverage.
+src/hir/interval.rs::func::iter	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#iter and IntervalSetIter exist with direct iteration coverage.
+src/hir/interval.rs::func::negate	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet now exposes vendored non-mutating and mutating negate helpers with direct complement coverage.
+src/hir/interval.rs::func::push	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet#push exists with direct canonicalization coverage.
+src/hir/interval.rs::func::symmetric_difference	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet now exposes vendored non-mutating and mutating symmetric-difference helpers with direct coverage.
+src/hir/interval.rs::func::union	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	IntervalSet now exposes vendored non-mutating and mutating union helpers with direct coverage.
+src/hir/interval.rs::struct::IntervalSet	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	Dedicated Crystal generic IntervalSet wrapper exists with direct constructor and operation coverage.
+src/hir/interval.rs::struct::IntervalSetIter	done	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	Dedicated Crystal IntervalSetIter exists with direct iteration coverage.
 src/hir/interval.rs::trait::Bound	partial	src/regex/syntax/hir_interval.cr	Crystal uses typed generic specializations over UInt8 and UInt32 instead of a public Bound trait
 src/hir/interval.rs::trait::Interval	partial	src/regex/syntax/hir_interval.cr	Crystal uses typed generic specializations over canonical Range(UInt8, UInt8) and Range(UInt32, UInt32) instead of a public Interval trait
 src/hir/literal.rs::enum::ExtractKind	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind now exposes vendored prefix/suffix predicate helpers, including Rust-style `is_prefix` and `is_suffix`, with direct API coverage.
@@ -180,8 +180,8 @@ src/hir/literal.rs::struct::Extractor	done	src/regex/syntax/literal.cr;spec/hir_
 src/hir/literal.rs::struct::Literal	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal exists as a dedicated Crystal literal-extraction value object with direct API coverage.
 src/hir/literal.rs::struct::Seq	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exists as a dedicated Crystal literal-extraction sequence wrapper with direct API coverage.
 src/hir/mod.rs::enum::Class	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Crystal now exposes a dedicated HIR::Class dispatcher wrapper over byte and Unicode classes with direct API coverage.
-src/hir/mod.rs::enum::Dot	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Dot exists as a dedicated Crystal enum with direct constructor coverage.
-src/hir/mod.rs::enum::ErrorKind	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::ErrorKind now exists with translator error coverage.
+src/hir/mod.rs::enum::Dot	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Dot exists as a dedicated Crystal enum with direct constructor coverage.
+src/hir/mod.rs::enum::ErrorKind	done	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::ErrorKind now exists with direct translator error coverage.
 src/hir/mod.rs::enum::HirKind	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Crystal models HirKind through the concrete Node class hierarchy exposed by Hir#kind and Hir#into_kind.
 src/hir/mod.rs::enum::Look	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Look::Kind exposes reversed, as_repr, from_repr, and as_char through the public Crystal enum surface with direct coverage.
 src/hir/mod.rs::func::alternation	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::Hir.alternation now accepts HIR wrapper inputs directly in addition to preserving Rust-style flattening and simplification.
@@ -199,37 +199,37 @@ src/hir/mod.rs::func::contains_word	done	src/regex/syntax/hir.cr;spec/regex-synt
 src/hir/mod.rs::func::contains_word_ascii	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes contains_word_ascii with direct API coverage.
 src/hir/mod.rs::func::contains_word_unicode	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes contains_word_unicode with direct API coverage.
 src/hir/mod.rs::func::difference	partial	src/regex/syntax/hir.cr	Byte and Unicode class nodes expose in-place difference helpers on the direct Crystal class nodes
-src/hir/mod.rs::func::dot	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes direct dot construction on the public HIR wrapper
-src/hir/mod.rs::func::empty	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes empty and normalizes empty literals to the empty HIR
+src/hir/mod.rs::func::dot	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir.dot and Hir::Hir.dot expose direct dot construction with public coverage.
+src/hir/mod.rs::func::empty	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir.empty exposes the vendored empty constructor with direct coverage.
 src/hir/mod.rs::func::end	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassBytesRange and ClassUnicodeRange now expose direct end helpers.
-src/hir/mod.rs::func::explicit_captures_len	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes explicit_captures_len on the public HIR wrapper
-src/hir/mod.rs::func::fail	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes fail via an explicit empty byte-class HIR constructor
+src/hir/mod.rs::func::explicit_captures_len	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes explicit_captures_len on the public wrapper with direct coverage.
+src/hir/mod.rs::func::fail	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir.fail exposes the vendored fail constructor with direct coverage.
 src/hir/mod.rs::func::full	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes full with direct API coverage.
 src/hir/mod.rs::func::insert	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes insert plus exact set_insert compatibility aliases with direct API coverage.
 src/hir/mod.rs::func::intersect	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes intersect plus exact set_intersect compatibility aliases with direct API coverage.
-src/hir/mod.rs::func::into_kind	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes into_kind as a public node introspection helper
+src/hir/mod.rs::func::into_kind	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes into_kind as a public node introspection helper with direct coverage.
 src/hir/mod.rs::func::is_alternation_literal	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes alternation_literal? on the public HIR wrapper
 src/hir/mod.rs::func::is_ascii	partial	src/regex/syntax/hir.cr	Byte and Unicode class nodes expose Crystal-style ascii? predicates on the direct class nodes
-src/hir/mod.rs::func::is_empty	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::LookSet exposes empty? on the public Crystal bitset wrapper
-src/hir/mod.rs::func::is_literal	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes literal? on the public HIR wrapper
-src/hir/mod.rs::func::is_utf8	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes utf8? on the public HIR wrapper
+src/hir/mod.rs::func::is_empty	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet exposes the vendored empty predicate with direct coverage.
+src/hir/mod.rs::func::is_literal	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes literal? on the public wrapper with direct coverage.
+src/hir/mod.rs::func::is_utf8	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes utf8? on the public wrapper with direct coverage.
 src/hir/mod.rs::func::iter	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet now exposes an explicit LookSetIter compatibility wrapper in addition to Enumerable iteration.
-src/hir/mod.rs::func::kind	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes kind as a public node introspection helper
+src/hir/mod.rs::func::kind	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes kind as a public node introspection helper with direct coverage.
 src/hir/mod.rs::func::len	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes len on the public Crystal bitset wrapper with direct coverage.
 src/hir/mod.rs::func::literal	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::Hir exposes literal for both raw bytes and Literal wrapper inputs and still normalizes empty literals to empty HIR.
-src/hir/mod.rs::func::look	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes direct look construction on the public HIR wrapper
-src/hir/mod.rs::func::look_set	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes look_set via a Crystal LookSet bitset wrapper
-src/hir/mod.rs::func::look_set_prefix	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes look_set_prefix via a Crystal LookSet bitset wrapper
-src/hir/mod.rs::func::look_set_prefix_any	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes look_set_prefix_any via a Crystal LookSet bitset wrapper
-src/hir/mod.rs::func::look_set_suffix	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes look_set_suffix via a Crystal LookSet bitset wrapper
-src/hir/mod.rs::func::look_set_suffix_any	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes look_set_suffix_any via a Crystal LookSet bitset wrapper
-src/hir/mod.rs::func::maximum_len	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes maximum_len on the public HIR wrapper
-src/hir/mod.rs::func::memory_usage	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Properties exposes memory_usage through a dedicated Crystal properties wrapper
-src/hir/mod.rs::func::minimum_len	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes minimum_len on the public HIR wrapper
+src/hir/mod.rs::func::look	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir.look exposes direct look construction with public coverage.
+src/hir/mod.rs::func::look_set	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set through the public LookSet wrapper with direct coverage.
+src/hir/mod.rs::func::look_set_prefix	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set_prefix through the public LookSet wrapper with direct coverage.
+src/hir/mod.rs::func::look_set_prefix_any	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set_prefix_any through the public LookSet wrapper with direct coverage.
+src/hir/mod.rs::func::look_set_suffix	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set_suffix through the public LookSet wrapper with direct coverage.
+src/hir/mod.rs::func::look_set_suffix_any	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set_suffix_any through the public LookSet wrapper with direct coverage.
+src/hir/mod.rs::func::maximum_len	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes maximum_len on the public wrapper with direct coverage.
+src/hir/mod.rs::func::memory_usage	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exposes memory_usage through the dedicated Crystal wrapper with direct coverage.
+src/hir/mod.rs::func::minimum_len	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes minimum_len on the public wrapper with direct coverage.
 src/hir/mod.rs::func::negate	partial	src/regex/syntax/hir.cr	Byte and Unicode class nodes expose in-place negate helpers on the direct Crystal class nodes
 src/hir/mod.rs::func::new	partial	src/regex/syntax/hir.cr;src/regex/syntax/error.cr	Public Crystal constructors now exist for Hir, Properties, LookSet, Repetition, Capture, and structured Hir::Error.
-src/hir/mod.rs::func::pattern	partial	src/regex/syntax/error.cr	Structured Hir::Error exposes the original pattern directly.
-src/hir/mod.rs::func::properties	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes properties via a dedicated Crystal properties wrapper
+src/hir/mod.rs::func::pattern	done	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::Error exposes the original pattern directly with translator error coverage.
+src/hir/mod.rs::func::properties	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes properties via a dedicated Crystal wrapper with direct coverage.
 src/hir/mod.rs::func::push	partial	src/regex/syntax/hir.cr	Byte and Unicode class nodes expose push helpers on the direct Crystal class nodes
 src/hir/mod.rs::func::ranges	partial	src/regex/syntax/hir.cr	Byte and Unicode class nodes expose ranges views on the direct Crystal class nodes
 src/hir/mod.rs::func::read_repr	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes native-endian read_repr with direct API coverage.
@@ -241,29 +241,29 @@ src/hir/mod.rs::func::set_intersect	done	src/regex/syntax/hir.cr;spec/regex-synt
 src/hir/mod.rs::func::set_remove	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet now exposes the exact Rust-shaped set_remove mutator name.
 src/hir/mod.rs::func::set_subtract	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet now exposes the exact Rust-shaped set_subtract mutator name.
 src/hir/mod.rs::func::set_union	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet now exposes the exact Rust-shaped set_union mutator name.
-src/hir/mod.rs::func::singleton	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet.singleton now exists with direct API coverage.
-src/hir/mod.rs::func::span	partial	src/regex/syntax/error.cr	Structured Hir::Error exposes span directly.
+src/hir/mod.rs::func::singleton	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet.singleton now exists with direct API coverage.
+src/hir/mod.rs::func::span	done	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::Error exposes span directly with translator error coverage.
 src/hir/mod.rs::func::start	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassBytesRange and ClassUnicodeRange now expose direct start helpers.
-src/hir/mod.rs::func::static_explicit_captures_len	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::Hir exposes static_explicit_captures_len on the public HIR wrapper
+src/hir/mod.rs::func::static_explicit_captures_len	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes static_explicit_captures_len on the public wrapper with direct coverage.
 src/hir/mod.rs::func::subs	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	HIR nodes now expose subs on the Crystal node hierarchy for capture, repetition, concat, and alternation.
-src/hir/mod.rs::func::subtract	partial	src/regex/syntax/hir.cr	Regex::Syntax::Hir::LookSet exposes subtract plus Crystal-style mutating bang helpers on the public bitset wrapper
+src/hir/mod.rs::func::subtract	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet exposes subtract and subtract! on the public bitset wrapper with direct coverage.
 src/hir/mod.rs::func::symmetric_difference	partial	src/regex/syntax/hir.cr	Byte and Unicode class nodes expose in-place symmetric_difference helpers on the direct Crystal class nodes.
 src/hir/mod.rs::func::to_byte_class	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	UnicodeClass exposes to_byte_class on the public Crystal HIR API.
 src/hir/mod.rs::func::to_unicode_class	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	CharClass exposes to_unicode_class on the public Crystal HIR API.
 src/hir/mod.rs::func::try_case_fold_simple	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Byte and Unicode class nodes now expose try_case_fold_simple on the public Crystal HIR API.
 src/hir/mod.rs::func::union	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Byte and Unicode class nodes expose in-place union helpers on the direct Crystal class nodes, and the public Properties wrapper now exposes Rust-style Properties.union semantics with length/lookset aggregation coverage.
-src/hir/mod.rs::func::with	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition now exposes with for substituting the repeated child while preserving bounds and greediness.
+src/hir/mod.rs::func::with	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition now exposes with for substituting the repeated child while preserving bounds and greediness.
 src/hir/mod.rs::func::write_repr	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Regex::Syntax::Hir::LookSet exposes native-endian write_repr with direct API coverage.
 src/hir/mod.rs::method::Class.case_fold_simple	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Crystal now exposes a dedicated HIR::Class dispatcher for case folding and related class-wide helpers.
 src/hir/mod.rs::method::ClassBytesRange.new	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassBytesRange now exists as a dedicated wrapper struct with canonicalizing constructor coverage.
 src/hir/mod.rs::method::ClassUnicodeRange.new	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassUnicodeRange now exists as a dedicated wrapper struct with canonicalizing constructor coverage.
-src/hir/mod.rs::method::Error.kind	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::Error exposes kind directly with translator error coverage.
-src/hir/mod.rs::method::Hir.empty	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir.empty now exists with direct constructor coverage.
-src/hir/mod.rs::method::Hir.kind	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir.kind now exists with direct introspection coverage.
+src/hir/mod.rs::method::Error.kind	done	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::Error exposes kind directly with translator error coverage.
+src/hir/mod.rs::method::Hir.empty	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir.empty now exists with direct constructor coverage.
+src/hir/mod.rs::method::Hir.kind	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir.kind now exists with direct introspection coverage.
 src/hir/mod.rs::method::HirKind.subs	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	HIR nodes now expose subs on the Crystal node hierarchy for capture, repetition, concat, and alternation.
-src/hir/mod.rs::method::LookSet.empty	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet.empty now exists with direct API coverage.
-src/hir/mod.rs::method::Properties.minimum_len	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exposes minimum_len directly on the public Crystal wrapper.
-src/hir/mod.rs::method::Repetition.with	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition.with now exists with direct API coverage.
+src/hir/mod.rs::method::LookSet.empty	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet.empty now exists with direct API coverage.
+src/hir/mod.rs::method::Properties.minimum_len	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exposes minimum_len directly on the public Crystal wrapper.
+src/hir/mod.rs::method::Repetition.with	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition.with now exists with direct API coverage.
 src/hir/mod.rs::struct::Capture	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Capture exists as a concrete Crystal HIR node with constructor and subs coverage.
 src/hir/mod.rs::struct::ClassBytes	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	CharClass is the Crystal equivalent of Rust's ClassBytes and exposes the corresponding helper surface directly.
 src/hir/mod.rs::struct::ClassBytesIter	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassBytesIter now exists as a dedicated wrapper iterator over byte-class ranges.
@@ -271,13 +271,13 @@ src/hir/mod.rs::struct::ClassBytesRange	done	src/regex/syntax/hir.cr;spec/regex-
 src/hir/mod.rs::struct::ClassUnicode	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	UnicodeClass exists as the Crystal equivalent of Rust's ClassUnicode and exposes the corresponding helper surface directly.
 src/hir/mod.rs::struct::ClassUnicodeIter	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassUnicodeIter now exists as a dedicated wrapper iterator over Unicode-class ranges.
 src/hir/mod.rs::struct::ClassUnicodeRange	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassUnicodeRange now exists as a dedicated wrapper struct with start/end/len coverage.
-src/hir/mod.rs::struct::Error	partial	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::Error exists as a dedicated Crystal parse error type.
-src/hir/mod.rs::struct::Hir	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir exists as the public Crystal HIR wrapper with smart constructors and property analysis.
-src/hir/mod.rs::struct::Literal	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Literal exists as a concrete Crystal HIR node.
-src/hir/mod.rs::struct::LookSet	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet exists as a dedicated Crystal bitset wrapper with iteration and constructor coverage.
+src/hir/mod.rs::struct::Error	done	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::Error exists as a dedicated Crystal parse error type.
+src/hir/mod.rs::struct::Hir	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir exists as the public Crystal HIR wrapper with smart constructors and property analysis.
+src/hir/mod.rs::struct::Literal	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Literal exists as a concrete Crystal HIR node.
+src/hir/mod.rs::struct::LookSet	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet exists as a dedicated Crystal bitset wrapper with iteration and constructor coverage.
 src/hir/mod.rs::struct::LookSetIter	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSetIter now exists as a dedicated compatibility iterator in addition to Enumerable traversal.
-src/hir/mod.rs::struct::Properties	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exists as a dedicated Crystal wrapper over precomputed HIR analysis.
-src/hir/mod.rs::struct::Repetition	partial	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition exists as a concrete Crystal HIR node with constructor, subs, and replacement-helper coverage.
+src/hir/mod.rs::struct::Properties	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exists as a dedicated Crystal wrapper over precomputed HIR analysis.
+src/hir/mod.rs::struct::Repetition	done	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition exists as a concrete Crystal HIR node with constructor, subs, and replacement-helper coverage.
 src/hir/print.rs::func::new	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer constructor surface exists and is covered directly.
 src/hir/print.rs::method::Printer.new	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Printer.new and print(Hir, IO) exist through the dedicated Crystal HIR printer.
 src/hir/print.rs::struct::Printer	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer type exists with direct parity coverage.
