@@ -281,21 +281,21 @@ src/hir/mod.rs::struct::Repetition	done	src/regex/syntax/hir.cr;spec/regex-synta
 src/hir/print.rs::func::new	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer constructor surface exists and is covered directly.
 src/hir/print.rs::method::Printer.new	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Printer.new and print(Hir, IO) exist through the dedicated Crystal HIR printer.
 src/hir/print.rs::struct::Printer	done	src/regex/syntax/hir_print.cr;spec/hir_print_spec.cr	Dedicated Crystal HIR printer type exists with direct parity coverage.
-src/hir/translate.rs::func::build	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.build over the direct AST-to-HIR translator surface.
-src/hir/translate.rs::func::case_insensitive	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.case_insensitive over the direct translator surface.
-src/hir/translate.rs::func::crlf	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.crlf over the direct translator surface.
-src/hir/translate.rs::func::dot_matches_new_line	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.dot_matches_new_line over the direct translator surface.
-src/hir/translate.rs::func::line_terminator	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.line_terminator over the direct translator surface.
-src/hir/translate.rs::func::multi_line	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.multi_line over the direct translator surface.
-src/hir/translate.rs::func::new	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes Translator.new and TranslatorBuilder.new over the direct translator surface.
-src/hir/translate.rs::func::swap_greed	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.swap_greed over the direct translator surface.
-src/hir/translate.rs::func::translate	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Translator.translate now exists with direct builder-based coverage over AST nodes.
-src/hir/translate.rs::func::unicode	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.unicode over the direct translator surface.
-src/hir/translate.rs::func::utf8	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now exposes TranslatorBuilder.utf8 over the direct translator surface.
-src/hir/translate.rs::method::Translator.new	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Translator.new now exists with direct builder-based coverage.
-src/hir/translate.rs::method::TranslatorBuilder.new	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.new now exists with direct builder-based coverage.
-src/hir/translate.rs::struct::Translator	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now defines a dedicated direct Translator type for AST-to-HIR lowering.
-src/hir/translate.rs::struct::TranslatorBuilder	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now defines a dedicated TranslatorBuilder with the broad vendored option surface.
+src/hir/translate.rs::func::build	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.build is exposed with direct builder-based AST-to-HIR coverage.
+src/hir/translate.rs::func::case_insensitive	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.case_insensitive is exposed with direct builder-based coverage.
+src/hir/translate.rs::func::crlf	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.crlf is exposed with direct builder-based coverage.
+src/hir/translate.rs::func::dot_matches_new_line	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.dot_matches_new_line is exposed with direct builder-based coverage.
+src/hir/translate.rs::func::line_terminator	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.line_terminator is exposed with direct builder-based coverage.
+src/hir/translate.rs::func::multi_line	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.multi_line is exposed with direct builder-based coverage.
+src/hir/translate.rs::func::new	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Translator and TranslatorBuilder constructor surface is exposed with direct coverage.
+src/hir/translate.rs::func::swap_greed	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.swap_greed is exposed with direct builder-based coverage.
+src/hir/translate.rs::func::translate	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Translator.translate is exposed with direct AST-node coverage from both direct and builder-built translators.
+src/hir/translate.rs::func::unicode	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.unicode is exposed with direct builder-based coverage.
+src/hir/translate.rs::func::utf8	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.utf8 is exposed with direct builder-based coverage.
+src/hir/translate.rs::method::Translator.new	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Translator.new is exposed with direct constructor coverage.
+src/hir/translate.rs::method::TranslatorBuilder.new	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	TranslatorBuilder.new is exposed with direct constructor coverage.
+src/hir/translate.rs::struct::Translator	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal defines a dedicated direct Translator type for AST-to-HIR lowering with direct public coverage.
+src/hir/translate.rs::struct::TranslatorBuilder	done	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal defines a dedicated TranslatorBuilder with the broad vendored option surface and direct public coverage.
 src/hir/visitor.rs::trait::Visitor	partial	src/regex/syntax/hir_visitor.cr;spec/hir_visitor_spec.cr	Dedicated Crystal HIR visitor mixin and constant-stack Hir.visit traversal now exist with depth-first hook-order coverage for concat, alternation, capture, repetition, and literal walks plus explicit failure-propagation coverage via raising visitors.
 src/lib.rs::func::escape	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax exposes vendored top-level `escape` with direct public helper coverage.
 src/lib.rs::func::escape_into	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax exposes vendored top-level `escape_into` writing to an IO with direct public helper coverage.
