@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `616 done`, `1 not_applicable`, `261 partial`
+- `rust_source_parity.tsv`: `667 done`, `1 not_applicable`, `210 partial`
 
 Interpretation:
 
@@ -105,8 +105,8 @@ Interpretation:
 - [x] Public parser, AST, HIR, and helper APIs are closed as a feature bucket.
   The public surface now includes the staged parser/builders, top-level helper
   APIs, HIR properties and look-set analysis, class helpers, literal-extractor
-  APIs, and the direct AST/HIR helper surface needed for vendored-style
-  behavioral coverage.
+  APIs including the vendored `src/hir/literal.rs` helper surface, and the
+  direct AST/HIR helper surface needed for vendored-style behavioral coverage.
 
 ### Diagnostics and Round-Trip Closure
 

@@ -10,6 +10,17 @@ module Regex::Syntax::Hir::LiteralExtraction
     def suffix? : Bool
       self == Suffix
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_prefix : Bool
+      prefix?
+    end
+
+    # ameba:disable Naming/PredicateName
+    def is_suffix : Bool
+      suffix?
+    end
+    # ameba:enable Naming/PredicateName
   end
 
   class Literal

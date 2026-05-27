@@ -170,57 +170,57 @@ src/hir/interval.rs::struct::IntervalSet	struct	partial	src/regex/syntax/hir_int
 src/hir/interval.rs::struct::IntervalSetIter	struct	partial	src/regex/syntax/hir_interval.cr;spec/hir_interval_spec.cr	Dedicated Crystal interval iterator now exists
 src/hir/interval.rs::trait::Bound	trait	partial	src/regex/syntax/hir_interval.cr	Crystal uses typed generic specializations over UInt8 and UInt32 instead of a public Bound trait
 src/hir/interval.rs::trait::Interval	trait	partial	src/regex/syntax/hir_interval.cr	Crystal uses typed generic specializations over canonical Range(UInt8, UInt8) and Range(UInt32, UInt32) instead of a public Interval trait
-src/hir/literal.rs::enum::ExtractKind	enum	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind exists as a dedicated Crystal enum with prefix/suffix predicate coverage; Crystal keeps the idiomatic `prefix?`/`suffix?` names instead of Rust's `is_prefix`/`is_suffix`.
-src/hir/literal.rs::func::as_bytes	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal now exposes as_bytes on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::cross_forward	func	partial	src/regex/syntax/literal.cr,plans/inventory/rust_test_parity.tsv	Crystal Seq now implements cross-forward composition with upstream-shaped literal extraction coverage, but the broader source inventory still needs more method-by-method reconciliation.
-src/hir/literal.rs::func::cross_reverse	func	partial	src/regex/syntax/literal.cr,plans/inventory/rust_test_parity.tsv	Crystal Seq now implements cross-reverse suffix composition with upstream-shaped literal extraction coverage, but the broader source inventory still needs more method-by-method reconciliation.
-src/hir/literal.rs::func::dedup	func	partial	src/regex/syntax/literal.cr	Seq exposes dedup directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::empty	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq.empty exists with direct API coverage.
-src/hir/literal.rs::func::extend	func	partial	src/regex/syntax/literal.cr	Literal exposes extend directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::extract	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes extract on Hir and Node inputs through the public Crystal literal-extraction API.
-src/hir/literal.rs::func::infinite	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq.infinite exists with direct API coverage.
-src/hir/literal.rs::func::into_bytes	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal now exposes into_bytes on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::is_empty	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose empty? predicates directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::is_exact	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose exact? predicates directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::is_finite	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes finite? directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::is_inexact	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes inexact? directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::is_prefix	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind exposes the equivalent Crystal predicate `prefix?` instead of Rust's `is_prefix`.
-src/hir/literal.rs::func::is_suffix	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind exposes the equivalent Crystal predicate `suffix?` instead of Rust's `is_suffix`.
-src/hir/literal.rs::func::keep_first_bytes	func	partial	src/regex/syntax/literal.cr	Literal and Seq expose keep_first_bytes directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::keep_last_bytes	func	partial	src/regex/syntax/literal.cr	Literal and Seq expose keep_last_bytes directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::kind	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes kind as a builder-style setter over ExtractKind on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::len	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose len directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::limit_class	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes limit_class as a builder-style setter on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::limit_literal_len	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes limit_literal_len as a builder-style setter on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::limit_repeat	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes limit_repeat as a builder-style setter on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::limit_total	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes limit_total as a builder-style setter on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::literals	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes literals directly through a public getter on the Crystal literal-extraction API.
-src/hir/literal.rs::func::longest_common_prefix	func	partial	src/regex/syntax/literal.cr	Seq exposes longest_common_prefix directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::longest_common_suffix	func	partial	src/regex/syntax/literal.cr	Seq exposes longest_common_suffix directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::make_inexact	func	partial	src/regex/syntax/literal.cr	Literal and Seq expose make_inexact directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::make_infinite	func	partial	src/regex/syntax/literal.cr	Seq exposes make_infinite directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::max_cross_len	func	partial	src/regex/syntax/literal.cr	Seq exposes max_cross_len directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::max_literal_len	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes max_literal_len directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::max_union_len	func	partial	src/regex/syntax/literal.cr	Seq exposes max_union_len directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::min_literal_len	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes min_literal_len directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::minimize_by_preference	func	partial	src/regex/syntax/literal.cr	Seq exposes minimize_by_preference directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::new	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Public Crystal constructors now exist for Literal, Seq, and Extractor across the literal-extraction module.
-src/hir/literal.rs::func::optimize_for_prefix_by_preference	func	partial	src/regex/syntax/literal.cr	Seq exposes optimize_for_prefix_by_preference directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::optimize_for_suffix_by_preference	func	partial	src/regex/syntax/literal.cr	Seq exposes optimize_for_suffix_by_preference directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::push	func	partial	src/regex/syntax/literal.cr	Seq exposes push directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::rank	func	partial	src/regex/syntax/rank.cr	Crystal exposes the vendored rank table through Regex::Syntax::Hir::LiteralExtraction.rank.
-src/hir/literal.rs::func::reverse	func	partial	src/regex/syntax/literal.cr	Literal exposes reverse directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::reverse_literals	func	partial	src/regex/syntax/literal.cr	Seq exposes reverse_literals directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::singleton	func	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq.singleton exists with direct API coverage.
-src/hir/literal.rs::func::sort	func	partial	src/regex/syntax/literal.cr	Seq exposes sort directly on the public Crystal literal-extraction API.
-src/hir/literal.rs::func::union	func	partial	src/regex/syntax/literal.cr,plans/inventory/rust_test_parity.tsv	Crystal Seq now implements union semantics used by extractor parity coverage; full source inventory reconciliation is still pending.
-src/hir/literal.rs::func::union_into_empty	func	partial	src/regex/syntax/literal.cr,spec/hir_literal_spec.cr	Crystal Seq now implements Rust-style splice-into-first-empty behavior, including drain/no-splice and infinite-infection cases from the upstream docs.
-src/hir/literal.rs::method::ExtractKind.is_prefix	method	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind maps this Rust helper to the idiomatic Crystal predicate `prefix?`.
-src/hir/literal.rs::method::Extractor.new	method	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor.new now exists with direct API coverage.
-src/hir/literal.rs::method::Seq.empty	method	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq.empty now exists with direct API coverage.
-src/hir/literal.rs::struct::Extractor	struct	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exists as a dedicated Crystal literal-extraction builder with configurable limits and extract surface.
-src/hir/literal.rs::struct::Literal	struct	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal exists as a dedicated Crystal literal-extraction value object with byte and exactness helpers.
-src/hir/literal.rs::struct::Seq	struct	partial	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exists as a dedicated Crystal literal-extraction sequence wrapper with finite/infinite constructors and predicate helpers.
+src/hir/literal.rs::enum::ExtractKind	enum	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind now exposes vendored prefix/suffix predicate helpers, including Rust-style `is_prefix` and `is_suffix`, with direct API coverage.
+src/hir/literal.rs::func::as_bytes	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal exposes `as_bytes` directly with public API coverage.
+src/hir/literal.rs::func::cross_forward	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Seq exposes `cross_forward` directly with public API coverage and vendored extractor behavior coverage.
+src/hir/literal.rs::func::cross_reverse	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Seq exposes `cross_reverse` directly with public API coverage and vendored extractor behavior coverage.
+src/hir/literal.rs::func::dedup	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `dedup` directly with public API coverage.
+src/hir/literal.rs::func::empty	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `empty` directly with public API coverage.
+src/hir/literal.rs::func::extend	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal exposes `extend` directly with public API coverage.
+src/hir/literal.rs::func::extract	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Extractor exposes `extract` on `Hir` and `Node` inputs with direct API coverage and vendored extractor behavior coverage.
+src/hir/literal.rs::func::infinite	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `infinite` directly with public API coverage.
+src/hir/literal.rs::func::into_bytes	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal exposes `into_bytes` directly with public API coverage.
+src/hir/literal.rs::func::is_empty	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose the vendored empty predicates with direct API coverage.
+src/hir/literal.rs::func::is_exact	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose the vendored exactness predicates with direct API coverage.
+src/hir/literal.rs::func::is_finite	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes the vendored finite predicate with direct API coverage.
+src/hir/literal.rs::func::is_inexact	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes the vendored inexact predicate with direct API coverage.
+src/hir/literal.rs::func::is_prefix	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind exposes the vendored `is_prefix` helper with direct API coverage.
+src/hir/literal.rs::func::is_suffix	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind exposes the vendored `is_suffix` helper with direct API coverage.
+src/hir/literal.rs::func::keep_first_bytes	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose `keep_first_bytes` directly with public API coverage.
+src/hir/literal.rs::func::keep_last_bytes	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose `keep_last_bytes` directly with public API coverage.
+src/hir/literal.rs::func::kind	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes the vendored builder-style `kind` setter with direct API coverage.
+src/hir/literal.rs::func::len	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose `len` directly with public API coverage.
+src/hir/literal.rs::func::limit_class	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes the vendored `limit_class` setter with direct API coverage.
+src/hir/literal.rs::func::limit_literal_len	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes the vendored `limit_literal_len` setter with direct API coverage.
+src/hir/literal.rs::func::limit_repeat	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes the vendored `limit_repeat` setter with direct API coverage.
+src/hir/literal.rs::func::limit_total	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes the vendored `limit_total` setter with direct API coverage.
+src/hir/literal.rs::func::literals	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `literals` directly with public API coverage.
+src/hir/literal.rs::func::longest_common_prefix	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `longest_common_prefix` directly with public API coverage.
+src/hir/literal.rs::func::longest_common_suffix	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `longest_common_suffix` directly with public API coverage.
+src/hir/literal.rs::func::make_inexact	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal and Seq expose `make_inexact` directly with public API coverage.
+src/hir/literal.rs::func::make_infinite	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `make_infinite` directly with public API coverage.
+src/hir/literal.rs::func::max_cross_len	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `max_cross_len` directly with public API coverage.
+src/hir/literal.rs::func::max_literal_len	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `max_literal_len` directly with public API coverage.
+src/hir/literal.rs::func::max_union_len	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `max_union_len` directly with public API coverage.
+src/hir/literal.rs::func::min_literal_len	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `min_literal_len` directly with public API coverage.
+src/hir/literal.rs::func::minimize_by_preference	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Seq exposes `minimize_by_preference` directly with public API coverage and vendored optimizer behavior coverage.
+src/hir/literal.rs::func::new	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal, Seq, and Extractor expose public constructors with direct API coverage.
+src/hir/literal.rs::func::optimize_for_prefix_by_preference	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Seq exposes `optimize_for_prefix_by_preference` directly with public API coverage and vendored optimizer behavior coverage.
+src/hir/literal.rs::func::optimize_for_suffix_by_preference	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Seq exposes `optimize_for_suffix_by_preference` directly with public API coverage and vendored optimizer behavior coverage.
+src/hir/literal.rs::func::push	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `push` directly with public API coverage.
+src/hir/literal.rs::func::rank	func	done	src/regex/syntax/rank.cr;spec/hir_literal_api_spec.cr	Crystal exposes the vendored rank table through `Regex::Syntax::Hir::LiteralExtraction.rank` with direct API coverage.
+src/hir/literal.rs::func::reverse	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal exposes `reverse` directly with public API coverage.
+src/hir/literal.rs::func::reverse_literals	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `reverse_literals` directly with public API coverage.
+src/hir/literal.rs::func::singleton	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `singleton` directly with public API coverage.
+src/hir/literal.rs::func::sort	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `sort` directly with public API coverage.
+src/hir/literal.rs::func::union	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Seq exposes `union` directly with public API coverage and vendored extractor behavior coverage.
+src/hir/literal.rs::func::union_into_empty	func	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr;spec/hir_literal_spec.cr	Seq exposes `union_into_empty` directly with public API coverage and vendored splice/infinite behavior coverage.
+src/hir/literal.rs::method::ExtractKind.is_prefix	method	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	ExtractKind exposes the vendored `is_prefix` method with direct API coverage.
+src/hir/literal.rs::method::Extractor.new	method	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exposes `new` with direct API coverage.
+src/hir/literal.rs::method::Seq.empty	method	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exposes `empty` with direct API coverage.
+src/hir/literal.rs::struct::Extractor	struct	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Extractor exists as a dedicated Crystal literal-extraction builder with direct API coverage.
+src/hir/literal.rs::struct::Literal	struct	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Literal exists as a dedicated Crystal literal-extraction value object with direct API coverage.
+src/hir/literal.rs::struct::Seq	struct	done	src/regex/syntax/literal.cr;spec/hir_literal_api_spec.cr	Seq exists as a dedicated Crystal literal-extraction sequence wrapper with direct API coverage.
 src/hir/literal.rs::test::alternation	test	done	spec/hir_literal_spec.cr	Vendored alternation extraction behavior is covered directly, including exact, inexact, impossible, nested, and cartesian-product cases.
 src/hir/literal.rs::test::anything	test	done	spec/hir_literal_spec.cr	Vendored infinite-extraction behavior for dot and over-limit classes is covered directly across concatenation and alternation cases.
 src/hir/literal.rs::test::anything_small_limits	test	done	spec/hir_literal_spec.cr	Vendored small-limit extractor behavior is covered directly for nested counted repetition and total-limit overflow.
