@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `772 done`, `1 not_applicable`, `105 partial`
+- `rust_source_parity.tsv`: `788 done`, `1 not_applicable`, `89 partial`
 
 Interpretation:
 
@@ -78,6 +78,14 @@ Interpretation:
   `set_union` / `set_intersect` / `set_subtract` aliases, explicit `iter`
   wrappers, direct start/end/len range helpers, and HIR constructor overloads
   for `literal`, `concat`, and `alternation` on HIR wrapper values.
+
+- [x] HIR node and class compatibility aliases
+  The Crystal HIR now exposes more of vendored `src/hir/mod.rs` with the
+  Rust-facing names instead of only equivalent Crystal-native helpers:
+  explicit `HirKind`, `ClassBytes`, and `ClassUnicode` compatibility aliases,
+  direct `is_alternation_literal`, `is_ascii`, `is_utf8`, and `is_empty`
+  predicates, wrapper-range constructors and `push` overloads for byte and
+  Unicode classes, and direct coverage for those vendored names.
 
 ### Semantics Closure
 

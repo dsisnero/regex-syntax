@@ -1,4 +1,8 @@
 module Regex::Syntax::Hir
+  alias HirKind = Node
+  alias ClassBytes = CharClass
+  alias ClassUnicode = UnicodeClass
+
   module IntervalOps
     extend self
 
@@ -615,6 +619,13 @@ module Regex::Syntax::Hir
       end
     end
 
+    # ameba:disable Naming/PredicateName
+    def is_utf8 : Bool
+      utf8?
+    end
+
+    # ameba:enable Naming/PredicateName
+
     def minimum_len : Int32?
       case @kind
       when Kind::Unicode
@@ -671,6 +682,13 @@ module Regex::Syntax::Hir
         raise "unreachable"
       end
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_empty : Bool
+      empty?
+    end
+
+    # ameba:enable Naming/PredicateName
 
     def literal : Bytes?
       case @kind
@@ -787,6 +805,11 @@ module Regex::Syntax::Hir
       end
     end
 
+    def initialize(ranges : Enumerable(ClassBytesRange))
+      @intervals = IntervalOps.canonicalize(ranges.map(&.to_range).to_a)
+      @negated = false
+    end
+
     def complexity : Int32
       2
     end
@@ -805,6 +828,10 @@ module Regex::Syntax::Hir
       self
     end
 
+    def push(range : ClassBytesRange) : self
+      push(range.to_range)
+    end
+
     def ranges : Array(Range(UInt8, UInt8))
       @intervals
     end
@@ -817,6 +844,13 @@ module Regex::Syntax::Hir
       last = @intervals.last?
       last ? last.end <= 0x7F_u8 : true
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_ascii : Bool
+      ascii?
+    end
+
+    # ameba:enable Naming/PredicateName
 
     def minimum_len : Int32?
       @intervals.empty? ? nil : 1
@@ -917,6 +951,11 @@ module Regex::Syntax::Hir
       end
     end
 
+    def initialize(ranges : Enumerable(ClassUnicodeRange))
+      @intervals = IntervalOps.canonicalize(ranges.map(&.to_range).to_a)
+      @negated = false
+    end
+
     def complexity : Int32
       2
     end
@@ -935,6 +974,10 @@ module Regex::Syntax::Hir
       self
     end
 
+    def push(range : ClassUnicodeRange) : self
+      push(range.to_range)
+    end
+
     def ranges : Array(Range(UInt32, UInt32))
       @intervals
     end
@@ -947,6 +990,13 @@ module Regex::Syntax::Hir
       last = @intervals.last?
       last ? last.end <= 0x7F_u32 : true
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_ascii : Bool
+      ascii?
+    end
+
+    # ameba:enable Naming/PredicateName
 
     def minimum_len : Int32?
       first = @intervals.first?
@@ -1968,6 +2018,13 @@ module Regex::Syntax::Hir
     def alternation_literal? : Bool
       self.class.analysis(node)[:alternation_literal]
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_alternation_literal : Bool
+      alternation_literal?
+    end
+
+    # ameba:enable Naming/PredicateName
 
     def all_assertions? : Bool
       !look_set.empty? && minimum_len == 0

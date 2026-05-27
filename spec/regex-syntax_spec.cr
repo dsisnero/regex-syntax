@@ -2107,11 +2107,30 @@ describe Regex::Syntax do
   end
 
   describe "hir class helper parity" do
+    it "accepts vendored class aliases and wrapper constructors" do
+      bytes = Regex::Syntax::Hir::ClassBytes.new([
+        Regex::Syntax::Hir::ClassBytesRange.new(0x63_u8, 0x61_u8),
+      ])
+      bytes.ranges.should eq([0x61_u8..0x63_u8])
+      bytes.is_ascii.should be_true
+      bytes.push(Regex::Syntax::Hir::ClassBytesRange.new(0x7A_u8, 0x79_u8))
+      bytes.ranges.should eq([0x61_u8..0x63_u8, 0x79_u8..0x7A_u8])
+
+      unicode = Regex::Syntax::Hir::ClassUnicode.new([
+        Regex::Syntax::Hir::ClassUnicodeRange.new('c'.ord.to_u32, 'a'.ord.to_u32),
+      ])
+      unicode.ranges.should eq([0x61_u32..0x63_u32])
+      unicode.is_ascii.should be_true
+      unicode.push(Regex::Syntax::Hir::ClassUnicodeRange.new('z'.ord.to_u32, 'y'.ord.to_u32))
+      unicode.ranges.should eq([0x61_u32..0x63_u32, 0x79_u32..0x7A_u32])
+    end
+
     it "exposes byte-class helpers like Rust" do
       klass = Regex::Syntax::Hir::CharClass.empty
       klass.minimum_len.should be_nil
       klass.maximum_len.should be_nil
       klass.ascii?.should be_true
+      klass.is_ascii.should be_true
 
       klass.push(0x61_u8..0x61_u8)
       klass.push(0x62_u8..0x63_u8)
@@ -2123,11 +2142,13 @@ describe Regex::Syntax do
       singleton = Regex::Syntax::Hir::CharClass.empty.push(0x7A_u8..0x7A_u8)
       singleton.literal.should eq(Bytes[0x7A_u8])
       singleton.ascii?.should be_true
+      singleton.is_ascii.should be_true
       singleton.to_unicode_class.should_not be_nil
       singleton.to_unicode_class.as(Regex::Syntax::Hir::UnicodeClass).ranges.should eq([0x7A_u32..0x7A_u32])
 
       non_ascii = Regex::Syntax::Hir::CharClass.empty.push(0xFF_u8..0xFF_u8)
       non_ascii.ascii?.should be_false
+      non_ascii.is_ascii.should be_false
       non_ascii.to_unicode_class.should be_nil
 
       foldable = Regex::Syntax::Hir::CharClass.empty.push(0x41_u8..0x41_u8)
@@ -2139,6 +2160,7 @@ describe Regex::Syntax do
       klass.minimum_len.should be_nil
       klass.maximum_len.should be_nil
       klass.ascii?.should be_true
+      klass.is_ascii.should be_true
 
       klass.push(0x61_u32..0x61_u32)
       klass.push(0x62_u32..0x63_u32)
@@ -2152,6 +2174,7 @@ describe Regex::Syntax do
       literal.should_not be_nil
       String.new(literal.as(Bytes)).should eq("☃")
       snowman.ascii?.should be_false
+      snowman.is_ascii.should be_false
       snowman.minimum_len.should eq(3)
       snowman.maximum_len.should eq(3)
       snowman.to_byte_class.should be_nil
@@ -2194,6 +2217,7 @@ describe Regex::Syntax do
       )
       byte_class.kind.should eq(Regex::Syntax::Hir::Class::Kind::Bytes)
       byte_class.utf8?.should be_true
+      byte_class.is_utf8.should be_true
       byte_class.minimum_len.should eq(1)
       byte_class.maximum_len.should eq(1)
       byte_class.literal.should eq(Bytes[0x41_u8])
@@ -2210,6 +2234,7 @@ describe Regex::Syntax do
       unicode_class.unicode.as(Regex::Syntax::Hir::UnicodeClass).ranges.should contain('k'.ord.to_u32..'k'.ord.to_u32)
       unicode_class.negate
       unicode_class.empty?.should be_false
+      unicode_class.is_empty.should be_false
     end
   end
 
@@ -2264,7 +2289,9 @@ describe Regex::Syntax do
     it "exposes kind introspection like Rust" do
       literal = Regex::Syntax::Hir::Hir.literal("abc".to_slice)
       literal.kind.should be_a(Regex::Syntax::Hir::Literal)
+      literal.kind.is_a?(Regex::Syntax::Hir::HirKind).should be_true
       literal.into_kind.should be_a(Regex::Syntax::Hir::Literal)
+      literal.into_kind.is_a?(Regex::Syntax::Hir::HirKind).should be_true
     end
 
     it "builds repetition and capture HIR values directly like Rust" do
@@ -2316,6 +2343,11 @@ describe Regex::Syntax do
         Regex::Syntax::Hir::Look.new(Regex::Syntax::Hir::Look::Kind::StartText),
       ] of Regex::Syntax::Hir::Node)
       hir.kind.subs.size.should eq(2)
+    end
+
+    it "exposes alternation-literal analysis with the vendored API name" do
+      Regex::Syntax.parse("foo|bar").is_alternation_literal.should be_true
+      Regex::Syntax.parse("a|b").is_alternation_literal.should be_false
     end
   end
 
