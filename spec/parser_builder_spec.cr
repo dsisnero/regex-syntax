@@ -3,6 +3,7 @@ require "./spec_helper"
 describe Regex::Syntax::ParserBuilder do
   it "parses with default options through the top-level helper" do
     Regex::Syntax.parse("a|b").node.should be_a(Regex::Syntax::Hir::Alternation)
+    Regex::Syntax::Parser.new.parse("a|b").node.should be_a(Regex::Syntax::Hir::Alternation)
   end
 
   it "builds parsers with configured options like Rust" do
@@ -64,5 +65,21 @@ describe Regex::Syntax::ParserBuilder do
         .build
         .parse(".")
     end.kind.should eq(Regex::Syntax::Hir::ErrorKind::InvalidLineTerminator)
+  end
+
+  it "exposes parser builder setters as stable public API" do
+    builder = Regex::Syntax::ParserBuilder.new
+    builder.case_insensitive(false).should be(builder)
+    builder.multi_line(false).should be(builder)
+    builder.dot_matches_new_line(false).should be(builder)
+    builder.swap_greed(false).should be(builder)
+    builder.ignore_whitespace(false).should be(builder)
+    builder.crlf(false).should be(builder)
+    builder.nest_limit(5).should be(builder)
+    builder.octal(false).should be(builder)
+    builder.unicode(true).should be(builder)
+    builder.utf8(true).should be(builder)
+    builder.line_terminator('\n'.ord.to_u8).should be(builder)
+    builder.build.should be_a(Regex::Syntax::Parser)
   end
 end

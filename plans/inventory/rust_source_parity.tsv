@@ -297,46 +297,46 @@ src/hir/translate.rs::method::TranslatorBuilder.new	partial	src/regex/syntax/tra
 src/hir/translate.rs::struct::Translator	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now defines a dedicated direct Translator type for AST-to-HIR lowering.
 src/hir/translate.rs::struct::TranslatorBuilder	partial	src/regex/syntax/translate.cr;spec/translator_builder_spec.cr	Crystal now defines a dedicated TranslatorBuilder with the broad vendored option surface.
 src/hir/visitor.rs::trait::Visitor	partial	src/regex/syntax/hir_visitor.cr;spec/hir_visitor_spec.cr	Dedicated Crystal HIR visitor mixin and constant-stack Hir.visit traversal now exist with depth-first hook-order coverage for concat, alternation, capture, repetition, and literal walks plus explicit failure-propagation coverage via raising visitors.
-src/lib.rs::func::escape	partial	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax now exposes top-level escape with direct public helper coverage.
-src/lib.rs::func::escape_into	partial	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax now exposes top-level escape_into writing to an IO with direct public helper coverage.
-src/lib.rs::func::is_escapeable_character	partial	src/regex-syntax.cr;spec/lib_spec.cr	Crystal exposes the equivalent public helper `escapeable_character?` instead of Rust's `is_escapeable_character`.
-src/lib.rs::func::is_meta_character	partial	src/regex-syntax.cr;spec/lib_spec.cr	Crystal exposes the equivalent public helper `meta_character?` instead of Rust's `is_meta_character`.
-src/lib.rs::func::is_word_byte	partial	src/regex-syntax.cr;spec/lib_spec.cr	Crystal exposes the equivalent public helper `word_byte?` instead of Rust's `is_word_byte`.
-src/lib.rs::func::is_word_character	partial	src/regex-syntax.cr;spec/lib_spec.cr	Crystal exposes the equivalent public helper `word_character?` instead of Rust's `is_word_character`.
-src/lib.rs::func::try_is_word_character	partial	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax exposes try_is_word_character over the upstream Unicode word table surface, which is always enabled in Crystal. Only Rust's cargo-feature-absent branch is not applicable here.
-src/parser.rs::func::build	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.build over the staged AST-to-HIR parser pipeline with direct public builder coverage.
-src/parser.rs::func::case_insensitive	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.case_insensitive over the staged parser builder surface.
-src/parser.rs::func::crlf	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.crlf over the staged parser builder surface.
-src/parser.rs::func::dot_matches_new_line	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.dot_matches_new_line over the staged parser builder surface.
-src/parser.rs::func::ignore_whitespace	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.ignore_whitespace over the staged parser builder surface.
-src/parser.rs::func::line_terminator	partial	src/regex/syntax/parser.cr;src/regex/syntax/translate.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.line_terminator with vendored InvalidUtf8 versus InvalidLineTerminator behavior and custom dot translation coverage.
-src/parser.rs::func::multi_line	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.multi_line over the staged parser builder surface.
-src/parser.rs::func::nest_limit	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.nest_limit over the staged parser builder surface.
-src/parser.rs::func::new	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes Parser.new and ParserBuilder.new with direct public builder coverage.
-src/parser.rs::func::octal	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.octal over the staged parser builder surface.
-src/parser.rs::func::parse	partial	src/regex/syntax/parser.cr;src/regex-syntax.cr;spec/parser_builder_spec.cr	Crystal now exposes both top-level Regex::Syntax.parse and Parser#parse over the staged AST-to-HIR pipeline.
-src/parser.rs::func::swap_greed	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.swap_greed over the staged parser builder surface.
-src/parser.rs::func::unicode	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.unicode over the staged parser builder surface.
-src/parser.rs::func::utf8	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now exposes ParserBuilder.utf8 over the staged parser builder surface.
-src/parser.rs::method::Parser.new	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Parser.new now exists with direct public builder coverage.
-src/parser.rs::method::ParserBuilder.new	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder.new now exists with direct public builder coverage.
-src/parser.rs::struct::Parser	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now defines a dedicated public Parser wrapper over the staged AST-to-HIR pipeline.
-src/parser.rs::struct::ParserBuilder	partial	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal now defines a dedicated public ParserBuilder with the broad vendored option surface, including line terminator support.
-src/unicode.rs::enum::ClassQuery	partial	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Crystal now exposes a dedicated Unicode::ClassQuery hierarchy with OneLetter, Binary, and ByValue query variants mapped onto the existing property query pipeline.
-src/unicode.rs::enum::Error	partial	src/regex/syntax/unicode.cr	Crystal now exposes a dedicated Unicode::Error enum for the upstream property/perl-class error categories, with the upstream feature surfaces always enabled. Only Rust cargo-feature-absent variants are not applicable here.
-src/unicode.rs::func::class	partial	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode.class now exists as a direct query entrypoint over the Crystal Unicode property pipeline, with OneLetter regression coverage.
-src/unicode.rs::func::hir_class	partial	src/regex/syntax/unicode.cr	Unicode.hir_class now exists as a direct helper from vendored char-pair ranges into Crystal Unicode HIR classes.
-src/unicode.rs::func::is_word_character	partial	src/regex/syntax/unicode.cr;src/regex-syntax.cr;spec/lib_spec.cr	Unicode.word_character? now maps to the top-level Crystal Unicode word-character helper over the vendored Perl word table, with the upstream feature surface always enabled. Only Rust's cargo-feature-absent branch is not applicable here.
-src/unicode.rs::func::mapping	partial	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.mapping now exists with direct vendored Kelvin-sign and ASCII fold coverage.
-src/unicode.rs::func::new	partial	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.new now exists as the direct Crystal constructor for the vendored simple-fold traverser surface.
-src/unicode.rs::func::overlaps	partial	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.overlaps now exists with direct vendored range-overlap coverage.
-src/unicode.rs::func::perl_digit	partial	src/regex/syntax/unicode.cr	Unicode.perl_digit now exists as a direct Crystal helper over the vendored Decimal_Number Unicode class behavior.
-src/unicode.rs::func::perl_space	partial	src/regex/syntax/unicode.cr	Unicode.perl_space now exists as a direct Crystal helper over the vendored White_Space Unicode class behavior.
-src/unicode.rs::func::perl_word	partial	src/regex/syntax/unicode.cr	Unicode.perl_word now exists as a direct Crystal helper over the vendored Perl word table.
-src/unicode.rs::method::SimpleCaseFolder.new	partial	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.new now exists with direct vendored helper coverage.
-src/unicode.rs::struct::CaseFoldError	partial	src/regex/syntax/unicode.cr	Crystal now defines Unicode::CaseFoldError for the upstream Unicode case-folding surface, which is always enabled in Crystal. Only Rust cargo-feature-absent construction paths are not applicable here.
-src/unicode.rs::struct::SimpleCaseFolder	partial	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Crystal now defines a dedicated Unicode::SimpleCaseFolder with vendored mapping and overlap coverage.
-src/unicode.rs::struct::UnicodeWordError	partial	src/regex-syntax.cr	Crystal now defines UnicodeWordError at the top-level API surface for the upstream Unicode word-class surface, which is always enabled in Crystal. Only Rust cargo-feature-absent behavior is not applicable here.
+src/lib.rs::func::escape	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax exposes vendored top-level `escape` with direct public helper coverage.
+src/lib.rs::func::escape_into	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax exposes vendored top-level `escape_into` writing to an IO with direct public helper coverage.
+src/lib.rs::func::is_escapeable_character	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax now exposes vendored `is_escapeable_character` alongside the Crystal predicate helper, with direct coverage for both.
+src/lib.rs::func::is_meta_character	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax now exposes vendored `is_meta_character` alongside the Crystal predicate helper, with direct coverage for both.
+src/lib.rs::func::is_word_byte	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax now exposes vendored `is_word_byte` alongside the Crystal predicate helper, with direct coverage for both.
+src/lib.rs::func::is_word_character	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax now exposes vendored `is_word_character` alongside the Crystal predicate helper, with direct coverage for both.
+src/lib.rs::func::try_is_word_character	done	src/regex-syntax.cr;spec/lib_spec.cr	Regex::Syntax exposes vendored `try_is_word_character` over the always-enabled Unicode word table surface, with direct public helper coverage.
+src/parser.rs::func::build	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `build` with direct public builder coverage over the staged AST-to-HIR pipeline.
+src/parser.rs::func::case_insensitive	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `case_insensitive` with direct public builder coverage.
+src/parser.rs::func::crlf	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `crlf` with direct public builder coverage.
+src/parser.rs::func::dot_matches_new_line	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `dot_matches_new_line` with direct public builder coverage.
+src/parser.rs::func::ignore_whitespace	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `ignore_whitespace` with direct public builder coverage.
+src/parser.rs::func::line_terminator	done	src/regex/syntax/parser.cr;src/regex/syntax/translate.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `line_terminator` with direct builder coverage and the upstream InvalidUtf8 versus InvalidLineTerminator split.
+src/parser.rs::func::multi_line	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `multi_line` with direct public builder coverage.
+src/parser.rs::func::nest_limit	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `nest_limit` with direct public builder coverage.
+src/parser.rs::func::new	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Parser and ParserBuilder expose vendored constructor surface with direct public coverage.
+src/parser.rs::func::octal	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `octal` with direct public builder coverage.
+src/parser.rs::func::parse	done	src/regex/syntax/parser.cr;src/regex-syntax.cr;spec/parser_builder_spec.cr	Regex::Syntax.parse and Parser#parse expose the vendored staged parser entrypoints with direct public coverage.
+src/parser.rs::func::swap_greed	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `swap_greed` with direct public builder coverage.
+src/parser.rs::func::unicode	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `unicode` with direct public builder coverage.
+src/parser.rs::func::utf8	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder exposes vendored `utf8` with direct public builder coverage.
+src/parser.rs::method::Parser.new	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Parser.new exists with direct public coverage.
+src/parser.rs::method::ParserBuilder.new	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	ParserBuilder.new exists with direct public coverage.
+src/parser.rs::struct::Parser	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal defines a dedicated public Parser wrapper over the staged AST-to-HIR pipeline with direct coverage.
+src/parser.rs::struct::ParserBuilder	done	src/regex/syntax/parser.cr;spec/parser_builder_spec.cr	Crystal defines a dedicated public ParserBuilder with the vendored option surface and direct coverage.
+src/unicode.rs::enum::ClassQuery	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode exposes vendored ClassQuery variants OneLetter, Binary, and ByValue with direct coverage.
+src/unicode.rs::enum::Error	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode exposes the vendored Error enum for property and perl-class lookup categories with direct coverage.
+src/unicode.rs::func::class	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode.class exists as a direct vendored query entrypoint with OneLetter, Binary, and ByValue coverage.
+src/unicode.rs::func::hir_class	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode.hir_class exists as a direct helper from vendored char-pair ranges into Crystal Unicode HIR classes, with direct coverage.
+src/unicode.rs::func::is_word_character	done	src/regex/syntax/unicode.cr;src/regex-syntax.cr;spec/unicode_spec.cr;spec/lib_spec.cr	Unicode now exposes vendored `is_word_character` alongside the Crystal predicate helper, with direct coverage for both.
+src/unicode.rs::func::mapping	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.mapping exists with direct vendored Kelvin-sign and ASCII fold coverage.
+src/unicode.rs::func::new	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.new exists as the direct Crystal constructor for the vendored simple-fold traverser surface, with direct coverage.
+src/unicode.rs::func::overlaps	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.overlaps exists with direct vendored range-overlap coverage.
+src/unicode.rs::func::perl_digit	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode.perl_digit exists as a direct Crystal helper over the vendored Decimal_Number Unicode class behavior, with direct coverage.
+src/unicode.rs::func::perl_space	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode.perl_space exists as a direct Crystal helper over the vendored White_Space Unicode class behavior, with direct coverage.
+src/unicode.rs::func::perl_word	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Unicode.perl_word exists as a direct Crystal helper over the vendored Perl word table, with direct coverage.
+src/unicode.rs::method::SimpleCaseFolder.new	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	SimpleCaseFolder.new exists with direct vendored helper coverage.
+src/unicode.rs::struct::CaseFoldError	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Crystal defines Unicode::CaseFoldError for the vendored Unicode case-folding surface, with direct message coverage.
+src/unicode.rs::struct::SimpleCaseFolder	done	src/regex/syntax/unicode.cr;spec/unicode_spec.cr	Crystal defines a dedicated Unicode::SimpleCaseFolder with direct vendored mapping and overlap coverage.
+src/unicode.rs::struct::UnicodeWordError	done	src/regex-syntax.cr;spec/lib_spec.cr	Crystal defines UnicodeWordError at the top-level API surface for the vendored Unicode word-class surface.
 src/unicode_tables/age.rs::const::BY_NAME	done	src/regex/syntax/unicode_tables/age.cr	Generated Unicode table constant exists in the Crystal port with the same canonical constant name.
 src/unicode_tables/age.rs::const::V10_0	done	src/regex/syntax/unicode_tables/age.cr	Generated Unicode table constant exists in the Crystal port with the same canonical constant name.
 src/unicode_tables/age.rs::const::V11_0	done	src/regex/syntax/unicode_tables/age.cr	Generated Unicode table constant exists in the Crystal port with the same canonical constant name.

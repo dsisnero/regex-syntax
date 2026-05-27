@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `667 done`, `1 not_applicable`, `210 partial`
+- `rust_source_parity.tsv`: `707 done`, `1 not_applicable`, `170 partial`
 
 Interpretation:
 
@@ -38,6 +38,9 @@ Interpretation:
 - The remaining source partials are still mostly API/model-shape mappings:
   Crystal class hierarchies, wrapper objects, builder-style APIs, and
   idiomatic replacements for Rust enums, traits, and free functions.
+- The remaining source partials are now concentrated mostly in AST/HIR/interval
+  shape differences rather than top-level lib, parser, or Unicode helper
+  surfaces.
 - Broad semantic parity is no longer being driven by generated-manifest
   `missing` rows. The manifests are now mostly documentation of intentional
   cross-language shape differences.

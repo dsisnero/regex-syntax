@@ -35,6 +35,46 @@ describe Regex::Syntax::Unicode do
     klass.intervals.should eq(expected.intervals)
   end
 
+  it "supports binary and property-value Unicode class queries like Rust" do
+    binary = Regex::Syntax::Unicode.class(Regex::Syntax::Unicode::ClassQuery::Binary.new("Greek"))
+    binary.intervals.should eq(Regex::Syntax::Unicode.property_class("Greek", false).intervals)
+
+    by_value = Regex::Syntax::Unicode.class(
+      Regex::Syntax::Unicode::ClassQuery::ByValue.new("gc", "Separator")
+    )
+    by_value.intervals.should eq(Regex::Syntax::Unicode.property_class("gc:Separator", false).intervals)
+  end
+
+  it "exposes direct unicode helper classes like Rust" do
+    hir = Regex::Syntax::Unicode.hir_class([{'a', 'c'}, {'β', 'δ'}])
+    hir.intervals.should eq([
+      'a'.ord.to_u32..'c'.ord.to_u32,
+      'β'.ord.to_u32..'δ'.ord.to_u32,
+    ])
+
+    Regex::Syntax::Unicode.perl_digit.intervals.should eq(
+      Regex::Syntax::Unicode.property_class("Decimal_Number", false).intervals
+    )
+    Regex::Syntax::Unicode.perl_space.intervals.should eq(
+      Regex::Syntax::Unicode.property_class("White_Space", false).intervals
+    )
+    Regex::Syntax::Unicode.perl_word.intervals.should eq(
+      Regex::Syntax::UnicodeTables::PerlWord::PERL_WORD
+    )
+  end
+
+  it "exposes unicode word-character helper aliases and error enums like Rust" do
+    Regex::Syntax::Unicode.word_character?('β').should be_true
+    Regex::Syntax::Unicode.is_word_character('β').should be_true
+    Regex::Syntax::Unicode.word_character?('☃').should be_false
+    Regex::Syntax::Unicode.is_word_character('☃').should be_false
+
+    Regex::Syntax::Unicode::Error::PropertyNotFound.to_s.should eq("PropertyNotFound")
+    Regex::Syntax::Unicode::Error::PropertyValueNotFound.to_s.should eq("PropertyValueNotFound")
+    Regex::Syntax::Unicode::Error::PerlClassNotFound.to_s.should eq("PerlClassNotFound")
+    Regex::Syntax::Unicode::CaseFoldError.new.message.should contain("Unicode-aware case folding")
+  end
+
   it "normalizes symbolic names like the vendored unicode helper" do
     Regex::Syntax::Unicode.normalize_symbolic_name("Line_Break").should eq("linebreak")
     Regex::Syntax::Unicode.normalize_symbolic_name("Line-break").should eq("linebreak")

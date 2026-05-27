@@ -13,11 +13,13 @@ describe Regex::Syntax do
 
   it "detects meta characters like Rust" do
     Regex::Syntax.meta_character?('?').should be_true
+    Regex::Syntax.is_meta_character('?').should be_true
     Regex::Syntax.meta_character?('-').should be_true
     Regex::Syntax.meta_character?('&').should be_true
     Regex::Syntax.meta_character?('#').should be_true
 
     Regex::Syntax.meta_character?('%').should be_false
+    Regex::Syntax.is_meta_character('%').should be_false
     Regex::Syntax.meta_character?('/').should be_false
     Regex::Syntax.meta_character?('!').should be_false
     Regex::Syntax.meta_character?('"').should be_false
@@ -26,6 +28,7 @@ describe Regex::Syntax do
 
   it "detects escapable characters like Rust" do
     Regex::Syntax.escapeable_character?('?').should be_true
+    Regex::Syntax.is_escapeable_character('?').should be_true
     Regex::Syntax.escapeable_character?('-').should be_true
     Regex::Syntax.escapeable_character?('&').should be_true
     Regex::Syntax.escapeable_character?('#').should be_true
@@ -35,18 +38,22 @@ describe Regex::Syntax do
     Regex::Syntax.escapeable_character?('"').should be_true
 
     Regex::Syntax.escapeable_character?('e').should be_false
+    Regex::Syntax.is_escapeable_character('e').should be_false
     Regex::Syntax.escapeable_character?('<').should be_false
     Regex::Syntax.escapeable_character?('☃').should be_false
   end
 
   it "detects ascii word bytes like Rust" do
     Regex::Syntax.word_byte?('a'.ord.to_u8).should be_true
+    Regex::Syntax.is_word_byte('a'.ord.to_u8).should be_true
     Regex::Syntax.word_byte?('_'.ord.to_u8).should be_true
     Regex::Syntax.word_byte?('-'.ord.to_u8).should be_false
+    Regex::Syntax.is_word_byte('-'.ord.to_u8).should be_false
   end
 
   it "detects unicode word characters like Rust" do
     Regex::Syntax.word_character?('a').should be_true
+    Regex::Syntax.is_word_character('a').should be_true
     Regex::Syntax.word_character?('à').should be_true
     Regex::Syntax.word_character?('β').should be_true
     Regex::Syntax.word_character?('𑀑').should be_true
@@ -54,6 +61,7 @@ describe Regex::Syntax do
     Regex::Syntax.word_character?('𖹀').should be_true
     Regex::Syntax.word_character?('-').should be_false
     Regex::Syntax.word_character?('☃').should be_false
+    Regex::Syntax.is_word_character('☃').should be_false
   end
 
   it "exposes try_is_word_character through the always-enabled unicode surface" do

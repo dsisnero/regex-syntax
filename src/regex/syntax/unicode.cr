@@ -190,6 +190,13 @@ module Regex::Syntax::Unicode
     Regex::Syntax.try_is_word_character(char)
   end
 
+  # ameba:disable Naming/PredicateName
+  def self.is_word_character(char : Char) : Bool
+    word_character?(char)
+  end
+
+  # ameba:enable Naming/PredicateName
+
   def self.property_class(name : String, negated : Bool) : Hir::UnicodeClass
     if index = name.index("!=")
       property_name = name[...index]

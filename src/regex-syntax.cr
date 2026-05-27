@@ -41,6 +41,13 @@ module Regex::Syntax
     end
   end
 
+  # ameba:disable Naming/PredicateName
+  def self.is_meta_character(char : Char) : Bool
+    meta_character?(char)
+  end
+
+  # ameba:enable Naming/PredicateName
+
   def self.escapeable_character?(char : Char) : Bool
     return true if meta_character?(char)
     return false unless char.ascii?
@@ -53,6 +60,13 @@ module Regex::Syntax
     end
   end
 
+  # ameba:disable Naming/PredicateName
+  def self.is_escapeable_character(char : Char) : Bool
+    escapeable_character?(char)
+  end
+
+  # ameba:enable Naming/PredicateName
+
   def self.word_byte?(byte : UInt8) : Bool
     case byte
     when '_'.ord.to_u8, '0'.ord.to_u8..'9'.ord.to_u8, 'a'.ord.to_u8..'z'.ord.to_u8, 'A'.ord.to_u8..'Z'.ord.to_u8
@@ -62,9 +76,23 @@ module Regex::Syntax
     end
   end
 
+  # ameba:disable Naming/PredicateName
+  def self.is_word_byte(byte : UInt8) : Bool
+    word_byte?(byte)
+  end
+
+  # ameba:enable Naming/PredicateName
+
   def self.word_character?(char : Char) : Bool
     try_is_word_character(char)
   end
+
+  # ameba:disable Naming/PredicateName
+  def self.is_word_character(char : Char) : Bool
+    word_character?(char)
+  end
+
+  # ameba:enable Naming/PredicateName
 
   def self.try_is_word_character(char : Char) : Bool
     codepoint = char.ord.to_u32
