@@ -1,4 +1,9 @@
 module Regex::Syntax
+  module AST::Parse
+    alias Parser = ::Regex::Syntax::AstParser
+    alias ParserBuilder = ::Regex::Syntax::AstParserBuilder
+  end
+
   class AstParserBuilder
     def initialize
       @unicode = true

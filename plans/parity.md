@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `837 done`, `1 not_applicable`, `40 partial`
+- `rust_source_parity.tsv`: `849 done`, `1 not_applicable`, `28 partial`
 
 Interpretation:
 
@@ -78,6 +78,13 @@ Interpretation:
   `is_valid`, `is_negation`, and `is_capturing`; direct `ClassSet.union` and
   `ClassSetUnion.into_item` compatibility helpers; and direct constructor
   coverage for the remaining concrete AST node types.
+
+- [x] Vendored ast::parse compatibility namespace
+  The Crystal port now exposes the upstream `ast::parse` surface through
+  `Regex::Syntax::AST::Parse`, with direct `Parser` and `ParserBuilder`
+  compatibility aliases and coverage for `new`, `build`, `parse`,
+  `parse_with_comments`, `ignore_whitespace`, `nest_limit`, `octal`, and
+  `empty_min_range`.
 
 - [x] HIR class and look-set compatibility layer
   The Crystal HIR now exposes a larger Rust-shaped compatibility surface for

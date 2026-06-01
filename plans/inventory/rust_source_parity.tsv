@@ -96,18 +96,18 @@ src/ast/mod.rs::struct::RepetitionOp	done	src/regex/syntax/ast.cr;spec/ast_api_s
 src/ast/mod.rs::struct::SetFlags	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	SetFlags now exposes a direct Flags wrapper like the Rust AST surface.
 src/ast/mod.rs::struct::Span	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Span now has direct constructor and replacement-helper coverage on the Crystal AST API.
 src/ast/mod.rs::struct::WithComments	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	WithComments now has direct constructor coverage on the Crystal AST API.
-src/ast/parse.rs::func::build	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParserBuilder.build over the direct AST parser surface.
-src/ast/parse.rs::func::empty_min_range	partial	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now supports the vendored empty_min_range option on the direct AST parser surface.
-src/ast/parse.rs::func::ignore_whitespace	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParserBuilder.ignore_whitespace over the direct AST parser surface.
-src/ast/parse.rs::func::nest_limit	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParserBuilder.nest_limit over the direct AST parser surface.
-src/ast/parse.rs::func::new	partial	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParser.new and AstParserBuilder.new over the direct AST parser surface.
-src/ast/parse.rs::func::octal	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParserBuilder.octal over the direct AST parser surface.
-src/ast/parse.rs::func::parse	partial	src/regex-syntax.cr;spec/ast_parser_builder_spec.cr	AstParser.parse now exists with direct AST parser builder coverage.
-src/ast/parse.rs::func::parse_with_comments	partial	src/regex-syntax.cr;spec/ast_parser_builder_spec.cr	AstParser.parse_with_comments now exists with direct AST parser builder coverage.
-src/ast/parse.rs::method::Parser.new	partial	src/regex-syntax.cr;spec/ast_parser_builder_spec.cr	Crystal maps the vendored AST parser constructor surface to AstParser.new instead of a nested ast::parse::Parser type.
-src/ast/parse.rs::method::ParserBuilder.new	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes AstParserBuilder.new over the direct AST parser surface.
-src/ast/parse.rs::struct::Parser	partial	src/regex-syntax.cr;spec/ast_parser_builder_spec.cr	Crystal maps the vendored AST parser type to Regex::Syntax::AstParser instead of a nested ast::parse::Parser type.
-src/ast/parse.rs::struct::ParserBuilder	partial	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now defines a dedicated AstParserBuilder over the direct AST parser surface.
+src/ast/parse.rs::func::build	done	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored ast::parse::ParserBuilder.build surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::func::empty_min_range	done	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored empty_min_range builder/parser surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::func::ignore_whitespace	done	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored ignore_whitespace builder/parser surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::func::nest_limit	done	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored nest_limit builder/parser surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::func::new	done	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored Parser.new and ParserBuilder.new surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::func::octal	done	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored octal builder/parser surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::func::parse	done	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored parse surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::func::parse_with_comments	done	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored parse_with_comments surface directly through Regex::Syntax::AST::Parse.
+src/ast/parse.rs::method::Parser.new	done	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored ast::parse::Parser constructor through the Regex::Syntax::AST::Parse compatibility namespace.
+src/ast/parse.rs::method::ParserBuilder.new	done	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored ast::parse::ParserBuilder constructor through the Regex::Syntax::AST::Parse compatibility namespace.
+src/ast/parse.rs::struct::Parser	done	src/regex-syntax.cr;src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored ast::parse::Parser type directly through the Regex::Syntax::AST::Parse compatibility namespace.
+src/ast/parse.rs::struct::ParserBuilder	done	src/regex/syntax/parser.cr;spec/ast_parser_builder_spec.cr	Crystal now exposes the vendored ast::parse::ParserBuilder type directly through the Regex::Syntax::AST::Parse compatibility namespace.
 src/ast/print.rs::func::new	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer constructor surface exists and is covered directly.
 src/ast/print.rs::method::Printer.new	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Printer.new and print(Ast, IO) exist through the dedicated Crystal AST printer.
 src/ast/print.rs::struct::Printer	done	src/regex/syntax/ast_print.cr;spec/ast_print_spec.cr	Dedicated Crystal AST printer type exists with direct round-trip coverage.

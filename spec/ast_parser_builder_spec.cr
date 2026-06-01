@@ -1,12 +1,19 @@
 require "./spec_helper"
 
-describe Regex::Syntax::AstParserBuilder do
+describe Regex::Syntax::AST::Parse do
+  it "exposes vendored parser and builder aliases" do
+    Regex::Syntax::AST::Parse::Parser.should eq(Regex::Syntax::AstParser)
+    Regex::Syntax::AST::Parse::ParserBuilder.should eq(Regex::Syntax::AstParserBuilder)
+  end
+
   it "builds AST parsers with vendored parser options" do
-    parser = Regex::Syntax::AstParserBuilder.new
+    builder = Regex::Syntax::AST::Parse::ParserBuilder.new
       .ignore_whitespace(true)
       .nest_limit(10)
       .octal(true)
-      .build
+    parser = builder.build
+
+    parser.should be_a(Regex::Syntax::AST::Parse::Parser)
 
     ast = parser.parse("(?x)\\141")
     ast.kind.should be_a(Regex::Syntax::AST::Concat)
@@ -19,7 +26,7 @@ describe Regex::Syntax::AstParserBuilder do
   end
 
   it "supports parse_with_comments through the built AST parser" do
-    parser = Regex::Syntax::AstParserBuilder.new.ignore_whitespace(true).build
+    parser = Regex::Syntax::AST::Parse::ParserBuilder.new.ignore_whitespace(true).build
     parsed = parser.parse_with_comments("(?x)a # comment\n b")
 
     parsed.comments.size.should eq(1)
@@ -29,14 +36,27 @@ describe Regex::Syntax::AstParserBuilder do
 
   it "supports empty_min_range like Rust" do
     expect_parse_error(/empty repetition count/) do
-      Regex::Syntax::AstParserBuilder.new.build.parse("a{,9}")
+      Regex::Syntax::AST::Parse::ParserBuilder.new.build.parse("a{,9}")
     end
 
-    ast = Regex::Syntax::AstParserBuilder.new.empty_min_range(true).build.parse("a{,9}")
+    ast = Regex::Syntax::AST::Parse::ParserBuilder.new.empty_min_range(true).build.parse("a{,9}")
     ast.kind.should be_a(Regex::Syntax::AST::Repetition)
     repetition = ast.kind.as(Regex::Syntax::AST::Repetition)
     repetition.op.min.should eq(0_u32)
     repetition.op.max.should eq(9_u32)
+  end
+
+  it "supports direct parser construction like vendored ast::parse::Parser" do
+    parser = Regex::Syntax::AST::Parse::Parser.new(
+      ignore_whitespace: true,
+      octal: true,
+      empty_min_range: true
+    )
+    ast = parser.parse("(?x)\\141")
+    ast.kind.should be_a(Regex::Syntax::AST::Concat)
+
+    comments = parser.parse_with_comments("(?x)a # note\n b")
+    comments.comments.size.should eq(1)
   end
 
   it "does not overcount nest depth on long alternation trees" do
@@ -76,7 +96,7 @@ describe Regex::Syntax::AstParserBuilder do
     )\d{4}
     REGEX
 
-    ast = Regex::Syntax::AstParserBuilder.new
+    ast = Regex::Syntax::AST::Parse::ParserBuilder.new
       .ignore_whitespace(true)
       .nest_limit(50)
       .build
