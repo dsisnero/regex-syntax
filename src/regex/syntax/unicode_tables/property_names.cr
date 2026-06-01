@@ -275,4 +275,6 @@ module Regex::Syntax::UnicodeTables::PropertyNames
     "xonfkc"                         => "Expands_On_NFKC",
     "xonfkd"                         => "Expands_On_NFKD",
   }
+
+  PROPERTY_NAMES = BY_NAME
 end

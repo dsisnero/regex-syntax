@@ -63,6 +63,27 @@ describe Regex::Syntax::Unicode do
     )
   end
 
+  it "exposes vendored unicode table namespace aliases" do
+    Regex::Syntax::UnicodeTables::PerlDecimal::BY_NAME.should eq(
+      Regex::Syntax::UnicodeTables::GeneralCategory::BY_NAME
+    )
+    Regex::Syntax::UnicodeTables::PerlDecimal::DECIMAL_NUMBER.should eq(
+      Regex::Syntax::UnicodeTables::GeneralCategory::DECIMAL_NUMBER
+    )
+    Regex::Syntax::UnicodeTables::PerlSpace::BY_NAME.should eq(
+      Regex::Syntax::UnicodeTables::PropertyBool::BY_NAME
+    )
+    Regex::Syntax::UnicodeTables::PerlSpace::WHITE_SPACE.should eq(
+      Regex::Syntax::UnicodeTables::PropertyBool::WHITE_SPACE
+    )
+    Regex::Syntax::UnicodeTables::PropertyNames::PROPERTY_NAMES.should eq(
+      Regex::Syntax::UnicodeTables::PropertyNames::BY_NAME
+    )
+    Regex::Syntax::UnicodeTables::PropertyValues::PROPERTY_VALUES.should eq(
+      Regex::Syntax::UnicodeTables::PropertyValues::BY_PROPERTY
+    )
+  end
+
   it "exposes unicode word-character helper aliases and error enums like Rust" do
     Regex::Syntax::Unicode.word_character?('β').should be_true
     Regex::Syntax::Unicode.is_word_character('β').should be_true

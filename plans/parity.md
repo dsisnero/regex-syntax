@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `849 done`, `1 not_applicable`, `28 partial`
+- `rust_source_parity.tsv`: `855 done`, `1 not_applicable`, `22 partial`
 
 Interpretation:
 
@@ -42,6 +42,9 @@ Interpretation:
   shape differences and a few explicit cross-language model differences rather
   than top-level lib, parser, Unicode, interval, or translator helper
   surfaces.
+- Vendored Unicode-table compatibility namespaces like `perl_decimal`,
+  `perl_space`, `PROPERTY_NAMES`, and `PROPERTY_VALUES` are now exposed
+  directly in Crystal instead of being left as documented alias drift.
 - Broad semantic parity is no longer being driven by generated-manifest
   `missing` rows. The manifests are now mostly documentation of intentional
   cross-language shape differences.

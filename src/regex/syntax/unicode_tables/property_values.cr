@@ -926,4 +926,6 @@ module Regex::Syntax::UnicodeTables::PropertyValues
       "zwj"               => "ZWJ",
     },
   }
+
+  PROPERTY_VALUES = BY_PROPERTY
 end
