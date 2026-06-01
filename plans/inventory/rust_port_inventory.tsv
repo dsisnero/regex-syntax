@@ -45,7 +45,7 @@ src/ast/mod.rs::func::is_one_line	func	done	src/regex/syntax/ast.cr;spec/ast_api
 src/ast/mod.rs::func::is_valid	func	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSetRange and RepetitionOp now expose the vendored is_valid compatibility predicates with direct coverage.
 src/ast/mod.rs::func::kind	func	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast exposes the vendored kind helper directly on the public Crystal AST wrapper with constructor coverage across concrete node kinds.
 src/ast/mod.rs::func::literal	func	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.literal now exists as a direct top-level AST constructor helper.
-src/ast/mod.rs::func::new	func	partial	src/regex/syntax/ast.cr	Crystal exposes direct initializers on the concrete AST node classes instead of Rust-style free constructor helpers.
+src/ast/mod.rs::func::new	func	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Position.new and Span.new expose the vendored public constructor surface directly with explicit API coverage.
 src/ast/mod.rs::func::pattern	func	done	src/regex/syntax/error.cr;spec/error_spec.cr	AST::Error now exposes the vendored pattern accessor directly with parser and explicit-constructor coverage.
 src/ast/mod.rs::func::push	func	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	ClassSetUnion.push now has direct vendored-style span-update and append coverage.
 src/ast/mod.rs::func::repetition	func	done	src/regex/syntax/ast.cr;spec/ast_api_spec.cr	Ast.repetition now exists as a direct top-level AST constructor helper.

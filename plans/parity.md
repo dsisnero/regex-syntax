@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `869 done`, `1 not_applicable`, `8 partial`
+- `rust_source_parity.tsv`: `870 done`, `1 not_applicable`, `7 partial`
 
 Interpretation:
 
