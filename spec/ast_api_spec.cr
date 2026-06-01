@@ -190,9 +190,17 @@ describe Regex::Syntax::AST do
     )
     unicode.kind.kind.named_value?.should be_true
     unicode.kind.op.should eq(Regex::Syntax::AST::ClassUnicode::ClassUnicodeOpKind::NotEqual)
+    if op = unicode.kind.op
+      op.is_equal.should be_false
+    else
+      fail "expected unicode op"
+    end
     unicode.kind.property_name.should eq("scx")
     unicode.kind.property_value.should eq("Katakana")
     unicode.is_negated.should be_false
+
+    equal_op = Regex::Syntax::AST::ClassUnicode::ClassUnicodeOpKind::Equal
+    equal_op.is_equal.should be_true
 
     named_group = Regex::Syntax::AST::Group.new(
       Regex::Syntax::AST::Span.new(0, 8),

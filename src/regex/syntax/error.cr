@@ -176,6 +176,7 @@ module Regex::Syntax::AST
     CaptureLimitExceeded
     ClassEscapeInvalid
     ClassRangeInvalid
+    ClassRangeLiteral
     ClassUnclosed
     DecimalEmpty
     DecimalInvalid
@@ -213,6 +214,7 @@ module Regex::Syntax::AST
       in .capture_limit_exceeded?                    then "exceeded the maximum number of capturing groups"
       in .class_escape_invalid?                      then "invalid escape sequence found in character class"
       in .class_range_invalid?                       then "invalid character class range, the start must be <= the end"
+      in .class_range_literal?                       then "invalid range boundary, must be a literal"
       in .class_unclosed?                            then "unclosed character class"
       in .decimal_empty?                             then "decimal literal empty"
       in .decimal_invalid?                           then "decimal literal invalid"

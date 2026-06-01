@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `855 done`, `1 not_applicable`, `22 partial`
+- `rust_source_parity.tsv`: `869 done`, `1 not_applicable`, `8 partial`
 
 Interpretation:
 
@@ -45,6 +45,9 @@ Interpretation:
 - Vendored Unicode-table compatibility namespaces like `perl_decimal`,
   `perl_space`, `PROPERTY_NAMES`, and `PROPERTY_VALUES` are now exposed
   directly in Crystal instead of being left as documented alias drift.
+- The remaining source partials are now almost entirely explicit
+  cross-language type-shape differences: Rust enums/traits versus Crystal
+  wrapper classes, mixins, and generic specializations.
 - Broad semantic parity is no longer being driven by generated-manifest
   `missing` rows. The manifests are now mostly documentation of intentional
   cross-language shape differences.

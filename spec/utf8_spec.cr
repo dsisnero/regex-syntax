@@ -77,6 +77,25 @@ describe Regex::Syntax::Utf8 do
     four.as_slice.should eq([rutf8(0xD, 0xE), rutf8(0xC, 0xD), rutf8(0xB, 0xC), rutf8(0xA, 0xB)])
   end
 
+  it "exposes vendored Utf8Sequence constructors and reverse helper" do
+    one = Utf8Sequence.one(rutf8(0xA, 0xB))
+    one.as_slice.should eq([rutf8(0xA, 0xB)])
+
+    two = Utf8Sequence.two(StaticArray[rutf8(0xA, 0xB), rutf8(0xB, 0xC)])
+    collected = [] of Utf8Range
+    two.each { |range| collected << range }
+    collected.should eq([rutf8(0xA, 0xB), rutf8(0xB, 0xC)])
+
+    three = Utf8Sequence.three(StaticArray[rutf8(0xA, 0xB), rutf8(0xB, 0xC), rutf8(0xC, 0xD)])
+    three.reverse
+    three.as_slice.should eq([rutf8(0xC, 0xD), rutf8(0xB, 0xC), rutf8(0xA, 0xB)])
+
+    four = Utf8Sequence.four(
+      StaticArray[rutf8(0xA, 0xB), rutf8(0xB, 0xC), rutf8(0xC, 0xD), rutf8(0xD, 0xE)]
+    )
+    four.len.should eq(4)
+  end
+
   it "exposes sequence slices, length, and matching like Rust" do
     seq = Utf8Sequence.new([rutf8(0xD0, 0xD3), rutf8(0x80, 0xBF)])
     seq.as_slice.should eq([rutf8(0xD0, 0xD3), rutf8(0x80, 0xBF)])

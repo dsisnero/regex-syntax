@@ -31,9 +31,48 @@ module Regex::Syntax::Utf8
     def initialize(@ranges : Array(Utf8Range))
     end
 
+    def self.one(range : Utf8Range) : self
+      new([range])
+    end
+
+    def self.two(ranges : StaticArray(Utf8Range, 2)) : self
+      new(ranges.to_a)
+    end
+
+    def self.three(ranges : StaticArray(Utf8Range, 3)) : self
+      new(ranges.to_a)
+    end
+
+    def self.four(ranges : StaticArray(Utf8Range, 4)) : self
+      new(ranges.to_a)
+    end
+
     def self.from_encoded_range(start : Array(UInt8), end_ : Array(UInt8)) : self
       raise "invalid encoded length" unless start.size == end_.size
-      new(start.each_with_index.map { |byte, i| Utf8Range.new(byte, end_[i]) }.to_a)
+      case start.size
+      when 1
+        one(Utf8Range.new(start[0], end_[0]))
+      when 2
+        two(StaticArray[
+          Utf8Range.new(start[0], end_[0]),
+          Utf8Range.new(start[1], end_[1]),
+        ])
+      when 3
+        three(StaticArray[
+          Utf8Range.new(start[0], end_[0]),
+          Utf8Range.new(start[1], end_[1]),
+          Utf8Range.new(start[2], end_[2]),
+        ])
+      when 4
+        four(StaticArray[
+          Utf8Range.new(start[0], end_[0]),
+          Utf8Range.new(start[1], end_[1]),
+          Utf8Range.new(start[2], end_[2]),
+          Utf8Range.new(start[3], end_[3]),
+        ])
+      else
+        raise "invalid encoded length"
+      end
     end
 
     def as_slice : Array(Utf8Range)
@@ -47,6 +86,15 @@ module Regex::Syntax::Utf8
     def reverse! : self
       @ranges.reverse!
       self
+    end
+
+    def reverse : Nil
+      reverse!
+      nil
+    end
+
+    def each(& : Utf8Range ->) : Nil
+      @ranges.each { |range| yield range }
     end
 
     def matches(bytes : Bytes) : Bool

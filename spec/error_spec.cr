@@ -67,6 +67,27 @@ error: duplicate flag
 TEXT
   end
 
+  it "exposes direct AST error accessors like vendored ast::Error" do
+    auxiliary = Regex::Syntax::AST::Span.new(2, 3)
+    err = Regex::Syntax::AST::Error.new(
+      Regex::Syntax::AST::ErrorKind::FlagDuplicate,
+      "(?ii)",
+      Regex::Syntax::AST::Span.new(3, 4),
+      auxiliary
+    )
+
+    err.kind.should eq(Regex::Syntax::AST::ErrorKind::FlagDuplicate)
+    err.pattern.should eq("(?ii)")
+    err.span.should eq(Regex::Syntax::AST::Span.new(3, 4))
+    err.auxiliary_span.should eq(auxiliary)
+  end
+
+  it "exposes vendored AST error kinds including class range literal" do
+    String.build { |io| Regex::Syntax::AST::ErrorKind::ClassRangeLiteral.to_s(io) }.should eq(
+      "invalid range boundary, must be a literal"
+    )
+  end
+
   it "raises structured HIR errors for unicode-disabled translation" do
     err = begin
       Regex::Syntax::Parser.new(unicode: false).parse(%q(\pZ))
