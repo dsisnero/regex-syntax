@@ -29,7 +29,7 @@ Checklist rules:
 ## Current State
 
 - `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `788 done`, `1 not_applicable`, `89 partial`
+- `rust_source_parity.tsv`: `837 done`, `1 not_applicable`, `40 partial`
 
 Interpretation:
 
@@ -68,6 +68,16 @@ Interpretation:
   capture metadata, non-capturing groups with explicit empty `Flags`, and
   Rust-style empty/singleton collapsing for `Alternation#into_ast` and
   `Concat#into_ast`.
+
+- [x] AST compatibility aliases and vendored predicates
+  The Crystal AST now exposes more of vendored `src/ast/mod.rs` with the
+  Rust-facing names instead of only nested Crystal-native helpers: explicit
+  `AssertionKind`, `ClassAsciiKind`, `ClassPerlKind`,
+  `ClassSetBinaryOpKind`, `FlagsItemKind`, `GroupKind`, `LiteralKind`, and
+  `RepetitionKind` aliases; vendored predicate names such as `is_one_line`,
+  `is_valid`, `is_negation`, and `is_capturing`; direct `ClassSet.union` and
+  `ClassSetUnion.into_item` compatibility helpers; and direct constructor
+  coverage for the remaining concrete AST node types.
 
 - [x] HIR class and look-set compatibility layer
   The Crystal HIR now exposes a larger Rust-shaped compatibility surface for

@@ -1,4 +1,14 @@
 module Regex::Syntax::AST
+  alias AssertionKind = Assertion::Kind
+  alias ClassAsciiKind = ClassAscii::Kind
+  alias ClassPerlKind = ClassPerl::Kind
+  alias ClassSetBinaryOpKind = ClassSetBinaryOp::Kind
+  alias ClassSetItemKind = ClassSetItem::Kind
+  alias FlagsItemKind = FlagsItem::Kind
+  alias GroupKind = Group::Kind
+  alias LiteralKind = Literal::Kind
+  alias RepetitionKind = RepetitionOp::Kind
+
   enum Flag
     CaseInsensitive
     MultiLine
@@ -84,9 +94,23 @@ module Regex::Syntax::AST
       @start.line == @end.line
     end
 
+    # ameba:disable Naming/PredicateName
+    def is_one_line : Bool
+      one_line?
+    end
+
+    # ameba:enable Naming/PredicateName
+
     def empty? : Bool
       @start.offset == @end.offset
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_empty : Bool
+      empty?
+    end
+
+    # ameba:enable Naming/PredicateName
 
     def with_start(start : Position) : Span
       Span.new(start, @end)
@@ -479,6 +503,12 @@ module Regex::Syntax::AST
       return false unless end_char = @end.c
       start_char <= end_char
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_valid : Bool
+      valid?
+    end
+    # ameba:enable Naming/PredicateName
   end
 
   # A character class set item.
@@ -515,8 +545,23 @@ module Regex::Syntax::AST
     end
 
     def push(item : ClassSetItem) : self
+      if @items.empty?
+        @span = @span.with_start(item.span.start)
+      end
+      @span = @span.with_end(item.span.end)
       @items << item
       self
+    end
+
+    def into_item : ClassSetItem
+      case @items.size
+      when 0
+        ClassSetItem.new(@span, ClassSetItem::Kind::Empty)
+      when 1
+        @items.first
+      else
+        ClassSetItem.new(@span, ClassSetItem::Kind::Union, self)
+      end
     end
   end
 
@@ -533,6 +578,12 @@ module Regex::Syntax::AST
     getter binary_op : ClassSetBinaryOp?
 
     def initialize(@span : Span, @kind : Kind, @item : ClassSetItem? = nil, @binary_op : ClassSetBinaryOp? = nil)
+    end
+
+    def self.union(ast : ClassSetUnion) : self
+      span = ast.span
+      item = ast.into_item
+      new(span, Kind::Item, item: item)
     end
 
     def union(item : ClassSetItem) : self
@@ -624,6 +675,13 @@ module Regex::Syntax::AST
       max.nil? || min <= max
     end
 
+    # ameba:disable Naming/PredicateName
+    def is_valid : Bool
+      valid?
+    end
+
+    # ameba:enable Naming/PredicateName
+
     def range : RepetitionRange?
       return nil unless @kind.range?
       if min = @min
@@ -675,6 +733,12 @@ module Regex::Syntax::AST
     enum Kind
       Negation # -
       Flag     # i, m, s, x, U
+
+      # ameba:disable Naming/PredicateName
+      def is_negation : Bool
+        negation?
+      end
+      # ameba:enable Naming/PredicateName
     end
 
     getter span : Span
@@ -687,6 +751,13 @@ module Regex::Syntax::AST
     def negation? : Bool
       @kind.negation?
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_negation : Bool
+      negation?
+    end
+
+    # ameba:enable Naming/PredicateName
 
     def flag_enum : Flag?
       return nil unless flag = @flag
@@ -759,6 +830,13 @@ module Regex::Syntax::AST
     def capturing? : Bool
       @kind.capture?
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_capturing : Bool
+      capturing?
+    end
+
+    # ameba:enable Naming/PredicateName
 
     def capture_name : CaptureName?
       return nil unless name = @name
@@ -882,5 +960,11 @@ module Regex::Syntax::AST
     def empty? : Bool
       @root.is_a?(Empty)
     end
+
+    # ameba:disable Naming/PredicateName
+    def is_empty : Bool
+      empty?
+    end
+    # ameba:enable Naming/PredicateName
   end
 end

@@ -1,12 +1,26 @@
 require "./spec_helper"
 
 describe Regex::Syntax::AST do
+  it "exposes vendored AST enum aliases" do
+    Regex::Syntax::AST::AssertionKind::Start.should eq(Regex::Syntax::AST::Assertion::Kind::Start)
+    Regex::Syntax::AST::ClassAsciiKind::Alpha.should eq(Regex::Syntax::AST::ClassAscii::Kind::Alpha)
+    Regex::Syntax::AST::ClassPerlKind::Word.should eq(Regex::Syntax::AST::ClassPerl::Kind::Word)
+    Regex::Syntax::AST::ClassSetBinaryOpKind::Intersection.should eq(Regex::Syntax::AST::ClassSetBinaryOp::Kind::Intersection)
+    Regex::Syntax::AST::ClassSetItemKind::Literal.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Literal)
+    Regex::Syntax::AST::FlagsItemKind::Negation.should eq(Regex::Syntax::AST::FlagsItem::Kind::Negation)
+    Regex::Syntax::AST::GroupKind::Capture.should eq(Regex::Syntax::AST::Group::Kind::Capture)
+    Regex::Syntax::AST::LiteralKind::Verbatim.should eq(Regex::Syntax::AST::Literal::Kind::Verbatim)
+    Regex::Syntax::AST::RepetitionKind::Range.should eq(Regex::Syntax::AST::RepetitionOp::Kind::Range)
+  end
+
   it "exposes span helper methods" do
     span = Regex::Syntax::AST::Span.new(2, 5)
     span.one_line?.should be_true
+    span.is_one_line.should be_true
     span.with_start(Regex::Syntax::AST::Position.new(1)).start.offset.should eq(1)
     span.with_end(Regex::Syntax::AST::Position.new(9)).end.offset.should eq(9)
     span.empty?.should be_false
+    span.is_empty.should be_false
 
     position = Regex::Syntax::AST::Position.new(7, 3, 2)
     position.offset.should eq(7)
@@ -30,6 +44,7 @@ describe Regex::Syntax::AST do
     finish = Regex::Syntax::AST::Literal.new(Regex::Syntax::AST::Span.new(2, 3), Regex::Syntax::AST::Literal::Kind::Verbatim, c: 'z')
     range = Regex::Syntax::AST::ClassSetRange.new(Regex::Syntax::AST::Span.new(0, 3), start, finish)
     range.valid?.should be_true
+    range.is_valid.should be_true
   end
 
   it "exposes class set union helpers" do
@@ -37,16 +52,22 @@ describe Regex::Syntax::AST do
     item = Regex::Syntax::AST::ClassSetItem.new(literal.span, Regex::Syntax::AST::ClassSetItem::Kind::Literal, literal)
     union = Regex::Syntax::AST::ClassSetUnion.new(Regex::Syntax::AST::Span.new(0, 1))
     union.push(item).items.size.should eq(1)
+    union.span.start.should eq(item.span.start)
+    union.span.end.should eq(item.span.end)
+    union.into_item.kind.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Literal)
 
     set = Regex::Syntax::AST::ClassSet.new(Regex::Syntax::AST::Span.new(0, 1), Regex::Syntax::AST::ClassSet::Kind::Item, item: item)
     union_item = set.union(item).item
     union_item.should_not be_nil
     union_item.as(Regex::Syntax::AST::ClassSetItem).kind.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Union)
+    Regex::Syntax::AST::ClassSet.union(union).item.should eq(item)
+    item.span.should eq(literal.span)
   end
 
   it "exposes repetition and flags helpers" do
     op = Regex::Syntax::AST::RepetitionOp.new(Regex::Syntax::AST::RepetitionOp::Kind::Range, 1_u32, 2_u32)
     op.valid?.should be_true
+    op.is_valid.should be_true
     if range = op.range
       range.kind.bounded?.should be_true
       range.valid?.should be_true
@@ -59,6 +80,8 @@ describe Regex::Syntax::AST do
       Regex::Syntax::AST::FlagsItem::Kind::Negation
     )
     flag_item.negation?.should be_true
+    flag_item.is_negation.should be_true
+    Regex::Syntax::AST::FlagsItemKind::Negation.is_negation.should be_true
 
     flags = Regex::Syntax::AST::Flags.new(Regex::Syntax::AST::Span.new(0, 0))
     flags.add_item(flag_item).should be_nil
@@ -85,6 +108,7 @@ describe Regex::Syntax::AST do
       capture_index: 1
     )
     group.capturing?.should be_true
+    group.is_capturing.should be_true
     group.capture_name.should be_nil
 
     concat = Regex::Syntax::AST::Concat.new(Regex::Syntax::AST::Span.new(0, 0), children)
@@ -96,7 +120,44 @@ describe Regex::Syntax::AST do
     ast = Regex::Syntax::AST::Ast.empty
     ast.kind.should be_a(Regex::Syntax::AST::Empty)
     ast.empty?.should be_true
+    ast.is_empty.should be_true
     Regex::Syntax::AST::Ast.dot(Regex::Syntax::AST::Span.new(1, 2)).kind.should be_a(Regex::Syntax::AST::Dot)
+  end
+
+  it "exposes direct AST node constructors like vendored ast/mod.rs" do
+    span = Regex::Syntax::AST::Span.new(0, 1)
+    assertion = Regex::Syntax::AST::Assertion.new(span, Regex::Syntax::AST::AssertionKind::Start)
+    Regex::Syntax::AST::Ast.assertion(assertion).kind.should eq(assertion)
+
+    perl = Regex::Syntax::AST::ClassPerl.new(span, Regex::Syntax::AST::ClassPerlKind::DigitNeg)
+    Regex::Syntax::AST::Ast.class_perl(perl).kind.should eq(perl)
+
+    ascii = Regex::Syntax::AST::ClassAscii.new(span, Regex::Syntax::AST::ClassAsciiKind::Alpha, false)
+    ascii.kind.should eq(Regex::Syntax::AST::ClassAsciiKind::Alpha)
+    Regex::Syntax::AST::ClassAsciiKind.from_name("alpha").should eq(Regex::Syntax::AST::ClassAsciiKind::Alpha)
+
+    unicode = Regex::Syntax::AST::ClassUnicode.new(span, false, "Greek")
+    Regex::Syntax::AST::Ast.class_unicode(unicode).kind.should eq(unicode)
+
+    literal = Regex::Syntax::AST::Literal.new(span, Regex::Syntax::AST::LiteralKind::Verbatim, c: 'a')
+    range = Regex::Syntax::AST::ClassSetRange.new(span, literal, literal)
+    binary_lhs = Regex::Syntax::AST::ClassSet.new(span, Regex::Syntax::AST::ClassSet::Kind::Item, item: Regex::Syntax::AST::ClassSetItem.new(span, Regex::Syntax::AST::ClassSetItemKind::Range, range))
+    binary_rhs = Regex::Syntax::AST::ClassSet.new(span, Regex::Syntax::AST::ClassSet::Kind::Item, item: Regex::Syntax::AST::ClassSetItem.new(span, Regex::Syntax::AST::ClassSetItemKind::Literal, literal))
+    binary = Regex::Syntax::AST::ClassSetBinaryOp.new(span, Regex::Syntax::AST::ClassSetBinaryOpKind::Intersection, binary_lhs, binary_rhs)
+    bracketed = Regex::Syntax::AST::ClassBracketed.new(span, false, Regex::Syntax::AST::ClassSet.new(span, Regex::Syntax::AST::ClassSet::Kind::BinaryOp, binary_op: binary))
+    Regex::Syntax::AST::Ast.class_bracketed(bracketed).kind.should eq(bracketed)
+
+    repetition = Regex::Syntax::AST::Repetition.new(
+      span,
+      Regex::Syntax::AST::RepetitionOp.new(Regex::Syntax::AST::RepetitionKind::ZeroOrMore),
+      true,
+      literal
+    )
+    Regex::Syntax::AST::Ast.repetition(repetition).kind.should eq(repetition)
+
+    comment = Regex::Syntax::AST::Comment.new(span, " note")
+    with_comments = Regex::Syntax::AST::WithComments.new(Regex::Syntax::AST::Ast.empty(span), [comment])
+    with_comments.comments.first.comment.should eq(" note")
   end
 
   it "exposes unicode, literal, and capture compatibility helpers" do
