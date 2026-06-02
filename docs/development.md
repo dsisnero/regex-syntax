@@ -58,6 +58,28 @@ The expected loop for code changes is:
 
 This repo is maintained with red-green parity work, not feature guessing.
 
+## Release metadata checklist
+
+When cutting a release tag for this shard, update the repo-specific version
+surfaces together:
+
+- [`shard.yml`](../shard.yml)
+  - `version`
+  - `repository`
+  - `description`
+- [`src/regex-syntax.cr`](../src/regex-syntax.cr)
+  - `Regex::Syntax::VERSION`
+- [`spec/regex-syntax_spec.cr`](../spec/regex-syntax_spec.cr)
+  - version constant expectation
+- [`README.md`](../README.md)
+  - installation snippet and release-facing surface notes
+- [`CHANGELOG.md`](../CHANGELOG.md)
+  - release notes tied to the actual parity/code changes
+
+For this repo, a release is not just a tag bump. The release notes should name
+the concrete parser, translator, Unicode, interval, literal, printer, visitor,
+and diagnostics surfaces that changed.
+
 ## Which parser surface to use
 
 Use the correct parser entry point for the job:

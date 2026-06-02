@@ -7,6 +7,7 @@ This port tracks vendored Rust behavior as the contract. The implementation is n
 ## Documentation
 
 - [Architecture](./docs/architecture.md)
+- [Changelog](./CHANGELOG.md)
 - [Development](./docs/development.md)
 - [Coding Guidelines](./docs/coding-guidelines.md)
 - [Testing](./docs/testing.md)
@@ -20,6 +21,7 @@ Add this shard to your `shard.yml`:
 dependencies:
   regex-syntax:
     github: dsisnero/regex-syntax
+    version: ~> 0.5.0
 ```
 
 Then install dependencies:
@@ -118,6 +120,26 @@ Regex::Syntax.escapeable_character?('=')   # => true
 Regex::Syntax.word_byte?('A'.ord.to_u8)    # => true
 Regex::Syntax.word_character?('β')         # => true
 ```
+
+## Release highlights
+
+Version `0.5.0` is the first release in this repository that documents the port
+as a parity-closed staged implementation instead of a partial parser surface.
+
+- The public staged pipeline is fully documented and shipped:
+  `Regex::Syntax.parse`, `Parser` / `ParserBuilder`, and `AstParser` /
+  `AstParserBuilder`.
+- Structured diagnostics are part of the supported API through
+  `Regex::Syntax::AST::Error` and `Regex::Syntax::Hir::Error`, with
+  vendored-style span coverage.
+- Dedicated support modules are now part of the release surface instead of
+  embedded helpers: interval algebra, UTF-8 decomposition, literal extraction,
+  AST/HIR printers, and AST/HIR visitors.
+- Vendored Unicode compatibility namespaces and property tables ship directly in
+  the shard, including `gc`, `sc`, `scx`, `age`, `wb`, `gcb`, `sb`, and Perl
+  word-class behavior.
+- The parity manifests in [`plans/`](./plans/) now track intentional
+  API-shape differences rather than broad semantic missing work.
 
 ## What is implemented
 

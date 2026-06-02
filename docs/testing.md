@@ -130,7 +130,8 @@ Not every `partial` row means missing semantics.
 At the current project state, remaining `partial` rows in the inventories are largely:
 
 - intentional AST model-shape differences
-- simplified position/span modeling
 - internal Rust helper functions that are not exposed as separate Crystal helpers
+- a small number of visitor/interval trait-shape differences caused by Rust
+  traits mapping to Crystal mixins or typed generics
 
 That distinction should be preserved when updating manifests.

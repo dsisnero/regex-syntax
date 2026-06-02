@@ -7,7 +7,7 @@ describe Regex::Syntax do
   end
 
   it "has version constant" do
-    Regex::Syntax::VERSION.should be_a(String)
+    Regex::Syntax::VERSION.should eq("0.5.0")
   end
 
   it "defines Parser class" do

@@ -58,6 +58,11 @@ Prefer messages that name the actual subsystem:
 - `test: port vendored ast printer matrix`
 - `docs: update README and internal docs for current parser pipeline`
 
+For release commits and release tags, be equally specific:
+
+- `docs: prepare 0.5.0 release notes and metadata sync`
+- `chore: tag 0.5.0 after parity closure verification`
+
 ## PR description contents
 
 A good PR description here should include:
@@ -99,6 +104,22 @@ Update docs in the same PR when the change affects:
 - parity workflow
 
 This is especially important in this repo because stale docs have historically drifted away from the real staged architecture.
+
+## Release checklist
+
+When preparing a versioned release for this repository:
+
+- sync [`shard.yml`](../shard.yml) version and repository metadata
+- sync [`src/regex-syntax.cr`](../src/regex-syntax.cr) `VERSION`
+- update [`README.md`](../README.md) installation and shipped-surface notes
+- update [`CHANGELOG.md`](../CHANGELOG.md) with concrete parity and subsystem
+  changes
+- re-run `make format`, `make lint`, and `make test`
+- create the Git tag only after the release commit is recorded
+
+Release notes here should talk about the real port surface, such as staged AST
+-> HIR parsing, structured diagnostics, Unicode/property tables, interval
+algebra, literal extraction, printers, visitors, and parity-manifest closure.
 
 ## Manifest expectations
 
