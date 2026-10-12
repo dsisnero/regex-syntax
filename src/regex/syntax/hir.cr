@@ -717,7 +717,7 @@ module Regex::Syntax::Hir
     end
 
     def len : Int32
-      (@end - @start + 1).to_i32
+      @end.to_i32 - @start.to_i32 + 1
     end
 
     def to_range : Range(UInt8, UInt8)
@@ -1221,11 +1221,8 @@ module Regex::Syntax::Hir
     end
 
     def self.full : self
-      bits = 0_u32
-      ordered_kinds.each do |kind|
-        bits |= bit_for(kind)
-      end
-      new(bits)
+      # Rust reserves all 32 bits, including assertions added in future versions.
+      new(UInt32::MAX)
     end
 
     def empty? : Bool
@@ -1233,9 +1230,7 @@ module Regex::Syntax::Hir
     end
 
     def len : Int32
-      count = 0
-      each { count += 1 }
-      count
+      @bits.popcount
     end
 
     def contains(kind : Look::Kind) : Bool

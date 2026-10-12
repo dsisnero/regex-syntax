@@ -1,0 +1,159 @@
+# source_test_id	native_test	default_features	crystal_status	reason
+src/ast/mod.rs::test::ast_size	ast::tests::ast_size	true	skipped	Vendored Rust checks inline enum value size. Crystal models the AST as reference objects under a different runtime/object layout, so Rust's `size_of::<Ast>()` heuristic is not a meaningful parity target here.
+src/ast/mod.rs::test::no_stack_overflow_on_drop	ast::tests::no_stack_overflow_on_drop	true	skipped	Vendored Rust checks a custom `Drop` implementation for recursive AST values. Crystal uses GC-managed reference objects and does not expose an equivalent user-defined destructor path for this AST surface.
+src/ast/parse.rs::test::maybe_parse_ascii_class	ast::parse::tests::maybe_parse_ascii_class	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_alternate	ast::parse::tests::parse_alternate	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_capture_name	ast::parse::tests::parse_capture_name	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_comments	ast::parse::tests::parse_comments	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_counted_repetition	ast::parse::tests::parse_counted_repetition	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_decimal	ast::parse::tests::parse_decimal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_escape	ast::parse::tests::parse_escape	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_flag	ast::parse::tests::parse_flag	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_flags	ast::parse::tests::parse_flags	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_group	ast::parse::tests::parse_group	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_hex_brace	ast::parse::tests::parse_hex_brace	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_hex_eight	ast::parse::tests::parse_hex_eight	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_hex_four	ast::parse::tests::parse_hex_four	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_hex_two	ast::parse::tests::parse_hex_two	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_holistic	ast::parse::tests::parse_holistic	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_ignore_whitespace	ast::parse::tests::parse_ignore_whitespace	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_nest_limit	ast::parse::tests::parse_nest_limit	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_newlines	ast::parse::tests::parse_newlines	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_octal	ast::parse::tests::parse_octal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_perl_class	ast::parse::tests::parse_perl_class	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_primitive_non_escape	ast::parse::tests::parse_primitive_non_escape	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_set_class	ast::parse::tests::parse_set_class	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_set_class_open	ast::parse::tests::parse_set_class_open	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_uncounted_repetition	ast::parse::tests::parse_uncounted_repetition	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_unicode_class	ast::parse::tests::parse_unicode_class	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_unsupported_backreference	ast::parse::tests::parse_unsupported_backreference	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::parse_unsupported_lookaround	ast::parse::tests::parse_unsupported_lookaround	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::regression_454_nest_too_big	ast::parse::tests::regression_454_nest_too_big	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/parse.rs::test::regression_455_trailing_dash_ignore_whitespace	ast::parse::tests::regression_455_trailing_dash_ignore_whitespace	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_alternation	ast::print::tests::print_alternation	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_assertion	ast::print::tests::print_assertion	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_class	ast::print::tests::print_class	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_concat	ast::print::tests::print_concat	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_dot	ast::print::tests::print_dot	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_flags	ast::print::tests::print_flags	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_group	ast::print::tests::print_group	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_literal	ast::print::tests::print_literal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/ast/print.rs::test::print_repetition	ast::print::tests::print_repetition	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/error.rs::test::regression_464	error::tests::regression_464	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/error.rs::test::repetition_quantifier_expects_a_valid_decimal	error::tests::repetition_quantifier_expects_a_valid_decimal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::alternation	hir::literal::tests::alternation	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::anything	hir::literal::tests::anything	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::anything_small_limits	hir::literal::tests::anything_small_limits	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::class	hir::literal::tests::class	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::concat	hir::literal::tests::concat	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::crazy_repeats	hir::literal::tests::crazy_repeats	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::empty	hir::literal::tests::empty	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::holmes	hir::literal::tests::holmes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::holmes_alt	hir::literal::tests::holmes_alt	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::huge	hir::literal::tests::huge	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::impossible	hir::literal::tests::impossible	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::literal	hir::literal::tests::literal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::look	hir::literal::tests::look	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::odds_and_ends	hir::literal::tests::odds_and_ends	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::optimize	hir::literal::tests::optimize	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/literal.rs::test::repetition	hir::literal::tests::repetition	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_canonicalize_bytes	hir::tests::class_canonicalize_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_canonicalize_unicode	hir::tests::class_canonicalize_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_case_fold_bytes	hir::tests::class_case_fold_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_case_fold_unicode	hir::tests::class_case_fold_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_case_fold_unicode_disabled	hir::tests::class_case_fold_unicode_disabled	false	skipped	Vendored Rust only runs these when the compile-time `unicode-case` feature is disabled. Crystal exposes the upstream Unicode case-folding feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable. Phase 3 retains this compile-time feature omission; Crystal always includes verified Unicode 16.0.0 tables.
+src/hir/mod.rs::test::class_case_fold_unicode_disabled_panics	hir::tests::class_case_fold_unicode_disabled_panics	false	skipped	Vendored Rust only runs this when the compile-time `unicode-case` feature is disabled. Crystal exposes the upstream Unicode case-folding feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable. Phase 3 retains this compile-time feature omission; Crystal always includes verified Unicode 16.0.0 tables.
+src/hir/mod.rs::test::class_difference_bytes	hir::tests::class_difference_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_difference_unicode	hir::tests::class_difference_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_intersect_bytes	hir::tests::class_intersect_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_intersect_unicode	hir::tests::class_intersect_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_negate_bytes	hir::tests::class_negate_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_negate_unicode	hir::tests::class_negate_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_range_canonical_bytes	hir::tests::class_range_canonical_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_range_canonical_unicode	hir::tests::class_range_canonical_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_symmetric_difference_bytes	hir::tests::class_symmetric_difference_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_symmetric_difference_unicode	hir::tests::class_symmetric_difference_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_union_bytes	hir::tests::class_union_bytes	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::class_union_unicode	hir::tests::class_union_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::look_set_debug	hir::tests::look_set_debug	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::look_set_iter	hir::tests::look_set_iter	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/mod.rs::test::no_stack_overflow_on_drop	hir::tests::no_stack_overflow_on_drop	true	skipped	Vendored Rust checks a custom `Drop` implementation for recursive HIR values. Crystal uses GC-managed reference objects and does not expose an equivalent user-defined destructor path for this HIR surface.
+src/hir/print.rs::test::print_alternation	hir::print::tests::print_alternation	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::print_anchor	hir::print::tests::print_anchor	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::print_class	hir::print::tests::print_class	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::print_group	hir::print::tests::print_group	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::print_literal	hir::print::tests::print_literal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::print_repetition	hir::print::tests::print_repetition	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::print_word_boundary	hir::print::tests::print_word_boundary	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::regression_alternation_concat	hir::print::tests::regression_alternation_concat	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::regression_repetition_alternation	hir::print::tests::regression_repetition_alternation	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/print.rs::test::regression_repetition_concat	hir::print::tests::regression_repetition_concat	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_can_empty	hir::translate::tests::analysis_can_empty	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_captures_len	hir::translate::tests::analysis_captures_len	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_is_all_assertions	hir::translate::tests::analysis_is_all_assertions	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_is_alternation_literal	hir::translate::tests::analysis_is_alternation_literal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_is_anchored	hir::translate::tests::analysis_is_anchored	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_is_any_anchored	hir::translate::tests::analysis_is_any_anchored	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_is_literal	hir::translate::tests::analysis_is_literal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_is_utf8	hir::translate::tests::analysis_is_utf8	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_look_set_prefix_any	hir::translate::tests::analysis_look_set_prefix_any	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::analysis_static_captures_len	hir::translate::tests::analysis_static_captures_len	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::assertions	hir::translate::tests::assertions	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::cat_alt	hir::translate::tests::cat_alt	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::cat_class_flattened	hir::translate::tests::cat_class_flattened	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_ascii	hir::translate::tests::class_ascii	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_ascii_multiple	hir::translate::tests::class_ascii_multiple	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_bracketed	hir::translate::tests::class_bracketed	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_bracketed_difference	hir::translate::tests::class_bracketed_difference	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_bracketed_intersect	hir::translate::tests::class_bracketed_intersect	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_bracketed_intersect_negate	hir::translate::tests::class_bracketed_intersect_negate	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_bracketed_nested	hir::translate::tests::class_bracketed_nested	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_bracketed_symmetric_difference	hir::translate::tests::class_bracketed_symmetric_difference	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_bracketed_union	hir::translate::tests::class_bracketed_union	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_perl_ascii	hir::translate::tests::class_perl_ascii	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_perl_digit_disabled	hir::translate::tests::class_perl_digit_disabled	false	skipped	Vendored Rust only runs this when compile-time `unicode-perl` and `unicode-gencat` are both disabled. Crystal exposes those upstream feature surfaces as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::class_perl_space_disabled	hir::translate::tests::class_perl_space_disabled	false	skipped	Vendored Rust only runs this when compile-time `unicode-perl` and `unicode-bool` are both disabled. Crystal exposes those upstream feature surfaces as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::class_perl_unicode	hir::translate::tests::class_perl_unicode	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_perl_word_disabled	hir::translate::tests::class_perl_word_disabled	false	skipped	Vendored Rust only runs this when the compile-time `unicode-perl` feature is disabled. Crystal exposes the upstream Unicode-perl feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::class_unicode_age	hir::translate::tests::class_unicode_age	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_unicode_age_disabled	hir::translate::tests::class_unicode_age_disabled	false	skipped	Vendored Rust only runs this when the compile-time `unicode-age` feature is disabled. Crystal exposes the upstream Unicode-age feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::class_unicode_any_empty	hir::translate::tests::class_unicode_any_empty	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_unicode_gencat	hir::translate::tests::class_unicode_gencat	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_unicode_gencat_disabled	hir::translate::tests::class_unicode_gencat_disabled	false	skipped	Vendored Rust only runs this when the compile-time `unicode-gencat` feature is disabled. Crystal exposes the upstream Unicode general-category feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::class_unicode_script	hir::translate::tests::class_unicode_script	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::class_unicode_script_disabled	hir::translate::tests::class_unicode_script_disabled	false	skipped	Vendored Rust only runs this when the compile-time `unicode-script` feature is disabled. Crystal exposes the upstream Unicode script feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/hir/translate.rs::test::dot	hir::translate::tests::dot	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::empty	hir::translate::tests::empty	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::escape	hir::translate::tests::escape	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::flags	hir::translate::tests::flags	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::group	hir::translate::tests::group	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::ignore_whitespace	hir::translate::tests::ignore_whitespace	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::line_anchors	hir::translate::tests::line_anchors	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::literal	hir::translate::tests::literal	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::literal_case_insensitive	hir::translate::tests::literal_case_insensitive	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::regression_alt_empty_concat	hir::translate::tests::regression_alt_empty_concat	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::regression_empty_alt	hir::translate::tests::regression_empty_alt	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::regression_fuzz_char_decrement1	hir::translate::tests::regression_fuzz_char_decrement1	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::regression_fuzz_difference1	hir::translate::tests::regression_fuzz_difference1	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::regression_fuzz_match	hir::translate::tests::regression_fuzz_match	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::regression_singleton_alt	hir::translate::tests::regression_singleton_alt	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::repetition	hir::translate::tests::repetition	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::smart_alternation	hir::translate::tests::smart_alternation	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::smart_concat	hir::translate::tests::smart_concat	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/hir/translate.rs::test::smart_repetition	hir::translate::tests::smart_repetition	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/lib.rs::test::escape_meta	tests::escape_meta	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/lib.rs::test::word_byte	tests::word_byte	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/lib.rs::test::word_char	tests::word_char	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/lib.rs::test::word_char_disabled_error	tests::word_char_disabled_error	false	skipped	Vendored Rust only runs this when the compile-time `unicode-perl` feature is disabled. Crystal exposes the upstream Unicode word-character feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/lib.rs::test::word_char_disabled_panic	tests::word_char_disabled_panic	false	skipped	Vendored Rust only runs this when the compile-time `unicode-perl` feature is disabled. Crystal exposes the upstream Unicode word-character feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable.
+src/unicode.rs::test::range_contains	unicode::tests::range_contains	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/unicode.rs::test::regression_466	unicode::tests::regression_466	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/unicode.rs::test::simple_fold_a	unicode::tests::simple_fold_a	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/unicode.rs::test::simple_fold_disabled	unicode::tests::simple_fold_disabled	false	skipped	Vendored Rust only runs this when the compile-time `unicode-case` feature is disabled. Crystal exposes the upstream Unicode case-folding feature surface as always enabled, so only the Rust cargo-feature-absent branch is not applicable. Phase 3 retains this compile-time feature omission; Crystal always includes verified Unicode 16.0.0 tables.
+src/unicode.rs::test::simple_fold_k	unicode::tests::simple_fold_k	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/unicode.rs::test::sym_normalize	unicode::tests::sym_normalize	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/unicode.rs::test::valid_utf8_symbolic	unicode::tests::valid_utf8_symbolic	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/utf8.rs::test::bmp	utf8::tests::bmp	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/utf8.rs::test::codepoints_no_surrogates	utf8::tests::codepoints_no_surrogates	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/utf8.rs::test::reverse	utf8::tests::reverse	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv
+src/utf8.rs::test::single_codepoint_one_sequence	utf8::tests::single_codepoint_one_sequence	true	ported	Default-feature Rust test; Crystal assertion evidence in rust_test_parity.tsv

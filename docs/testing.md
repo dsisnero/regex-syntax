@@ -296,3 +296,44 @@ ledger maps every assertion in the original error/printer unit tests; visitor
 characterizations are labeled separately. AST error enums retain kind identity;
 `AST::Error#nest_limit` and `#kind_message` preserve the nesting-limit payload
 and its formatted text.
+
+### Public APIs and complete assertion reconciliation
+
+```bash
+python3 scripts/check_public_api_parity.py
+```
+
+This gate runs all 147 original default-feature Rust tests in a disposable
+instrumented source copy and checks the 25 remaining assertion locations.
+Five direct test ports retain the original assertions; the negative minimum
+length helper covers all ten upstream inputs. Another 306 native snapshots
+check all 32 singleton LookSet bits, mixed masks, exact debug output, native
+representation round-trips, character helpers across U+0000–U+00FF, and byte/Unicode range lengths.
+Full-byte range length arithmetic widens before adding one, returning 256
+without endpoint overflow.
+`LookSet.full` includes reserved bits: its length is 32 although its iterator
+currently yields 18 known assertions.
+
+`rust_assertion_audit.tsv` indexes every assertion macro location in the pinned
+`#[cfg(test)]` modules, joining the six feature ledgers. This is a location
+count, not a count of runtime invocations or assertions in generated fixtures.
+The scanner deliberately uses the existing regex backend. Feature exclusions
+and Rust layout/Drop exclusions point to `rust_test_configuration.tsv`, which
+matches all 158 inventory identities against the actual native test list:
+147 default-feature tests (144 ported and three Rust runtime/layout exclusions)
+and 11 tests requiring omitted Unicode tables. Crystal always ships those
+tables. Visitor modules have no original unit tests; their separate native
+characterizations remain in the diagnostic ledger.
+
+To regenerate after reviewing changes to the pinned source or audit evidence:
+
+```bash
+python3 scripts/check_public_api_parity.py --write-fixture --rust-only
+python3 scripts/check_public_api_parity.py
+```
+
+The complete index checks source locations and evidence paths. Run the earlier
+feature oracles to independently revalidate their detailed fixtures; the index
+alone does not establish behavior from an inventory status. Rust enum/trait
+representation differences are recorded as `intentional_divergence`, with
+precise tested contracts and limits, rather than outstanding behavioral gaps.

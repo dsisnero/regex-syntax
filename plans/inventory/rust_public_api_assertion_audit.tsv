@@ -1,0 +1,26 @@
+# source_assertion	status	crystal_evidence	notes
+src/hir/mod.rs:3831	excluded_runtime	plans/inventory/rust_test_configuration.tsv	Rust recursive value Drop stress test; Crystal GC-managed references have no custom Drop contract
+src/hir/mod.rs:3850	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/hir/mod.rs:3853	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/hir/mod.rs:3857	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/hir/mod.rs:3860	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/hir/mod.rs:3863	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/hir/mod.rs:3869	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/hir/mod.rs:3871	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/hir/translate.rs:3478	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:393	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:401	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:402	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:408	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:409	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:410	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:411	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:412	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:413	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:414	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:415	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:416	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:417	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:418	runtime_verified	spec/public_api_parity_spec.cr	Original Rust assertion executes; exact assertion port and native public API snapshots
+src/lib.rs:425	excluded_feature	plans/inventory/rust_test_configuration.tsv	Requires absent unicode-perl; Crystal ships all Unicode tables and has no table-disabled build
+src/lib.rs:431	excluded_feature	plans/inventory/rust_test_configuration.tsv	Requires absent unicode-perl; Crystal ships all Unicode tables and has no table-disabled build

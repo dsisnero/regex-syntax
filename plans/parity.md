@@ -70,50 +70,40 @@ Checklist rules:
   and optional repetitions. The property fixture now has 465 cases. Validation:
   1,149 Crystal specs, 465/465 property comparisons, and 22 downstream Thompson
   specs pass; formatting, lint, and all three inventory checks pass.
-- [ ] Full independent assertion-by-assertion audit of the remaining Rust test
-  ports. Phase 1 below now verifies the complete default-feature translator
-  runtime and HIR constructor compositions. Phase 2 verifies Parser/AST,
-  Phase 3 Unicode/class algebra, Phase 4 extraction/UTF-8, and Phase 5
-  diagnostics/printing/visitor behavior. API/assertion reconciliation remains
-  open in Phase 6.
-  Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
-  the verified slices must not be mistaken for a fresh exhaustive signoff.
+- [x] Complete the independent assertion-location audit of the Rust test ports.
+  Phases 1–6 now account for all 1,242 assertion macro locations in the pinned
+  test modules, with native-derived expectations or explicit supported
+  exclusions. `rust_assertion_audit.tsv` indexes the feature ledgers;
+  `check_public_api_parity.py` checks completeness and native test identities.
+  Downstream adoption and Thompson graph signoff remain open in Phase 7.
 
 ## Current State
 
 - `rust_test_parity.tsv`: `144 ported`, `14 skipped`, `0 partial`
-- `rust_source_parity.tsv`: `869 ported`, `1 skipped`, `7 partial`
+- `rust_source_parity.tsv`: `869 ported`, `1 skipped`,
+  `7 intentional_divergence`, `0 partial`
+- `rust_assertion_audit.tsv`: 1,242 test assertion locations indexed across all
+  modules. Visitor characterizations and tests without assertion macros are
+  tracked separately in their feature ledgers and test configuration manifest.
+- `rust_test_configuration.tsv`: all 158 inventory test identities reconciled
+  with the 147 executable default-feature Rust tests. Three of those 147 test
+  Rust layout/Drop mechanics; the other 11 inventory tests require omitted
+  Unicode tables, a build mode Crystal does not expose.
 
-Interpretation (inventory coverage, not independent assertion signoff):
-
-- The five parser-helper test partials are now closed by exact helper-result
-  and cursor-position replays. Rows outside completed phases still require
-  independent assertion audits despite their `ported` labels.
-- The remaining source partials are still mostly API/model-shape mappings:
-  Crystal class hierarchies, wrapper objects, builder-style APIs, and
-  idiomatic replacements for Rust enums, traits, and free functions.
-- The remaining source partials are now concentrated mostly in AST/HIR node
-  shape differences and a few explicit cross-language model differences rather
-  than top-level lib, parser, Unicode, interval, or translator helper
-  surfaces.
-- Vendored Unicode-table compatibility namespaces like `perl_decimal`,
-  `perl_space`, `PROPERTY_NAMES`, and `PROPERTY_VALUES` are now exposed
-  directly in Crystal instead of being left as documented alias drift.
-- The remaining source partials are now almost entirely explicit
-  cross-language type-shape differences: Rust enums/traits versus Crystal
-  wrapper classes, mixins, and generic specializations.
-- Broad semantic parity is no longer being driven by generated-manifest
-  `missing` rows. The manifests are now mostly documentation of intentional
-  cross-language shape differences.
+The seven model differences have precise contracts and test references in the
+source inventory. Rust enum payload exclusivity and ownership/trait syntax are
+intentional language differences; equivalent valid AST/class-set operations,
+visitor order and errors, and public interval behavior have independent native
+evidence. The private upstream `interval` traits and `Either` helper are not
+public extension contracts. Inventory labels are supported by the feature
+oracles rather than serving as semantic evidence on their own.
 
 ## Remaining Work in Feature-Sized Phases
 
 No unfixed runtime mismatch has been confirmed by the completed comparisons.
-The known remaining discrepancies are incomplete assertion coverage in phases
-3–6, seven source/API model mappings, and the downstream installed shard still
-containing the older implementation. Suspected edge cases
-below are audit targets, not established bugs. Keep the upstream revision pinned
-while completing these phases; fix any newly reproduced mismatch in its phase.
+The remaining work is normal downstream dependency adoption and exact Thompson
+graph verification in Phase 7. Keep the upstream revision pinned while checking
+that integration; an upstream syntax fix does not establish downstream parity.
 
 Work in order. Each phase should produce a reviewable feature commit containing
 its tests, fixes, and evidence updates. Track the audit under `regex-syntax-u0w`.
@@ -352,28 +342,61 @@ changing its expectations.
 Final gates: formatting, lint, compilation, 21,517 Crystal examples, the fresh
 diagnostic oracle, Phase 2 AST and Phase 1 HIR-construction oracles, 147 original
 Rust unit tests, 316 HIR display comparisons, all three inventory checks, and
-22 downstream Thompson harness specs pass. Phase 6 is next. Visitor trait/API
-representation rows remain partial for reconciliation, and downstream adoption
-and Thompson signoff remain open in Phase 7.
+22 downstream Thompson harness specs pass. Phase 5 left visitor trait/API
+representation reconciliation to Phase 6; downstream adoption and Thompson
+signoff remain open in Phase 7.
 
 ### Phase 6 — Public API reconciliation and audit completeness
 
-- [ ] Reconcile the seven source partials after behavioral phases 1–5:
+- [x] Reconcile the seven source partials after behavioral phases 1–5:
   AST `Ast`, `ClassSet`, and `ClassSetItem`; AST/HIR `Visitor`; interval `Bound`
   and `Interval`. Verify public contracts, then classify each remaining shape
   difference with a precise rationale and tests for the equivalent behavior.
-- [ ] Review all 14 skipped test rows and the skipped internal `Either` API.
+- [x] Review all 14 skipped test rows and the skipped internal `Either` API.
   Check that each exclusion concerns Rust runtime/build mechanics rather than
   untested user-visible behavior. Reconcile the 158 test inventory rows with
   the 147 executable default-feature Rust tests, including configuration and
   exclusion reasons; the counts are not interchangeable.
-- [ ] Complete the assertion audit ledger across all modules. Keep the existing
+- [x] Complete the assertion audit ledger across all modules. Keep the existing
   regex-discovery backend explicit; if switching to tree-sitter discovery,
   review manifest changes separately rather than silently regenerating them.
 
 **Exit evidence:** every upstream assertion has a test/fixture reference or a
 specific supported exclusion, all manifest checks pass, and no broad semantic
 claim rests solely on a `ported` label.
+
+**Completed evidence (2026-10-12):**
+
+Ported the original `escape_meta`, `word_byte`, `word_char`, `look_set_iter`,
+and `look_set_debug` assertions first, plus the previously unindexed negative
+minimum-length helper and all ten of its inputs. A native API characterization
+then reproduced `LookSet.full.bits`: Rust returns `UInt32::MAX`, while Crystal
+returned `262143`. The regression failed before changing production code and
+passes after preserving all 32 bits and counting them with population count.
+Iteration still yields the 18 recognized assertions, as Rust does.
+
+`check_public_api_parity.py` runs all 147 original Rust tests, verifies the
+remaining 25 assertion locations, and compares 306 public API snapshots:
+all 32 singleton bits, mixed/reserved masks, exact debug strings and native
+representation bytes, character helpers across U+0000–U+00FF, and canonical
+byte/Unicode range lengths. A second regression reproduced an OverflowError
+for the full byte range: endpoint arithmetic occurred in UInt8 before conversion. Widening before
+subtraction/addition now returns 256 for both forward and reversed endpoints,
+as Rust does. The combined index covers all 1,242 unit-test assertion locations
+without rewriting earlier feature ledgers. Every exclusion has its precise feature/runtime reason and
+configuration reference. The 158 test identities reconcile to 144 Crystal
+ports, three native runtime/layout tests, and 11 disabled-table tests.
+
+The seven source partials are now `intentional_divergence`, with precise limits
+and prior native fixture evidence; the private `Either` exclusion is verified
+against its module visibility and iterative traversal replacement. Discovery
+remains `PORT_PARSER=regex`. Phase 7 remains open.
+
+Final gates: `make format`, `make lint`, `make test` (21,831 examples),
+compilation, 147 default-feature Rust tests, 306 public API snapshots, fresh
+AST/class/Unicode/literal/UTF-8/diagnostic/visitor and HIR-construction oracles,
+316 HIR output comparisons, and all three inventory checks pass.
+Bead `regex-syntax-9lx` is complete; Phase 7 is next.
 
 ### Phase 7 — Downstream adoption and parity signoff
 
