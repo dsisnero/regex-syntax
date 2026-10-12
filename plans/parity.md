@@ -73,8 +73,9 @@ Checklist rules:
 - [ ] Full independent assertion-by-assertion audit of the remaining Rust test
   ports. Phase 1 below now verifies the complete default-feature translator
   runtime and HIR constructor compositions. Phase 2 verifies Parser/AST,
-  Phase 3 Unicode/class algebra, and Phase 4 extraction/UTF-8. Diagnostic,
-  printer/visitor, and API/assertion reconciliation remain open in phases 5–6.
+  Phase 3 Unicode/class algebra, Phase 4 extraction/UTF-8, and Phase 5
+  diagnostics/printing/visitor behavior. API/assertion reconciliation remains
+  open in Phase 6.
   Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
   the verified slices must not be mistaken for a fresh exhaustive signoff.
 
@@ -310,17 +311,50 @@ open in Phase 7.
 
 ### Phase 5 — Diagnostics, printing, and visitor contracts
 
-- [ ] Compare parser/translator error kinds, primary and auxiliary spans,
+- [x] Compare parser/translator error kinds, primary and auxiliary spans,
   multiline formatting, and public error text with Rust expectations. The
   existing AST/HIR oracles cover error kinds and spans; extend their coverage
   with Rust-derived formatted diagnostics and public error text for this phase.
-- [ ] Audit AST/HIR printer and visitor tests, including escaping, round trips,
+- [x] Audit AST/HIR printer and visitor tests, including escaping, round trips,
   hook order, class-set traversal, and early failure propagation. Distinguish
   language-specific exception mechanics from observable traversal behavior.
 
 **Exit evidence:** exact diagnostic fixtures, printer outputs and traversal
 traces, with any intentional presentation/API differences recorded explicitly.
 Do not infer diagnostic fidelity from successful HIR output comparisons.
+
+Completed against pinned Rust `72d650cb0a880a01ab6dc2137c0888e8f89740f7`.
+`scripts/check_diagnostic_parity.py` preserves all 21 original error/printer
+unit tests and their ten assertion locations, then runs nine native
+characterization tests. The visitor modules have no upstream unit tests;
+`plans/inventory/rust_diagnostic_assertion_audit.tsv` labels their native
+characterization separately. No original assertions in this phase are excluded.
+
+Tests were ported before implementation: the first 901-case replay produced
+35 failures and one error. Additional Unicode-whitespace cases later produced
+18 failures before that fix. The final 1,119 Rust-derived comparisons cover
+197 diagnostic/formatter cases, 478 printer outputs, 127 writer-failure cases,
+40 error-kind messages, 275 visitor traces, and two deep-tree cases. Visitor
+errors are injected at every fallible hook occurrence, including `finish`;
+writer errors compare exact partial bytes at each boundary. Both languages
+print and traverse directly constructed 50,000-level trees.
+
+Fixes preserve AST named-property braces and capture-group spelling; use span
+line/column metadata for Unicode carets; match CRLF, trailing newline, and lone
+CR formatting; include nesting limits and exact error-kind messages; and use
+iterative visitors for constant-stack printing. Original printer tests exposed
+mixed character/byte class ranges being erased; these now retain their full
+intervals and ASCII folding. Verbose class ranges now honor whitespace-aware
+lookahead, trailing dashes, and Unicode whitespace. An intermediate regression
+in trailing-dash handling was caught by the Phase 2 oracle and fixed without
+changing its expectations.
+
+Final gates: formatting, lint, compilation, 21,517 Crystal examples, the fresh
+diagnostic oracle, Phase 2 AST and Phase 1 HIR-construction oracles, 147 original
+Rust unit tests, 316 HIR display comparisons, all three inventory checks, and
+22 downstream Thompson harness specs pass. Phase 6 is next. Visitor trait/API
+representation rows remain partial for reconciliation, and downstream adoption
+and Thompson signoff remain open in Phase 7.
 
 ### Phase 6 — Public API reconciliation and audit completeness
 

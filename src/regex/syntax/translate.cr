@@ -552,36 +552,26 @@ module Regex::Syntax
       start_literal = range.start
       end_literal = range.end
 
-      start_char = start_literal.kind.hex? && start_literal.bytes ? nil : start_literal.c
-      end_char = end_literal.kind.hex? && end_literal.bytes ? nil : end_literal.c
-      start_byte = single_byte_literal(start_literal)
-      end_byte = single_byte_literal(end_literal)
-
-      if start_char && end_char
-        # In byte mode (non-Unicode), only ASCII characters are allowed
-        # Characters above 255 would overflow when converting to UInt8
-        return [] of Range(UInt8, UInt8) unless start_char.ascii? && end_char.ascii?
-
-        if @ignore_case
-          # For case-insensitive matching, we need to include both cases
-          start_lower = start_char.downcase.ord.to_u8
-          end_lower = end_char.downcase.ord.to_u8
-          start_upper = start_char.upcase.ord.to_u8
-          end_upper = end_char.upcase.ord.to_u8
-
-          # Create ranges for both cases
-          ranges = [] of Range(UInt8, UInt8)
-          ranges << (start_lower..end_lower) if start_lower <= end_lower
-          ranges << (start_upper..end_upper) if start_upper <= end_upper
-          ranges
-        else
-          [(start_char.ord.to_u8..end_char.ord.to_u8)]
-        end
-      elsif start_byte && end_byte
-        [(start_byte..end_byte)]
+      start_byte = class_range_byte(start_literal)
+      end_byte = class_range_byte(end_literal)
+      intervals = [(start_byte..end_byte)]
+      if @ignore_case
+        klass = Hir::CharClass.new(false, intervals)
+        klass.case_fold_simple
+        klass.intervals
       else
-        [] of Range(UInt8, UInt8)
+        intervals
       end
+    end
+
+    private def class_range_byte(literal : AST::Literal) : UInt8
+      if byte = single_byte_literal(literal)
+        return byte
+      end
+      if (char = literal.c) && char.ascii?
+        return char.ord.to_u8
+      end
+      raise ParseError.new("Unicode not allowed", :unicode_not_allowed, literal.span)
     end
 
     private def translate_class_set_range_unicode(range : AST::ClassSetRange) : Array(Range(UInt32, UInt32))

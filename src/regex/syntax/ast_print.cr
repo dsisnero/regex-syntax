@@ -41,7 +41,7 @@ module Regex::Syntax::AST
     end
 
     def print(ast : Ast, io : IO) : Nil
-      write_node(ast.root, io)
+      AST.visit(ast, PrinterWriter.new(io))
     end
 
     private def write_node(node : Node, io : IO) : Nil
@@ -71,7 +71,7 @@ module Regex::Syntax::AST
 
     private def write_node(node : ClassUnicode, io : IO) : Nil
       io << (node.negated? ? "\\P" : "\\p")
-      if node.name.size == 1
+      if node.kind.kind.one_letter?
         io << node.name
       else
         io << "{" << node.name << "}"
@@ -96,42 +96,15 @@ module Regex::Syntax::AST
       io << ":]"
     end
 
-    private def write_node(node : ClassBracketed, io : IO) : Nil
-      io << "["
-      io << "^" if node.negated?
-      write_class_set(node.kind, io)
-      io << "]"
-    end
-
-    private def write_node(node : Repetition, io : IO) : Nil
-      write_node(node.child, io)
-      write_repetition_suffix(node, io)
-    end
-
-    private def write_node(node : Group, io : IO) : Nil
-      write_group_prefix(node, io)
-      write_node(node.child, io)
-      io << ")"
-    end
-
-    private def write_node(node : Alternation, io : IO) : Nil
-      node.children.each_with_index do |child, i|
-        io << "|" if i > 0
-        write_node(child, io)
-      end
-    end
-
-    private def write_node(node : Concat, io : IO) : Nil
-      node.children.each do |child|
-        write_node(child, io)
-      end
+    private def write_capture_name(node : Group, name : String, io : IO) : Nil
+      io << (node.starts_with_p? == false ? "(?<" : "(?P<") << name << ">"
     end
 
     private def write_group_prefix(node : Group, io : IO) : Nil
       case node.kind
       when Group::Kind::Capture
         if name = node.name
-          io << "(?P<" << name << ">"
+          write_capture_name(node, name, io)
         else
           io << "("
         end
@@ -257,36 +230,6 @@ module Regex::Syntax::AST
       {'\\', '.', '+', '*', '?', '(', ')', '|', '[', ']', '{', '}', '^', '$', '#', '&', '-', '~'}.includes?(char)
     end
 
-    private def write_class_set(set : ClassSet, io : IO) : Nil
-      case set.kind
-      when ClassSet::Kind::Item
-        if item = set.item
-          write_class_set_item(item, io)
-        else
-          raise "class set item missing item value"
-        end
-      when ClassSet::Kind::BinaryOp
-        if binary_op = set.binary_op
-          write_class_set_binary_op(binary_op, io)
-        else
-          raise "class set binary op missing op value"
-        end
-      end
-    end
-
-    private def write_class_set_binary_op(node : ClassSetBinaryOp, io : IO) : Nil
-      write_class_set(node.lhs, io)
-      case node.kind
-      when ClassSetBinaryOp::Kind::Intersection
-        io << "&&"
-      when ClassSetBinaryOp::Kind::Difference
-        io << "--"
-      when ClassSetBinaryOp::Kind::SymmetricDifference
-        io << "~~"
-      end
-      write_class_set(node.rhs, io)
-    end
-
     private def write_class_set_item(node : ClassSetItem, io : IO) : Nil
       case node.kind
       when ClassSetItem::Kind::Empty
@@ -303,12 +246,6 @@ module Regex::Syntax::AST
         write_node(node.item.as(ClassUnicode), io)
       when ClassSetItem::Kind::Perl
         write_node(node.item.as(ClassPerl), io)
-      when ClassSetItem::Kind::Bracketed
-        write_node(node.item.as(ClassBracketed), io)
-      when ClassSetItem::Kind::Union
-        node.item.as(ClassSetUnion).items.each do |item|
-          write_class_set_item(item, io)
-        end
       end
     end
 
@@ -381,6 +318,68 @@ module Regex::Syntax::AST
       else
         io << actual_prefix << '{' << codepoint.to_s(16).upcase << '}'
       end
+    end
+  end
+
+  private class PrinterWriter < Printer
+    include Visitor
+
+    def initialize(@io : IO)
+    end
+
+    def finish : Nil
+    end
+
+    def visit_pre(node : Node) : Nil
+      case node
+      when Group
+        write_group_prefix(node, @io)
+      when ClassBracketed
+        bracket_pre(node)
+      end
+    end
+
+    def visit_post(node : Node) : Nil
+      case node
+      when Group, ClassBracketed
+        @io << (node.is_a?(Group) ? ")" : "]")
+      when Repetition
+        write_repetition_suffix(node, @io)
+      when Concat, Alternation
+      else
+        write_node(node, @io)
+      end
+    end
+
+    def visit_alternation_in : Nil
+      @io << "|"
+    end
+
+    def visit_class_set_item_pre(node : ClassSetItem) : Nil
+      bracket_pre(node.item.as(ClassBracketed)) if node.kind.bracketed?
+    end
+
+    def visit_class_set_item_post(node : ClassSetItem) : Nil
+      case node.kind
+      when ClassSetItem::Kind::Empty, ClassSetItem::Kind::Union
+      when ClassSetItem::Kind::Bracketed
+        @io << "]"
+      else
+        write_class_set_item(node, @io)
+      end
+    end
+
+    def visit_class_set_binary_op_in(node : ClassSetBinaryOp) : Nil
+      case node.kind
+      when ClassSetBinaryOp::Kind::Intersection        then @io << "&&"
+      when ClassSetBinaryOp::Kind::Difference          then @io << "--"
+      when ClassSetBinaryOp::Kind::SymmetricDifference then @io << "~~"
+      end
+    end
+
+    private def bracket_pre(node : ClassBracketed) : Nil
+      @io << "["
+      @io << "^" if node.negated?
     end
   end
 

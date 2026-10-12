@@ -261,3 +261,38 @@ python3 scripts/check_literal_utf8_parity.py
 
 Expectations are written only after the native tests pass, never from Crystal
 results. Generated sources and logs stay under `temp/literal-utf8-parity/`.
+
+### Diagnostics, printers, and visitor contracts
+
+```bash
+python3 scripts/check_diagnostic_parity.py
+```
+
+This oracle runs the 21 original Rust error/printer tests with their assertions
+intact, plus native characterization tests for diagnostics, class ranges,
+Unicode whitespace, all error-kind messages, raw byte literals, writer failures,
+and visitor contracts. It replays parser/translator test inputs through the
+pinned Rust parsers to obtain formatted diagnostics, including primary and
+auxiliary positions. Explicit formatter cases verify that span line/column
+metadata controls caret placement, independently of byte offsets.
+
+Visitor modules contain no upstream unit tests. The native characterization
+records every hook in expression and class-set traversals and injects an error
+at every fallible hook occurrence, including `finish`. Rust uses `Result` and
+Crystal uses exceptions; both must stop at the same event without later hooks.
+Writers fail at each byte boundary and compare both the error and emitted bytes.
+Printing and traversal also run on directly constructed 50,000-level trees.
+Crystal printers use the iterative visitor path to preserve constant stack use.
+
+All expectations come from Rust. To intentionally regenerate them:
+
+```bash
+python3 scripts/check_diagnostic_parity.py --write-fixture --rust-only
+python3 scripts/check_diagnostic_parity.py
+```
+
+Temporary sources and logs stay under `temp/diagnostic-parity/`. The assertion
+ledger maps every assertion in the original error/printer unit tests; visitor
+characterizations are labeled separately. AST error enums retain kind identity;
+`AST::Error#nest_limit` and `#kind_message` preserve the nesting-limit payload
+and its formatted text.

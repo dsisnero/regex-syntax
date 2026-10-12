@@ -1,0 +1,13 @@
+# source_assertion	status	crystal_evidence	notes
+src/error.rs:285	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/error.rs:295	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/ast/print.rs:424	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/hir/print.rs:367	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/hir/print.rs:522	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/hir/print.rs:537	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/hir/print.rs:559	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/hir/print.rs:574	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/hir/print.rs:597	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/hir/print.rs:606	runtime_verified	spec/diagnostic_parity_spec.cr	Original Rust assertion executed; exact diagnostic or printer output replayed
+src/ast/visitor.rs::visitor_contract	characterized	spec/diagnostic_parity_spec.cr	No upstream unit tests; native traces and errors at every fallible hook occurrence
+src/hir/visitor.rs::visitor_contract	characterized	spec/diagnostic_parity_spec.cr	No upstream unit tests; native traces and errors at every fallible hook occurrence

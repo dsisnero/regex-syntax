@@ -83,7 +83,7 @@ describe Regex::Syntax::AST::Printer do
     print_ast("(?siUmux)").should eq("(?siUmux)")
     print_ast("(?i:a)").should eq("(?i:a)")
     print_ast("(?P<foo>a)").should eq("(?P<foo>a)")
-    print_ast("(?<foo>a)").should eq("(?P<foo>a)")
+    print_ast("(?<foo>a)").should eq("(?<foo>a)")
     print_ast("(a)").should eq("(a)")
     print_ast("(?:a)").should eq("(?:a)")
   end

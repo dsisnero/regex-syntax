@@ -4,12 +4,12 @@ require "./regex/syntax/hir_interval"
 require "./regex/syntax/rank"
 require "./regex/syntax/literal"
 require "./regex/syntax/utf8"
-require "./regex/syntax/hir_print"
 require "./regex/syntax/hir_visitor"
+require "./regex/syntax/hir_print"
 require "./regex/syntax/ast"
 require "./regex/syntax/error"
-require "./regex/syntax/ast_print"
 require "./regex/syntax/ast_visitor"
+require "./regex/syntax/ast_print"
 require "./regex/syntax/parser"
 require "./regex/syntax/translate"
 
@@ -179,7 +179,7 @@ module Regex::Syntax
 
       AST::WithComments.new(AST::Ast.new(root), @comments.dup)
     rescue ex : ParseError
-      raise AST::Error.new(map_parse_error_kind(ex), pattern, ex.span || error_span, ex.auxiliary_span, ex.message.to_s)
+      raise AST::Error.new(map_parse_error_kind(ex), pattern, ex.span || error_span, ex.auxiliary_span, ex.message.to_s, nest_limit: @nest_limit)
     end
 
     private def reset(pattern : String) : Nil
@@ -877,9 +877,12 @@ module Regex::Syntax
 
     private def parse_class_set_range_or_item : AST::ClassSetItem
       first = parse_class_set_primitive_item
-      return first if eof? || current_char != '-' || peek_char == ']' || peek_char == '-'
+      bump_space
+      return first if eof? || current_char != '-' || peek_space == ']' || peek_space == '-'
 
       advance # skip '-'
+      bump_space
+      raise ParseError.new("invalid character class range") if eof?
       second = parse_class_set_primitive_item
 
       first_literal = first.item.as?(AST::Literal)
@@ -1498,6 +1501,26 @@ module Regex::Syntax
       '\0'
     end
 
+    private def peek_space : Char
+      return peek_char unless @ignore_whitespace
+      return '\0' if eof?
+
+      start = @pos + 1
+      in_comment = false
+      @input[start..].each_char do |char|
+        if unicode_whitespace?(char)
+          next
+        elsif !in_comment && char == '#'
+          in_comment = true
+        elsif in_comment && char == '\n'
+          in_comment = false
+        else
+          return char
+        end
+      end
+      @input[start]? || '\0'
+    end
+
     private def parse_flags_items : Array(AST::FlagsItem)
       items = [] of AST::FlagsItem
       seen_flags = {} of Char => AST::Span
@@ -1588,11 +1611,17 @@ module Regex::Syntax
       end
     end
 
+    private def unicode_whitespace?(char : Char) : Bool
+      codepoint = char.ord.to_u32
+      ranges = Regex::Syntax::UnicodeTables::PropertyBool::WHITE_SPACE
+      !!ranges.bsearch { |range| range.end >= codepoint }.try { |range| codepoint >= range.begin }
+    end
+
     private def bump_space : Nil
       return unless @ignore_whitespace
 
       while !eof?
-        if current_char.ascii_whitespace?
+        if unicode_whitespace?(current_char)
           advance
         elsif current_char == '#'
           comment_start = current_position

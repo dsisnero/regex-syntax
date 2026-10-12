@@ -17,7 +17,10 @@ describe Regex::Syntax do
     err = Regex::Syntax::AST::Error.new(
       Regex::Syntax::AST::ErrorKind::ClassUnclosed,
       "ab\ncd",
-      Regex::Syntax::AST::Span.new(0, 3)
+      Regex::Syntax::AST::Span.new(
+        Regex::Syntax::AST::Position.new(0, 1, 1),
+        Regex::Syntax::AST::Position.new(3, 2, 1)
+      )
     )
 
     err.to_s.should eq(<<-TEXT.chomp)

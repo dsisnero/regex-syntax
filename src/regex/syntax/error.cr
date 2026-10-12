@@ -65,24 +65,8 @@ module Regex::Syntax
     end
 
     private def convert(span : AST::Span) : FormatterSpan
-      FormatterSpan.new(position_for(span.start.offset), position_for(span.end.offset))
-    end
-
-    private def position_for(offset : Int32) : FormatterPosition
-      line = 1
-      column = 1
-      i = 0
-      max = offset.clamp(0, @pattern.bytesize)
-      while i < max
-        if @pattern.byte_at(i) == '\n'.ord
-          line += 1
-          column = 1
-        else
-          column += 1
-        end
-        i += 1
-      end
-      FormatterPosition.new(line, column)
+      FormatterSpan.new(FormatterPosition.new(span.start.line, span.start.column),
+        FormatterPosition.new(span.end.line, span.end.column))
     end
 
     private def notate_line(index : Int32) : String?
@@ -107,11 +91,17 @@ module Regex::Syntax
     end
 
     private def lines : Array(String)
-      @pattern.split('\n', remove_empty: false)
+      return [] of String if @pattern.empty?
+      result = @pattern.split('\n', remove_empty: false)
+      result.pop if @pattern.ends_with?('\n')
+      result.map_with_index do |line, index|
+        terminated = index < result.size - 1 || @pattern.ends_with?('\n')
+        line.ends_with?('\r') && terminated ? line[0...-1] : line
+      end
     end
 
     private def line_count : Int32
-      lines.size.to_i
+      lines.size + (@pattern.ends_with?('\n') ? 1 : 0)
     end
 
     private def line_number_width : Int32
@@ -209,9 +199,13 @@ module Regex::Syntax::AST
     UnsupportedLookAround
     UnsupportedGroupSyntax
 
+    def to_s : String
+      String.build { |io| to_s(io) }
+    end
+
     def to_s(io : IO) : Nil
       io << case self
-      in .capture_limit_exceeded?                    then "exceeded the maximum number of capturing groups"
+      in .capture_limit_exceeded?                    then "exceeded the maximum number of capturing groups (4294967295)"
       in .class_escape_invalid?                      then "invalid escape sequence found in character class"
       in .class_range_invalid?                       then "invalid character class range, the start must be <= the end"
       in .class_range_literal?                       then "invalid range boundary, must be a literal"
@@ -235,7 +229,7 @@ module Regex::Syntax::AST
       in .group_unclosed?                            then "unclosed group"
       in .group_unopened?                            then "unopened group"
       in .nest_limit_exceeded?                       then "exceed the maximum number of nested parentheses/brackets"
-      in .repetition_count_invalid?                  then "invalid repetition quantifier range, the start must be <= the end"
+      in .repetition_count_invalid?                  then "invalid repetition count range, the start must be <= the end"
       in .repetition_count_decimal_empty?            then "repetition quantifier expects a valid decimal"
       in .repetition_count_unclosed?                 then "unclosed counted repetition"
       in .repetition_missing?                        then "repetition operator missing expression"
@@ -244,7 +238,7 @@ module Regex::Syntax::AST
       in .special_word_or_repetition_unexpected_eof? then "found either the beginning of a special word boundary or a bounded repetition on a \\b with an opening brace, but no closing brace"
       in .unicode_class_invalid?                     then "invalid Unicode character class"
       in .unsupported_backreference?                 then "backreferences are not supported"
-      in .unsupported_look_around?                   then "look-around is not supported"
+      in .unsupported_look_around?                   then "look-around, including look-ahead and look-behind, is not supported"
       in .unsupported_group_syntax?                  then "unsupported group syntax"
       end
     end
@@ -254,7 +248,9 @@ module Regex::Syntax::AST
     getter kind : ErrorKind
     getter pattern : String
 
-    def initialize(@kind : ErrorKind, @pattern : String, span : Span, auxiliary_span : Span? = nil, raw_message : String? = nil)
+    getter nest_limit : Int32?
+
+    def initialize(@kind : ErrorKind, @pattern : String, span : Span, auxiliary_span : Span? = nil, raw_message : String? = nil, @nest_limit : Int32? = nil)
       @error_span = span
       @error_auxiliary_span = auxiliary_span
       super(raw_message || @kind.to_s, nil, @error_span, @error_auxiliary_span)
@@ -268,8 +264,16 @@ module Regex::Syntax::AST
       @error_auxiliary_span
     end
 
+    def kind_message : String
+      if @kind.nest_limit_exceeded? && (limit = @nest_limit)
+        "#{@kind} (#{limit})"
+      else
+        @kind.to_s
+      end
+    end
+
     def to_s(io : IO) : Nil
-      Regex::Syntax::Formatter(ErrorKind).new(@pattern, @kind, @error_span, @error_auxiliary_span).to_s(io)
+      Regex::Syntax::Formatter(String).new(@pattern, kind_message, @error_span, @error_auxiliary_span).to_s(io)
     end
   end
 end
@@ -284,6 +288,10 @@ module Regex::Syntax::Hir
     UnicodePerlClassNotFound
     UnicodeCaseUnavailable
 
+    def to_s : String
+      String.build { |io| to_s(io) }
+    end
+
     def to_s(io : IO) : Nil
       io << case self
       in .unicode_not_allowed?              then "Unicode not allowed here"
@@ -291,8 +299,8 @@ module Regex::Syntax::Hir
       in .invalid_line_terminator?          then "invalid line terminator, must be ASCII"
       in .unicode_property_not_found?       then "Unicode property not found"
       in .unicode_property_value_not_found? then "Unicode property value not found"
-      in .unicode_perl_class_not_found?     then "Unicode-aware Perl class not found"
-      in .unicode_case_unavailable?         then "Unicode-aware case insensitivity matching is not available"
+      in .unicode_perl_class_not_found?     then "Unicode-aware Perl class not found (make sure the unicode-perl feature is enabled)"
+      in .unicode_case_unavailable?         then "Unicode-aware case insensitivity matching is not available (make sure the unicode-case feature is enabled)"
       end
     end
   end

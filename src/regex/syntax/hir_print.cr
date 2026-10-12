@@ -30,7 +30,7 @@ module Regex::Syntax::Hir
     end
 
     def print(hir : Hir, io : IO) : Nil
-      write_node(hir.node, io)
+      Regex::Syntax::Hir.visit(hir, PrinterWriter.new(io))
     end
 
     private def write_node(node : Node, io : IO) : Nil
@@ -57,57 +57,8 @@ module Regex::Syntax::Hir
       write_look(node.kind, io)
     end
 
-    private def write_node(node : Capture, io : IO) : Nil
-      write_capture(node, io)
-    end
-
-    private def write_node(node : Concat, io : IO) : Nil
-      write_concat(node.children, io)
-    end
-
-    private def write_node(node : Alternation, io : IO) : Nil
-      write_alternation(node.children, io)
-    end
-
-    private def write_node(node : Repetition, io : IO) : Nil
-      write_repetition(node, io)
-    end
-
     private def write_node(node : DotNode, io : IO) : Nil
       write_dot(node.kind, io)
-    end
-
-    private def write_capture(node : Capture, io : IO) : Nil
-      io << "("
-      if name = node.name
-        io << "?P<" << name << ">"
-      end
-      write_node(node.sub, io)
-      io << ")"
-    end
-
-    private def write_concat(children : Array(Node), io : IO) : Nil
-      io << "(?:"
-      children.each { |child| write_node(child, io) }
-      io << ")"
-    end
-
-    private def write_alternation(children : Array(Node), io : IO) : Nil
-      if singleton_class = singleton_alternation_class(children)
-        write_unicode_class(singleton_class, io)
-        return
-      end
-      io << "(?:"
-      children.each_with_index do |child, i|
-        io << "|" if i > 0
-        write_node(child, io)
-      end
-      io << ")"
-    end
-
-    private def write_repetition(node : Repetition, io : IO) : Nil
-      write_node(node.sub, io)
-      write_repetition_suffix(node, io)
     end
 
     private def write_literal(bytes : Bytes, io : IO) : Nil
@@ -257,25 +208,42 @@ module Regex::Syntax::Hir
     private def meta_character?(char : Char) : Bool
       {'\\', '.', '+', '*', '?', '(', ')', '|', '[', ']', '{', '}', '^', '$', '#', '&', '-', '~'}.includes?(char)
     end
+  end
 
-    private def singleton_alternation_class(children : Array(Node)) : UnicodeClass?
-      ranges = [] of Range(UInt32, UInt32)
-      children.each do |child|
-        case child
-        when Literal
-          return nil unless ::Unicode.valid?(child.bytes)
-          string = String.new(child.bytes)
-          return nil unless string.size == 1
-          codepoint = string.each_char.first.ord.to_u32
-          ranges << (codepoint..codepoint)
-        when UnicodeClass
-          return nil unless child.ranges.size == 1 && child.ranges[0].begin == child.ranges[0].end
-          ranges << child.ranges[0]
-        else
-          return nil
-        end
+  private class PrinterWriter < Printer
+    include Visitor
+
+    def initialize(@io : IO)
+    end
+
+    def finish : Nil
+    end
+
+    def visit_pre(hir : Hir) : Nil
+      node = hir.node
+      case node
+      when Capture
+        @io << "("
+        @io << "?P<" << node.name << ">" if node.name
+      when Concat, Alternation
+        @io << "(?:"
+      when Repetition
+      else
+        write_node(node, @io)
       end
-      UnicodeClass.new(false, ranges)
+    end
+
+    def visit_post(hir : Hir) : Nil
+      case node = hir.node
+      when Capture, Concat, Alternation
+        @io << ")"
+      when Repetition
+        write_repetition_suffix(node, @io)
+      end
+    end
+
+    def visit_alternation_in : Nil
+      @io << "|"
     end
   end
 
