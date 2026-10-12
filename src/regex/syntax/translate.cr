@@ -135,21 +135,9 @@ module Regex::Syntax
              else
                Hir::Empty.new
              end
-      # Rust's HIR class constructor reduces singleton classes to literals.
-      # Materialize complements before testing, including nested negated sets.
       case node
-      when Hir::UnicodeClass
-        ranges = node.negated? ? Hir::IntervalOps.invert(node.intervals) : node.intervals
-        normalized = Hir::UnicodeClass.new(false, ranges)
-        if literal = normalized.literal
-          return Hir::Literal.new(literal)
-        end
-      when Hir::CharClass
-        ranges = node.negated? ? Hir::IntervalOps.invert(node.intervals) : node.intervals
-        normalized = Hir::CharClass.new(false, ranges)
-        if literal = normalized.literal
-          return Hir::Literal.new(literal)
-        end
+      when Hir::UnicodeClass, Hir::CharClass
+        return Hir::Hir.character_class(node).node
       end
       node
     end
@@ -238,7 +226,7 @@ module Regex::Syntax
     end
 
     private def translate_class_unicode(class_unicode : AST::ClassUnicode) : Hir::Node
-      raise ParseError.new("Unicode not allowed") unless @unicode
+      raise ParseError.new("Unicode not allowed", :unicode_not_allowed, class_unicode.span) unless @unicode
 
       if @ignore_case
         base_class = Unicode.property_class(class_unicode.name, false)
@@ -461,6 +449,7 @@ module Regex::Syntax
       when AST::ClassSetItem::Kind::Ascii
         if ascii = item.item.as?(AST::ClassAscii)
           intervals = ascii_class_bytes(ascii.kind)
+          validate_utf8_byte_intervals!(intervals, ascii.span, negated: ascii.negated?)
           ascii.negated? ? invert_byte_intervals(intervals) : intervals
         else
           [] of Range(UInt8, UInt8)
@@ -943,7 +932,6 @@ module Regex::Syntax
         when AST::FlagsItem::Kind::Flag
           if flag = item.flag
             result[flag.to_s] = !negated
-            negated = false
           end
         end
       end
@@ -993,7 +981,6 @@ module Regex::Syntax
         when AST::FlagsItem::Kind::Flag
           if flag = item.flag
             result[flag.to_s] = !negated
-            negated = false
           end
         end
       end

@@ -169,3 +169,38 @@ migrated; mappings and non-port rationales remain curated.
 HIR and Properties length results use `UInt64?` to match the pinned Rust build’s
 64-bit `usize`: minimum lengths saturate, and maximum lengths become `nil` on
 overflow. Class-local length helpers remain small integer byte counts.
+
+## HIR construction and complete translator runtime audit
+
+Run `python3 scripts/check_hir_construction_parity.py` to compile a temporary
+instrumented copy of the pinned Rust source and execute all 47 default-feature
+translator tests, preserving their original assertions. A separate Rust
+characterization test supplies constructor and property-union compositions.
+No vendored files are modified and no registry downloads are needed.
+
+The committed fixtures contain 565 translator calls, 444 constructor
+compositions, and 144 standalone property unions. Crystal compares exact node kinds and nesting, literal bytes, effective
+class intervals, capture indices/names, repetition bounds/greediness, display,
+and all twelve property fields. Error cases compare kind and complete primary
+span positions. The three manually constructed AST regressions are reconstructed
+as AST nodes; the fuzz-match case retains its verbose parser configuration.
+
+`plans/inventory/rust_hir_assertion_audit.tsv` maps all 545 upstream assertion
+locations: 537 execute under the default Unicode features and eight belong to
+six feature-disabled tests. It also maps the two no-panic fuzz calls to complete
+runtime snapshots. Unaccounted assertions fail the audit instead of becoming
+implicit skips. Disabled Unicode build modes remain excluded from this phase;
+Crystal supplies its Unicode tables unconditionally.
+
+Regenerate expectations only with
+`python3 scripts/check_hir_construction_parity.py --write-fixture`; Rust tests
+must pass before expectations are written. Artifacts and logs stay under
+`temp/hir-construction/`. Both new fixture specs run with `make test` without
+requiring Rust. The constructor recipes are characterization cases, not a claim
+that all arbitrary HIR trees have been enumerated.
+
+Use `Hir::Hir.character_class` for Rust-equivalent smart class construction from
+concrete byte/Unicode classes or the `Hir::Class` wrapper. `Hir::Hir.new(Node)`
+remains a raw wrapper. Smart construction lowers singleton classes to literals
+and empty classes to the byte fail node; repetition simplification uses the
+child's maximum length, including captured empty expressions.

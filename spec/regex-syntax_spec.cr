@@ -965,12 +965,12 @@ describe Regex::Syntax do
       ascii.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x0000_u32..0x007F_u32])
     end
 
-    it "canonicalizes complement of Any to the empty Unicode class" do
+    it "canonicalizes complement of Any to Rust’s byte fail node" do
       hir = Regex::Syntax.parse(%q(\P{any}))
-      hir.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
-      unicode_class = hir.node.as(Regex::Syntax::Hir::UnicodeClass)
-      unicode_class.negated?.should be_false
-      unicode_class.intervals.should be_empty
+      hir.node.should be_a(Regex::Syntax::Hir::CharClass)
+      byte_class = hir.node.as(Regex::Syntax::Hir::CharClass)
+      byte_class.negated?.should be_false
+      byte_class.intervals.should be_empty
     end
 
     it "parses bracketed Unicode property escapes" do

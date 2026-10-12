@@ -380,12 +380,13 @@ describe Regex::Syntax::Hir::LiteralExtraction do
   end
 
   it "handles crazy repeats like Rust" do
-    exact_empty_inexact = {inexact_seq(""), inexact_seq("")}
-    extract_pair("(?:){4294967295}").should eq(exact_empty_inexact)
-    extract_pair("(?:){64}{64}{64}{64}{64}{64}").should eq(exact_empty_inexact)
-    extract_pair("x{0}{4294967295}").should eq(exact_empty_inexact)
-    extract_pair("(?:|){4294967295}").should eq(exact_empty_inexact)
-    extract_pair("(?:){8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}").should eq(exact_empty_inexact)
+    # Rust's helper named `inexact` preserves the E("") exactness flags.
+    exact_empty = {exact_seq(""), exact_seq("")}
+    extract_pair("(?:){4294967295}").should eq(exact_empty)
+    extract_pair("(?:){64}{64}{64}{64}{64}{64}").should eq(exact_empty)
+    extract_pair("x{0}{4294967295}").should eq(exact_empty)
+    extract_pair("(?:|){4294967295}").should eq(exact_empty)
+    extract_pair("(?:){8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}").should eq(exact_empty)
 
     repeated_a = "a" * 100
     extract_pair("a{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}").should eq({

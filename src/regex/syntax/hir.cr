@@ -660,13 +660,13 @@ module Regex::Syntax::Hir
       case @kind
       when Kind::Unicode
         if unicode = @unicode
-          unicode.ranges.empty?
+          unicode.minimum_len.nil?
         else
           raise "unreachable"
         end
       when Kind::Bytes
         if bytes = @bytes
-          bytes.ranges.empty?
+          bytes.minimum_len.nil?
         else
           raise "unreachable"
         end
@@ -833,7 +833,7 @@ module Regex::Syntax::Hir
     end
 
     def ascii? : Bool
-      last = @intervals.last?
+      last = effective_intervals.last?
       last ? last.end <= 0x7F_u8 : true
     end
 
@@ -845,23 +845,24 @@ module Regex::Syntax::Hir
     # ameba:enable Naming/PredicateName
 
     def minimum_len : Int32?
-      @intervals.empty? ? nil : 1
+      effective_intervals.empty? ? nil : 1
     end
 
     def maximum_len : Int32?
-      @intervals.empty? ? nil : 1
+      effective_intervals.empty? ? nil : 1
     end
 
     def literal : Bytes?
-      return nil unless @intervals.size == 1 && @intervals[0].begin == @intervals[0].end
+      intervals = effective_intervals
+      return nil unless intervals.size == 1 && intervals[0].begin == intervals[0].end
 
-      Bytes[@intervals[0].begin]
+      Bytes[intervals[0].begin]
     end
 
     def to_unicode_class : UnicodeClass?
       return nil unless ascii?
 
-      UnicodeClass.new(false, @intervals.map { |range| range.begin.to_u32..range.end.to_u32 })
+      UnicodeClass.new(false, effective_intervals.map { |range| range.begin.to_u32..range.end.to_u32 })
     end
 
     def negate : self
@@ -979,7 +980,7 @@ module Regex::Syntax::Hir
     end
 
     def ascii? : Bool
-      last = @intervals.last?
+      last = effective_intervals.last?
       last ? last.end <= 0x7F_u32 : true
     end
 
@@ -991,19 +992,20 @@ module Regex::Syntax::Hir
     # ameba:enable Naming/PredicateName
 
     def minimum_len : Int32?
-      first = @intervals.first?
+      first = effective_intervals.first?
       first ? utf8_len(first.begin) : nil
     end
 
     def maximum_len : Int32?
-      last = @intervals.last?
+      last = effective_intervals.last?
       last ? utf8_len(last.end) : nil
     end
 
     def literal : Bytes?
-      return nil unless @intervals.size == 1 && @intervals[0].begin == @intervals[0].end
+      intervals = effective_intervals
+      return nil unless intervals.size == 1 && intervals[0].begin == intervals[0].end
 
-      char = @intervals[0].begin.chr
+      char = intervals[0].begin.chr
       string = char.to_s
       Bytes.new(string.bytesize) { |i| string.to_slice[i] }
     end
@@ -1011,7 +1013,7 @@ module Regex::Syntax::Hir
     def to_byte_class : CharClass?
       return nil unless ascii?
 
-      CharClass.new(false, @intervals.map { |range| range.begin.to_u8..range.end.to_u8 })
+      CharClass.new(false, effective_intervals.map { |range| range.begin.to_u8..range.end.to_u8 })
     end
 
     def negate : self
@@ -1888,6 +1890,25 @@ module Regex::Syntax::Hir
       Hir.new(CharClass.new(false, [] of Range(UInt8, UInt8)))
     end
 
+    def self.character_class(klass : Class) : Hir
+      if unicode = klass.unicode
+        character_class(unicode)
+      elsif bytes = klass.bytes
+        character_class(bytes)
+      else
+        raise "unreachable class kind"
+      end
+    end
+
+    def self.character_class(klass : UnicodeClass | CharClass) : Hir
+      return fail if klass.minimum_len.nil?
+      if bytes = klass.literal
+        return literal(bytes)
+      end
+
+      Hir.new(klass)
+    end
+
     # Create a literal expression
     def self.literal(bytes : Bytes) : Hir
       return empty if bytes.empty?
@@ -1965,7 +1986,7 @@ module Regex::Syntax::Hir
     end
 
     def self.repetition(sub : Node, min : UInt32, max : UInt32?, greedy : Bool = true) : Hir
-      if zero_width_assertion_only?(sub)
+      if lengths(sub)[:max] == 0_u64
         min = Math.min(min, 1_u32)
         max = max ? Math.min(max, 1_u32) : 1_u32
       end
@@ -2479,9 +2500,6 @@ module Regex::Syntax::Hir
       when Alternation
         counts = [] of Int32
         node.children.each do |branch|
-          branch_lengths = lengths(branch)
-          next unless branch_lengths[:possible]
-
           branch_count = static_capture_count(branch)
           return nil unless branch_count
 
@@ -2564,7 +2582,7 @@ module Regex::Syntax::Hir
         unbounded = false
         node.children.each do |branch|
           branch_lengths = lengths(branch)
-          next unless branch_lengths[:possible]
+          return {possible: false, min: 0_u64, max: nil} unless branch_lengths[:possible]
 
           possible = true
           if current_min = alt_min
@@ -2589,7 +2607,7 @@ module Regex::Syntax::Hir
       when Repetition
         child_lengths = lengths(node.sub)
         if !child_lengths[:possible]
-          return node.min == 0_u32 ? {possible: true, min: 0_u64, max: 0_u64} : {possible: false, min: 0_u64, max: nil}
+          return {possible: false, min: 0_u64, max: nil}
         end
 
         min = node.min == 0_u32 ? 0_u64 : saturating_mul(child_lengths[:min], node.min)
@@ -2716,23 +2734,6 @@ module Regex::Syntax::Hir
 
       byte = bytes[index]
       byte >= min && byte <= max
-    end
-
-    private def self.zero_width_assertion_only?(node : Node) : Bool
-      case node
-      when Look
-        true
-      when Capture
-        zero_width_assertion_only?(node.sub)
-      when Concat
-        node.children.all? { |child| zero_width_assertion_only?(child) }
-      when Alternation
-        node.children.all? { |child| zero_width_assertion_only?(child) }
-      when Repetition
-        zero_width_assertion_only?(node.sub)
-      else
-        false
-      end
     end
 
     private def self.single_literal_atom?(node : Node) : Bool

@@ -1538,7 +1538,6 @@ module Regex::Syntax
           when 'R'
             @crlf = !negated
           end
-          negated = false
         end
       end
     end

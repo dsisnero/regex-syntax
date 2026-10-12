@@ -71,11 +71,11 @@ Checklist rules:
   1,149 Crystal specs, 465/465 property comparisons, and 22 downstream Thompson
   specs pass; formatting, lint, and all three inventory checks pass.
 - [ ] Full independent assertion-by-assertion audit of the remaining Rust test
-  ports. The 316-case oracle covers literal translator calls, not dynamic
-  patterns, every property assertion, diagnostics, or every support-module
-  assertion. Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
-  this verified slice retain their prior evidence and must not be mistaken for
-  a fresh exhaustive signoff.
+  ports. Phase 1 below now verifies the complete default-feature translator
+  runtime and HIR constructor compositions. Parser/AST, Unicode/class algebra,
+  extraction/UTF-8, and diagnostic/support-module assertion audits remain open
+  in phases 2–6. Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
+  the verified slices must not be mistaken for a fresh exhaustive signoff.
 
 ## Current State
 
@@ -117,13 +117,13 @@ its tests, fixes, and evidence updates. Track the audit under `regex-syntax-u0w`
 
 ### Phase 1 — HIR construction and dynamic translator parity
 
-- [ ] Close the gap between parsed patterns and directly constructed HIR.
+- [x] Close the gap between parsed patterns and directly constructed HIR.
   Compare Rust `src/hir/mod.rs` smart constructors and `Properties` with Crystal
   direct constructors and wrappers. Cover empty/singleton classes and branches,
   impossible branches, nested repetitions, capture counts, look sets, and length
   overflow in compositions. In particular, check negated-class helper results
   and static capture analysis when an alternation contains an impossible branch.
-- [ ] Port dynamic translator assertions that the literal-call extractor misses.
+- [x] Port dynamic translator assertions that the literal-call extractor misses.
   Review every test in `src/hir/translate.rs` against the existing specs, including
   generated patterns, configuration changes, and expected errors. Record which
   assertions the 316 output and 465 property fixtures cover and add exact
@@ -134,6 +134,31 @@ its tests, fixes, and evidence updates. Track the audit under `regex-syntax-u0w`
 Rust-derived structural/property expectations for direct constructors, and no
 unexplained differences in the covered output or property fields. Retain the
 existing eight-case `smart_alternation` structural matrix.
+
+**Completed evidence (2026-10-11):** tests were ported before implementation.
+The initial focused run had 19 failures across 568 examples; the expanded
+constructor matrix exposed further differences before fixes. Final fixtures
+replay 565 calls from all 47 default-feature upstream translator tests, 444
+constructor compositions, and 144 standalone property unions. The assertion
+ledger `plans/inventory/rust_hir_assertion_audit.tsv` accounts for all 545
+assertion locations (537 executed, eight excluded by disabled-feature tests)
+and the two no-panic fuzz calls. Original Rust assertions remain in the native
+run; new constructor cases are Rust-derived characterization, not upstream tests.
+
+Fixed maximum-length-based repetition simplification for captured empty
+expressions; impossible-branch length/static-capture properties; smart class
+construction and empty-class fail node kinds; negated class helper queries and
+conversions; persistent flag negation; and translator error spans. Corrected the
+existing complement-of-Any node expectation and the five exact-empty literal
+expectations that had mistranslated Rust's `inexact([E("")], ...)` helper.
+
+Reproduce with `python3 scripts/check_hir_construction_parity.py`; expectations
+can only be regenerated from the passing Rust run using `--write-fixture`.
+All 2,308 Crystal specs, 147 default-feature Rust unit tests, 316 display cases,
+465 property cases, and 22 downstream Thompson harness specs pass. Formatting,
+lint, no-codegen compilation, and all three inventory checks pass. No vendored
+files or installed downstream dependency were changed. Phase 2 is next; phases
+2–7 retain their open status.
 
 ### Phase 2 — Parser and AST behavior
 
