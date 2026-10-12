@@ -211,7 +211,10 @@ module Regex::Syntax::Hir::LiteralExtraction
         make_infinite
         return
       end
-      return unless lits1 = @literals
+      unless lits1 = @literals
+        other.clear_finite_literals
+        return
+      end
       return unless lits2 = other.literals
 
       lits1.concat(lits2.map(&.clone))
@@ -260,7 +263,7 @@ module Regex::Syntax::Hir::LiteralExtraction
     def sort : Nil
       return unless lits = @literals
 
-      lits.sort_by!(&.bytes)
+      lits.sort_by! { |literal| {literal.bytes, literal.exact? ? 1 : 0} }
     end
 
     def reverse_literals : Nil
@@ -778,11 +781,15 @@ module Regex::Syntax::Hir::LiteralExtraction
     end
 
     private def extract_class_unicode(cls : Regex::Syntax::Hir::UnicodeClass) : Seq
-      return Seq.infinite if cls.negated? || class_over_limit_unicode?(cls)
+      if cls.negated?
+        cls = Regex::Syntax::Hir::UnicodeClass.new(false, Regex::Syntax::Hir::IntervalOps.invert(cls.intervals))
+      end
+      return Seq.infinite if class_over_limit_unicode?(cls)
 
       seq = Seq.empty
       cls.intervals.each do |range|
         range.each do |codepoint|
+          next if 0xD800_u32 <= codepoint <= 0xDFFF_u32
           seq.push(Literal.from_char(codepoint.chr))
         end
       end
@@ -791,7 +798,10 @@ module Regex::Syntax::Hir::LiteralExtraction
     end
 
     private def extract_class_bytes(cls : Regex::Syntax::Hir::CharClass) : Seq
-      return Seq.infinite if cls.negated? || class_over_limit_bytes?(cls)
+      if cls.negated?
+        cls = Regex::Syntax::Hir::CharClass.new(false, Regex::Syntax::Hir::IntervalOps.invert(cls.intervals))
+      end
+      return Seq.infinite if class_over_limit_bytes?(cls)
 
       seq = Seq.empty
       cls.intervals.each do |range|

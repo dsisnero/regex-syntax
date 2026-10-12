@@ -236,3 +236,28 @@ python3 scripts/check_class_unicode_parity.py
 The sync script regenerates Crystal range constants from the Rust fixture;
 it never reads Crystal results to establish expected data. Changes to the
 pinned upstream revision require a separately reviewed inventory refresh.
+
+### Literal extraction and UTF-8 assertion audit
+
+```bash
+python3 scripts/check_literal_utf8_parity.py
+```
+
+The oracle runs all 20 original literal/UTF-8 Rust tests and three native
+characterization tests in a temporary source copy. It checks the assertion
+ledger, compares freshly captured expectations with the committed fixture,
+then runs the focused Crystal specs. The 7,524 fixture cases preserve literal
+bytes, order, exactness, sequence metadata, consumed operands, extraction
+configuration and limits, all byte ranks, and ordered UTF-8 range/reset output.
+Both languages also verify exact encodings across every valid Unicode scalar
+and retain the upstream surrogate-range loop.
+
+To regenerate expectations after a reviewed upstream change:
+
+```bash
+python3 scripts/check_literal_utf8_parity.py --write-fixture --rust-only
+python3 scripts/check_literal_utf8_parity.py
+```
+
+Expectations are written only after the native tests pass, never from Crystal
+results. Generated sources and logs stay under `temp/literal-utf8-parity/`.

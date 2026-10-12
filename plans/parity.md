@@ -72,10 +72,10 @@ Checklist rules:
   specs pass; formatting, lint, and all three inventory checks pass.
 - [ ] Full independent assertion-by-assertion audit of the remaining Rust test
   ports. Phase 1 below now verifies the complete default-feature translator
-  runtime and HIR constructor compositions. Phase 2 verifies Parser/AST.
-  Unicode/class algebra,
-  extraction/UTF-8, and diagnostic/support-module assertion audits remain open
-  in phases 3–6. Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
+  runtime and HIR constructor compositions. Phase 2 verifies Parser/AST,
+  Phase 3 Unicode/class algebra, and Phase 4 extraction/UTF-8. Diagnostic,
+  printer/visitor, and API/assertion reconciliation remain open in phases 5–6.
+  Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
   the verified slices must not be mistaken for a fresh exhaustive signoff.
 
 ## Current State
@@ -270,7 +270,7 @@ next; downstream dependency adoption and Thompson signoff remain in Phase 7.
 
 ### Phase 4 — Literal extraction, optimization, and UTF-8 helpers
 
-- [ ] Audit `src/hir/literal.rs` and `src/utf8.rs` against the Crystal support
+- [x] Audit `src/hir/literal.rs` and `src/utf8.rs` against the Crystal support
   modules. Port dynamic loops and edge cases, including empty/infinite literal
   sequences, prefix/suffix extraction, exactness flags, ordering, deduplication,
   extraction limits, and UTF-8 range boundaries.
@@ -279,12 +279,41 @@ next; downstream dependency adoption and Thompson signoff remain in Phase 7.
 literal sequences with their metadata, and exact UTF-8 byte-range expectations.
 Rust ownership/destructor-only checks may stay skipped with explicit rationale.
 
+Completed against pinned Rust `72d650cb0a880a01ab6dc2137c0888e8f89740f7`.
+`scripts/check_literal_utf8_parity.py` executes the 16 original literal tests,
+four UTF-8 tests, and three native characterization tests before comparing
+Crystal results. The assertion ledger
+`plans/inventory/rust_literal_utf8_assertion_audit.tsv` maps all 170 literal
+assertion locations, seven UTF-8 assertion locations, and the surrogate no-panic
+loop; no Phase 4 assertions are excluded.
+
+Tests were ported first: the initial replay exposed ten failures. Broader
+characterization increased that to twelve failures and four errors before the
+implementation changed. The fixes preserve consumed union operands even when
+the destination is infinite, sort equal literal bytes by Rust's exactness
+ordering, materialize directly constructed negated classes, and skip surrogate
+code points during Unicode literal enumeration.
+
+The green oracle compares 7,524 exact results: 3,072 literal-helper cases,
+1,148 sequence operations (including the mutated second operand), 1,119
+extractions, 121 bounds checks, eight direct-class cases, all 256 byte ranks,
+and 1,800 ordered UTF-8 range/reset cases. Extraction snapshots include finite,
+exact/inexact, length bounds, common affixes, literal order, and bytes. Native
+and Crystal checks cover the exact UTF-8 encoding of all 1,112,064 valid scalars
+and the original 10,240 surrogate-range combinations.
+
+Final gates: 20,398 Crystal examples, formatting, lint, compilation, the fresh
+literal/UTF-8 oracle, 147 original Rust unit tests, 316 HIR display comparisons,
+all three inventory checks, and 22 downstream Thompson harness specs pass.
+Phase 5 is next; downstream dependency adoption and Thompson signoff remain
+open in Phase 7.
+
 ### Phase 5 — Diagnostics, printing, and visitor contracts
 
 - [ ] Compare parser/translator error kinds, primary and auxiliary spans,
   multiline formatting, and public error text with Rust expectations. The
-  current output oracle only compares successful parses; add an error oracle or
-  Rust-derived diagnostic fixtures for this phase.
+  existing AST/HIR oracles cover error kinds and spans; extend their coverage
+  with Rust-derived formatted diagnostics and public error text for this phase.
 - [ ] Audit AST/HIR printer and visitor tests, including escaping, round trips,
   hook order, class-set traversal, and early failure propagation. Distinguish
   language-specific exception mechanics from observable traversal behavior.

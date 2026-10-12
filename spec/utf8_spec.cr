@@ -43,7 +43,13 @@ describe Regex::Syntax::Utf8 do
 
       char = codepoint.to_u32.chr
 
-      Utf8Sequences.new(char, char).to_a.size.should eq(1)
+      sequences = Utf8Sequences.new(char, char).to_a
+      sequences.size.should eq(1)
+      bytes = char.to_s.to_slice
+      sequences.first.len.should eq(bytes.size)
+      sequences.first.as_slice.each_with_index do |range, index|
+        range.should eq(Utf8Range.new(bytes[index], bytes[index]))
+      end
     end
   end
 
