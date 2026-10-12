@@ -2,8 +2,8 @@ require "./spec_helper"
 
 describe Regex::Syntax::ParserBuilder do
   it "parses with default options through the top-level helper" do
-    Regex::Syntax.parse("a|b").node.should be_a(Regex::Syntax::Hir::Alternation)
-    Regex::Syntax::Parser.new.parse("a|b").node.should be_a(Regex::Syntax::Hir::Alternation)
+    Regex::Syntax.parse("a|b").node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x61_u32..0x62_u32])
+    Regex::Syntax::Parser.new.parse("a|b").node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x61_u32..0x62_u32])
   end
 
   it "builds parsers with configured options like Rust" do

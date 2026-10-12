@@ -26,10 +26,46 @@ Checklist rules:
 - Generated source manifest: `plans/inventory/rust_source_parity.tsv`
 - Generated test manifest: `plans/inventory/rust_test_parity.tsv`
 
+## Verification audit (2026-10-11)
+
+- Source revision: `72d650cb0a880a01ab6dc2137c0888e8f89740f7`,
+  `regex-syntax` 0.8.11. The vendor symlink resolves to the same pinned tree
+  used by the consuming `regex-automata` repository.
+- [x] Repair parsed alternation normalization and verify translator outputs.
+  `a|b` now lowers to Unicode class `[a-b]`. The full eight-assertion Rust
+  `smart_alternation` matrix has independent expected node shapes, including
+  common-prefix lifting. Singleton raw bytes, Unicode-first class merging,
+  byte fallback, duplicate literals, and empty/singleton branches are covered.
+- The prior `smart_alternation` mapping was inaccurate: only three of its eight
+  assertions had been represented, and the public parsing spec explicitly
+  expected the wrong `a|b` shape. Inventory labels alone did not establish
+  semantic parity.
+- `scripts/check_hir_output_parity.py` extracts all 316 distinct literal
+  `t`/`t_bytes` pattern/configuration pairs from the vendored translator tests,
+  compiles both implementations without registry downloads, and compares exact
+  printed HIR. The Rust-generated fixture is also run by `make test`.
+- That comparison exposed and repaired additional gaps: dot lowering to classes,
+  Unicode scalar interval canonicalization and assigned-property printing,
+  large-range case folding, negated Perl classes inside unions, escaped ASCII punctuation
+  in classes, and verbose comments around counted repetitions.
+- Validation: 147 default-feature Rust unit tests; 683 Crystal specs; 316/316
+  exact output comparisons; and 22 downstream Thompson specs run through a
+  temporary harness against this checkout, including exact `a|b`, Unicode,
+  invalid-byte, repetition, and capture graphs.
+- Inventory checks now accept the canonical `ported`/`skipped` statuses. A
+  duplicate source `repetition` row was removed; source/test/port checks pass
+  with the recorded regex discovery backend (877 source items, 158 test items).
+- [ ] Full independent assertion-by-assertion audit of the remaining Rust test
+  ports. The 316-case oracle covers literal translator calls, not dynamic
+  patterns, every property assertion, diagnostics, or every support-module
+  assertion. Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
+  this verified slice retain their prior evidence and must not be mistaken for
+  a fresh exhaustive signoff.
+
 ## Current State
 
-- `rust_test_parity.tsv`: `139 done`, `14 not_applicable`, `5 partial`
-- `rust_source_parity.tsv`: `870 done`, `1 not_applicable`, `7 partial`
+- `rust_test_parity.tsv`: `139 ported`, `14 skipped`, `5 partial`
+- `rust_source_parity.tsv`: `869 ported`, `1 skipped`, `7 partial`
 
 Interpretation:
 
@@ -159,13 +195,13 @@ Interpretation:
 
 - [x] Manifest and ledger reconciliation is closed as a feature bucket.
   The inventories are no longer aspirational. They distinguish implemented
-  behavior, compile-time Rust-only `not_applicable` rows, and intentional
+  behavior, compile-time Rust-only `skipped` rows, and intentional
   Crystal model differences instead of mixing those states together.
 
-- [x] Broad parity work is fully closed.
-  Semantic closure now includes the AST span/position fidelity pass. The
-  remaining `partial` rows are helper-surface or API-shape differences, not an
-  open implementation bucket.
+- [ ] Broad parity work is fully closed.
+  The independent assertion audit above remains open. Previously closed
+  buckets are historical mappings, not evidence that every upstream assertion
+  has been checked for fidelity.
 
 ## What Still Shows As `partial`
 
@@ -203,7 +239,7 @@ time:
 ## Project-Level Done Criteria
 
 - [x] No generated parity manifest is still carrying baseline `missing` drift.
-- [x] Broad semantic parity and AST fidelity are both closed.
+- [ ] Broad semantic parity and AST fidelity have independent exhaustive signoff.
 - [x] Remaining `partial` rows are documented and evidence-backed.
 - [x] Quality gates continue to pass:
   `make format`, `make lint`, `make test`

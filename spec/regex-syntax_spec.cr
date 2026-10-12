@@ -17,9 +17,9 @@ describe Regex::Syntax do
 
   it "exposes direct HIR constructors and wrapper introspection like Rust" do
     dot = Regex::Syntax::Hir.dot(Regex::Syntax::Hir::Dot::AnyChar)
-    dot.node.should be_a(Regex::Syntax::Hir::DotNode)
-    dot.kind.should be_a(Regex::Syntax::Hir::DotNode)
-    dot.into_kind.should be_a(Regex::Syntax::Hir::DotNode)
+    dot.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+    dot.kind.should be_a(Regex::Syntax::Hir::UnicodeClass)
+    dot.into_kind.should be_a(Regex::Syntax::Hir::UnicodeClass)
 
     empty = Regex::Syntax::Hir::Hir.empty
     empty.node.should be_a(Regex::Syntax::Hir::Empty)
@@ -131,11 +131,8 @@ describe Regex::Syntax do
 
     it "parses alternation" do
       hir = Regex::Syntax.parse("a|b")
-      hir.node.should be_a(Regex::Syntax::Hir::Alternation)
-      alt = hir.node.as(Regex::Syntax::Hir::Alternation)
-      alt.children.size.should eq(2)
-      alt.children[0].should be_a(Regex::Syntax::Hir::Literal)
-      alt.children[1].should be_a(Regex::Syntax::Hir::Literal)
+      hir.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      hir.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x61_u32..0x62_u32])
     end
 
     it "parses concatenation" do
@@ -156,9 +153,8 @@ describe Regex::Syntax do
 
     it "parses dot" do
       hir = Regex::Syntax.parse(".")
-      hir.node.should be_a(Regex::Syntax::Hir::DotNode)
-      dot_node = hir.node.as(Regex::Syntax::Hir::DotNode)
-      dot_node.kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+      hir.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      hir.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..9_u32, 11_u32..0x10FFFF_u32])
     end
 
     it "parses character class" do
@@ -332,12 +328,12 @@ describe Regex::Syntax do
 
     it "supports dotall toggles via inline flags" do
       without_s = Regex::Syntax.parse("(?-s).")
-      without_s.node.should be_a(Regex::Syntax::Hir::DotNode)
-      without_s.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+      without_s.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      without_s.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..9_u32, 11_u32..0x10FFFF_u32])
 
       with_s = Regex::Syntax.parse("(?s).")
-      with_s.node.should be_a(Regex::Syntax::Hir::DotNode)
-      with_s.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyChar)
+      with_s.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      with_s.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..0x10FFFF_u32])
     end
 
     it "supports multiline toggles via inline flags" do
@@ -678,8 +674,7 @@ describe Regex::Syntax do
       negated.negate
       negated.intervals.should eq([
         0x00_u32..0x60_u32,
-        0x62_u32..0xD7FF_u32,
-        0xE000_u32..0x10FFFF_u32,
+        0x62_u32..0x10FFFF_u32,
       ])
 
       union = Regex::Syntax::Hir::UnicodeClass.new(false, [0x61_u32..0x67_u32, 0x6D_u32..0x74_u32, 0x41_u32..0x43_u32])
@@ -1384,20 +1379,20 @@ describe Regex::Syntax do
 
     it "translates dot and line anchors like Rust" do
       dot = Regex::Syntax.parse(".")
-      dot.node.should be_a(Regex::Syntax::Hir::DotNode)
-      dot.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+      dot.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      dot.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..9_u32, 11_u32..0x10FFFF_u32])
 
       dotall = Regex::Syntax.parse("(?s).")
-      dotall.node.should be_a(Regex::Syntax::Hir::DotNode)
-      dotall.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyChar)
+      dotall.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      dotall.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..0x10FFFF_u32])
 
       byte_dot = Regex::Syntax::Parser.new(unicode: false, utf8: false).parse("(?-u).")
-      byte_dot.node.should be_a(Regex::Syntax::Hir::DotNode)
-      byte_dot.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyByteExceptLF)
+      byte_dot.node.should be_a(Regex::Syntax::Hir::CharClass)
+      byte_dot.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([0_u8..9_u8, 11_u8..255_u8])
 
       crlf_dot = Regex::Syntax::Parser.new(unicode: false, utf8: false).parse("(?R-u).")
-      crlf_dot.node.should be_a(Regex::Syntax::Hir::DotNode)
-      crlf_dot.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyByteExceptCRLF)
+      crlf_dot.node.should be_a(Regex::Syntax::Hir::CharClass)
+      crlf_dot.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([0_u8..9_u8, 11_u8..12_u8, 14_u8..255_u8])
 
       expect_hir_error(
         Regex::Syntax::Hir::ErrorKind::InvalidUtf8,
@@ -2270,7 +2265,8 @@ describe Regex::Syntax do
       String.new(concat.node.as(Regex::Syntax::Hir::Literal).bytes).should eq("ab")
 
       alternation = Regex::Syntax::Hir::Hir.alternation([left, right])
-      alternation.node.should be_a(Regex::Syntax::Hir::Alternation)
+      alternation.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      alternation.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x61_u32..0x62_u32])
     end
 
     it "builds look HIR values directly like Rust" do
@@ -2282,8 +2278,8 @@ describe Regex::Syntax do
 
     it "builds dot HIR values directly like Rust" do
       dot = Regex::Syntax::Hir::Hir.dot(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
-      dot.node.should be_a(Regex::Syntax::Hir::DotNode)
-      dot.node.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+      dot.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      dot.node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..9_u32, 11_u32..0x10FFFF_u32])
     end
 
     it "exposes kind introspection like Rust" do

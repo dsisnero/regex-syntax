@@ -372,6 +372,7 @@ module Regex::Syntax
     end
 
     private def repetition_operator_start? : Bool
+      bump_space
       return false if eof?
 
       case current_char
@@ -1020,10 +1021,11 @@ module Regex::Syntax
                      when 'r' then '\r'
                      when 't' then '\t'
                      when 'v' then '\v'
-                     when '\\', '-', ']', '^', '[', '&'
-                       c
                      else
-                       raise ParseError.new("invalid escape sequence in character class")
+                       unless Regex::Syntax.escapeable_character?(c)
+                         raise ParseError.new("invalid escape sequence in character class")
+                       end
+                       c
                      end
 
       AST::Literal.new(
@@ -1294,6 +1296,7 @@ module Regex::Syntax
     end
 
     private def parse_repetition(expr : AST::Node) : AST::Node
+      bump_space
       return expr if eof?
 
       start_pos = expr.span.start
@@ -1395,6 +1398,10 @@ module Regex::Syntax
     end
 
     private def bump_repetition_space : Nil
+      if @ignore_whitespace
+        bump_space
+        return
+      end
       while !eof? && current_char.ascii_whitespace?
         advance
       end

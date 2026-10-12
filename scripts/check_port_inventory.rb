@@ -6,7 +6,7 @@ require "set"
 require "tempfile"
 require_relative "parity_inventory_lib"
 
-VALID_STATUS = Set.new(%w[missing in_progress ported partial skipped]).freeze
+VALID_STATUS = Set.new(%w[missing in_progress ported partial skipped intentional_divergence]).freeze
 
 options = {
   root_dir: Dir.pwd,

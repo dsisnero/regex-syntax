@@ -137,13 +137,13 @@ describe Regex::Syntax::Translator do
   end
 
   describe "dot translation" do
-    it "translates dot to Hir::DotNode" do
+    it "translates dot to a Unicode class like Rust" do
       translator = Regex::Syntax::Translator.new
       ast = Regex::Syntax::AST::Dot.new(
         Regex::Syntax::AST::Span.new(0, 1)
       )
       hir = translator.translate(ast)
-      hir.should be_a(Regex::Syntax::Hir::DotNode)
+      hir.should be_a(Regex::Syntax::Hir::UnicodeClass)
     end
   end
 
@@ -190,8 +190,8 @@ describe Regex::Syntax::Translator do
       )
 
       hir = Regex::Syntax::Translator.new.translate(ast)
-      hir.should be_a(Regex::Syntax::Hir::DotNode)
-      hir.as(Regex::Syntax::Hir::DotNode).kind.should eq(Regex::Syntax::Hir::Dot::AnyCharExceptLF)
+      hir.should be_a(Regex::Syntax::Hir::UnicodeClass)
+      hir.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0_u32..9_u32, 11_u32..0x10FFFF_u32])
     end
 
     it "matches Rust regression_fuzz_match" do

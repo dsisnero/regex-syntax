@@ -29,13 +29,21 @@ module Regex::Syntax::Hir
     def canonicalize(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
       return [] of Range(UInt32, UInt32) if intervals.empty?
 
-      sorted = intervals.map { |range| canonical_range(range) }
+      sorted = intervals.compact_map do |range|
+        range = canonical_range(range)
+        next if range.begin >= 0xD800_u32 && range.end <= 0xDFFF_u32
+
+        first = range.begin.in?(0xD800_u32..0xDFFF_u32) ? 0xE000_u32 : range.begin
+        last = range.end.in?(0xD800_u32..0xDFFF_u32) ? 0xD7FF_u32 : range.end
+        first..last
+      end
+      return [] of Range(UInt32, UInt32) if sorted.empty?
       sorted.sort_by!(&.begin)
       merged = [] of Range(UInt32, UInt32)
       current = sorted.first
 
       sorted[1..].each do |range|
-        if range.begin.to_u64 <= current.end.to_u64 + 1
+        if range.begin.to_u64 <= current.end.to_u64 + 1 || (current.end == 0xD7FF_u32 && range.begin == 0xE000_u32)
           current = current.begin..Math.max(current.end, range.end)
         else
           merged << current
@@ -75,7 +83,7 @@ module Regex::Syntax::Hir
         next_start = range.end == 0x10FFFF_u32 ? 0x10FFFF_u32 : (range.end + 1).to_u32
       end
       append_scalar_gap(result, next_start, 0x10FFFF_u32) if canonical.last.end < 0x10FFFF_u32
-      result
+      canonicalize(result)
     end
 
     def union(a : Array(Range(UInt8, UInt8)), b : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
@@ -249,20 +257,16 @@ module Regex::Syntax::Hir
 
     def case_fold_unicode(intervals : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
       folded = canonicalize(intervals)
-      additions = [] of Range(UInt32, UInt32)
+      additions = folded.dup
+      table = Regex::Syntax::Unicode::SimpleCaseFolder::TABLE
       folded.each do |range|
-        additions << range
-        next if range.end - range.begin > 512
-
-        range.each do |code_point|
-          char = code_point.chr
-          additions << (char.ord.to_u32..char.ord.to_u32)
-          if mapped = Regex::Syntax::UnicodeTables::CaseFoldingSimple::CASE_FOLDING_SIMPLE[char]?
-            mapped.each do |mapped_char|
-              cp = mapped_char.ord.to_u32
-              additions << (cp..cp)
-            end
+        index = table.bsearch_index { |entry| entry[0].ord.to_u32 >= range.begin } || table.size
+        while index < table.size && table[index][0].ord.to_u32 <= range.end
+          table[index][1].each do |mapped_char|
+            codepoint = mapped_char.ord.to_u32
+            additions << (codepoint..codepoint)
           end
+          index += 1
         end
       end
       canonicalize(additions)
@@ -393,19 +397,7 @@ module Regex::Syntax::Hir
   end
 
   private def self.case_fold_unicode_from_codepoint_ranges(ranges : Array(Range(UInt32, UInt32))) : Array(Range(UInt32, UInt32))
-    folded = [] of Range(UInt32, UInt32)
-    ranges.each do |range|
-      folded << range
-      if range.end - range.begin <= 512
-        range.each do |code_point|
-          char = code_point.chr
-          unicode_case_variants(char).each do |variant|
-            folded << (variant..variant)
-          end
-        end
-      end
-    end
-    folded
+    IntervalOps.case_fold_unicode(ranges)
   end
 
   private def self.case_fold_ascii_ranges(ranges : Array(Range(UInt8, UInt8))) : Array(Range(UInt8, UInt8))
@@ -458,7 +450,7 @@ module Regex::Syntax::Hir
 
   # Module-level helper for creating dot expressions
   def self.dot(dot : Dot) : Hir
-    Hir.new(DotNode.new(dot))
+    Hir.dot(dot)
   end
 
   # Base class for all HIR nodes
@@ -1546,11 +1538,31 @@ module Regex::Syntax::Hir
     end
 
     def has_greedy_all? : Bool
-      return false unless greedy && max.nil?
+      return false unless greedy? && max.nil?
 
-      case sub
+      child = sub
+      case child
       when DotNode
         true
+      when UnicodeClass
+        !child.negated? && dot_intervals?(child.intervals, 0x10FFFF_u32)
+      when CharClass
+        !child.negated? && dot_intervals?(child.intervals, 255_u8)
+      else
+        false
+      end
+    end
+
+    private def dot_intervals?(intervals, domain_end) : Bool
+      return false if intervals.empty? || intervals.first.begin != 0 || intervals.last.end != domain_end
+
+      case intervals.size
+      when 1
+        true
+      when 2
+        intervals[0].end == 9 && intervals[1].begin == 11
+      when 3
+        intervals[0].end == 9 && intervals[1].begin == 11 && intervals[1].end == 12 && intervals[2].begin == 14
       else
         false
       end
@@ -1849,7 +1861,23 @@ module Regex::Syntax::Hir
 
     # Create a dot expression
     def self.dot(dot : Dot) : Hir
-      Hir.new(DotNode.new(dot))
+      node = case dot
+             when Dot::AnyChar
+               UnicodeClass.new(false, [0_u32..0x10FFFF_u32])
+             when Dot::AnyCharExceptLF
+               UnicodeClass.new(false, [0_u32..9_u32, 11_u32..0x10FFFF_u32])
+             when Dot::AnyCharExceptCRLF
+               UnicodeClass.new(false, [0_u32..9_u32, 11_u32..12_u32, 14_u32..0x10FFFF_u32])
+             when Dot::AnyByte
+               CharClass.new(false, [0_u8..255_u8])
+             when Dot::AnyByteExceptLF
+               CharClass.new(false, [0_u8..9_u8, 11_u8..255_u8])
+             when Dot::AnyByteExceptCRLF
+               CharClass.new(false, [0_u8..9_u8, 11_u8..12_u8, 14_u8..255_u8])
+             else
+               raise "Unknown dot kind #{dot}"
+             end
+      Hir.new(node)
     end
 
     def self.empty : Hir
@@ -1921,19 +1949,19 @@ module Regex::Syntax::Hir
           flattened << child
         end
       end
-      if flattened.all? { |child| child.is_a?(CharClass) || child.is_a?(UnicodeClass) }
-        if merged = merge_class_alternation(flattened)
-          return Hir.new(merged)
-        end
+      return fail if flattened.empty?
+      return Hir.new(flattened.first) if flattened.size == 1
+
+      if merged = merge_literal_alternation(flattened)
+        return Hir.new(merged)
       end
-      case flattened.size
-      when 0
-        fail
-      when 1
-        Hir.new(flattened.first)
-      else
-        Hir.new(Alternation.new(flattened))
+      if merged = merge_class_alternation(flattened)
+        return Hir.new(merged)
       end
+      if lifted = lift_common_prefix(flattened)
+        return lifted
+      end
+      Hir.new(Alternation.new(flattened))
     end
 
     def self.repetition(sub : Node, min : UInt32, max : UInt32?, greedy : Bool = true) : Hir
@@ -2053,34 +2081,121 @@ module Regex::Syntax::Hir
       merged
     end
 
+    # Rust tries single UTF-8 scalars before single raw bytes, regardless
+    # of the parser's Unicode flag. Mixed non-ASCII scalars/invalid bytes
+    # cannot be represented by one class.
+    private def self.merge_literal_alternation(children : Array(Node)) : Node?
+      return nil unless children.all?(Literal)
+
+      literals = children.map(&.as(Literal).bytes)
+      strings = literals.map { |bytes| String.new(bytes) }
+      if strings.all? { |string| string.valid_encoding? && string.size == 1 }
+        ranges = strings.map do |string|
+          codepoint = string.each_char.first.ord.to_u32
+          codepoint..codepoint
+        end
+        klass = UnicodeClass.new(false, ranges)
+        return klass.literal.try { |bytes| Literal.new(bytes) } || klass
+      end
+      return nil unless literals.all? { |bytes| bytes.size == 1 }
+
+      klass = CharClass.new(false, literals.map { |bytes| bytes[0]..bytes[0] })
+      klass.literal.try { |bytes| Literal.new(bytes) } || klass
+    end
+
     private def self.merge_class_alternation(children : Array(Node)) : Node?
       unicode_classes = [] of UnicodeClass
       byte_classes = [] of CharClass
-
       children.each do |child|
         case child
         when UnicodeClass
-          unicode_classes << child
+          # Materialize negation before converting between class kinds.
+          klass = UnicodeClass.empty
+          unicode_classes << klass.union(child)
         when CharClass
-          byte_classes << child
+          klass = CharClass.empty
+          byte_classes << klass.union(child)
         else
           return nil
         end
       end
 
-      if unicode_classes.empty?
-        merged = CharClass.empty
-        byte_classes.each { |klass| merged.union(klass) }
-        return merged
+      converted_bytes = byte_classes.compact_map(&.to_unicode_class)
+      if converted_bytes.size == byte_classes.size
+        merged = UnicodeClass.empty
+        unicode_classes.each { |klass| merged.union(klass) }
+        converted_bytes.each { |klass| merged.union(klass) }
+        return fail.node if merged.intervals.empty?
+        return merged.literal.try { |bytes| Literal.new(bytes) } || merged
       end
 
-      converted_byte_classes = byte_classes.compact_map(&.to_unicode_class)
-      return nil unless converted_byte_classes.size == byte_classes.size
+      converted_unicode = unicode_classes.compact_map(&.to_byte_class)
+      return nil unless converted_unicode.size == unicode_classes.size
 
-      merged = UnicodeClass.empty
-      unicode_classes.each { |klass| merged.union(klass) }
-      converted_byte_classes.each { |klass| merged.union(klass) }
-      merged
+      merged = CharClass.empty
+      byte_classes.each { |klass| merged.union(klass) }
+      converted_unicode.each { |klass| merged.union(klass) }
+      return fail.node if merged.intervals.empty?
+      merged.literal.try { |bytes| Literal.new(bytes) } || merged
+    end
+
+    private def self.lift_common_prefix(children : Array(Node)) : Hir?
+      return nil unless children.all?(Concat)
+
+      concats = children.map(&.as(Concat).children)
+      prefix = concats.first
+      common_len = prefix.size
+      concats.skip(1).each do |parts|
+        common_len = Math.min(common_len, parts.size)
+        common_len = (0...common_len).take_while { |index| same_node?(prefix[index], parts[index]) }.size
+        return nil if common_len == 0
+      end
+      return nil if common_len == 0
+
+      suffixes = concats.map { |parts| concat(parts[common_len..]).node }
+      concat(prefix[0, common_len] + [alternation(suffixes).node])
+    end
+
+    # Rust HIR equality is structural. Object identity would miss separately
+    # parsed copies of the same prefix; printed regex equality would erase
+    # distinctions such as captures and class variants.
+    private def self.same_node?(left : Node, right : Node) : Bool
+      return false unless left.class == right.class
+
+      case left
+      when Empty
+        true
+      when Literal
+        left.bytes == right.as(Literal).bytes
+      when UnicodeClass
+        other = right.as(UnicodeClass)
+        left.negated? == other.negated? && left.intervals == other.intervals
+      when CharClass
+        other = right.as(CharClass)
+        left.negated? == other.negated? && left.intervals == other.intervals
+      when Look
+        left.kind == right.as(Look).kind
+      when DotNode
+        left.kind == right.as(DotNode).kind
+      when Capture
+        other = right.as(Capture)
+        left.index == other.index && left.name == other.name && same_node?(left.sub, other.sub)
+      when Repetition
+        other = right.as(Repetition)
+        left.min == other.min && left.max == other.max && left.greedy? == other.greedy? && same_node?(left.sub, other.sub)
+      when Concat
+        same_children?(left.children, right.as(Concat).children)
+      when Alternation
+        same_children?(left.children, right.as(Alternation).children)
+      else
+        false
+      end
+    end
+
+    private def self.same_children?(left : Array(Node), right : Array(Node)) : Bool
+      left.size == right.size && left.zip(right).all? do |pair|
+        same_node?(pair[0], pair[1])
+      end
     end
 
     def self.analysis(node : Node) : NamedTuple(

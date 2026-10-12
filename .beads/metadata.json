@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "regex_syntax",
+  "project_id": "5ec044b5-ced9-49c2-a73b-17150ef7fa80"
+}

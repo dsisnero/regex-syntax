@@ -135,3 +135,28 @@ At the current project state, remaining `partial` rows in the inventories are la
   traits mapping to Crystal mixins or typed generics
 
 That distinction should be preserved when updating manifests.
+
+## Executable Rust output comparison
+
+Run `python3 scripts/check_hir_output_parity.py --rust-tests` to run the 147
+vendored default-feature unit tests, compile the pinned Rust
+crate and Crystal oracle, extract every literal `t`/`t_bytes` call from
+`src/hir/translate.rs`, and compare 316 exact HIR display outputs. The script
+uses `rustc` directly, requires no registry downloads, and writes all build
+artifacts under `temp/hir-parity/`. Its source revision check prevents an
+unreviewed vendor refresh from silently changing expected outputs.
+
+`spec/fixtures/hir_translate.tsv` records the Rust expectations as hexadecimal
+UTF-8 to preserve embedded whitespace and control characters. Regenerate only
+with `python3 scripts/check_hir_output_parity.py --write-fixture`; never derive
+expected values from Crystal. `make test` exercises every fixture. Independent
+structural expectations in `spec/hir_alternation_spec.cr` additionally verify
+the complete eight-case Rust `smart_alternation` matrix and byte/Unicode edges.
+
+This is evidence for the extracted cases, not a claim that dynamic fixtures,
+all HIR property assertions, or all support-module assertions were audited.
+The remaining audit is tracked in `plans/parity.md`.
+
+Inventory statuses are `ported`, `partial`, `missing`, `in_progress`, `skipped`,
+and `intentional_divergence`. Earlier `done`/`not_applicable` labels have been
+migrated; mappings and non-port rationales remain curated.

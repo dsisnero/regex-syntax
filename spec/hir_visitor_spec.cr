@@ -54,7 +54,7 @@ end
 
 describe Regex::Syntax::Hir do
   it "visits HIR nodes in depth-first order" do
-    hir = Regex::Syntax.parse("a(b|c)d")
+    hir = Regex::Syntax.parse("a(bb|cc)d")
     events = Regex::Syntax::Hir.visit(hir, HirVisitRecorder.new)
 
     events.should eq([
@@ -97,7 +97,7 @@ describe Regex::Syntax::Hir do
   end
 
   it "stops traversal when a visitor raises" do
-    hir = Regex::Syntax.parse("a(b|c)d")
+    hir = Regex::Syntax.parse("a(bb|cc)d")
     visitor = HirFailingVisitor.new
 
     expect_raises(Exception, "boom") do

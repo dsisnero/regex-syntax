@@ -428,7 +428,8 @@ module Regex::Syntax
         end
       when AST::ClassSetItem::Kind::Perl
         if perl = item.item.as?(AST::ClassPerl)
-          translate_class_perl(perl).as(Hir::CharClass).intervals
+          node = translate_class_perl(perl).as(Hir::CharClass)
+          node.negated? ? invert_byte_intervals(node.intervals) : node.intervals
         else
           [] of Range(UInt8, UInt8)
         end
@@ -484,7 +485,7 @@ module Regex::Syntax
           # For Unicode mode, Perl classes become Unicode classes
           node = translate_class_perl(perl)
           if node.is_a?(Hir::UnicodeClass)
-            node.intervals
+            node.negated? ? invert_unicode_intervals(node.intervals) : node.intervals
           else
             # Convert byte ranges to Unicode ranges
             node.as(Hir::CharClass).intervals.map { |rng| rng.begin.to_u32..rng.end.to_u32 }
@@ -679,20 +680,20 @@ module Regex::Syntax
       if @dot_matches_new_line
         kind = @unicode ? Hir::Dot::AnyChar : Hir::Dot::AnyByte
         ensure_valid_utf8_dot!(kind)
-        return Hir::DotNode.new(kind)
+        return Hir::Hir.dot(kind).node
       end
 
       if @unicode
         if @crlf
           kind = Hir::Dot::AnyCharExceptCRLF
           ensure_valid_utf8_dot!(kind)
-          Hir::DotNode.new(kind)
+          Hir::Hir.dot(kind).node
         else
           raise ParseError.new("invalid line terminator", :invalid_line_terminator, dot.span) unless @line_terminator <= 0x7F
           if @line_terminator == '\n'.ord.to_u8
             kind = Hir::Dot::AnyCharExceptLF
             ensure_valid_utf8_dot!(kind)
-            Hir::DotNode.new(kind)
+            Hir::Hir.dot(kind).node
           else
             Hir::UnicodeClass.new(false, dot_unicode_intervals(@line_terminator.chr))
           end
@@ -701,12 +702,12 @@ module Regex::Syntax
         if @crlf
           kind = Hir::Dot::AnyByteExceptCRLF
           ensure_valid_utf8_dot!(kind)
-          Hir::DotNode.new(kind)
+          Hir::Hir.dot(kind).node
         else
           if @line_terminator == '\n'.ord.to_u8
             kind = Hir::Dot::AnyByteExceptLF
             ensure_valid_utf8_dot!(kind)
-            Hir::DotNode.new(kind)
+            Hir::Hir.dot(kind).node
           else
             Hir::CharClass.new(false, dot_byte_intervals(@line_terminator))
           end

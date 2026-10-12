@@ -54,7 +54,7 @@ describe Regex::Syntax::TranslatorBuilder do
 
     dot = Regex::Syntax::AST::Dot.new(Regex::Syntax::AST::Span.new(0, 1))
     translated_dot = translator.translate(dot)
-    translated_dot.should be_a(Regex::Syntax::Hir::DotNode)
+    translated_dot.should be_a(Regex::Syntax::Hir::UnicodeClass)
   end
 
   it "matches vendored unicode-case and line-terminator behavior" do
@@ -88,7 +88,6 @@ describe Regex::Syntax::TranslatorBuilder do
     )
 
     hir = translator.translate(alternation)
-    hir.should be_a(Regex::Syntax::Hir::Alternation)
-    hir.as(Regex::Syntax::Hir::Alternation).children.size.should eq(2)
+    hir.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([0x61_u32..0x62_u32])
   end
 end
