@@ -60,7 +60,7 @@ describe Regex::Syntax::AST do
     union_item = set.union(item).item
     union_item.should_not be_nil
     union_item.as(Regex::Syntax::AST::ClassSetItem).kind.should eq(Regex::Syntax::AST::ClassSetItem::Kind::Union)
-    Regex::Syntax::AST::ClassSet.union(union).item.should eq(item)
+    Regex::Syntax::AST::ClassSet.union(union).item.as(Regex::Syntax::AST::ClassSetItem).item.should eq(union)
     item.span.should eq(literal.span)
   end
 

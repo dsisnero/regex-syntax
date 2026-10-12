@@ -552,8 +552,8 @@ module Regex::Syntax
       start_literal = range.start
       end_literal = range.end
 
-      start_char = start_literal.c
-      end_char = end_literal.c
+      start_char = start_literal.kind.hex? && start_literal.bytes ? nil : start_literal.c
+      end_char = end_literal.kind.hex? && end_literal.bytes ? nil : end_literal.c
       start_byte = single_byte_literal(start_literal)
       end_byte = single_byte_literal(end_literal)
 
@@ -820,17 +820,17 @@ module Regex::Syntax
 
       case repetition.op.kind
       when AST::RepetitionOp::Kind::ZeroOrOne
-        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, 1_u32, greedy: repetition.greedy?).node
+        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, 1_u32, greedy: repetition.greedy? != @swap_greed).node
       when AST::RepetitionOp::Kind::ZeroOrMore
-        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, nil, greedy: repetition.greedy?).node
+        Regex::Syntax::Hir::Hir.repetition(child, 0_u32, nil, greedy: repetition.greedy? != @swap_greed).node
       when AST::RepetitionOp::Kind::OneOrMore
-        Regex::Syntax::Hir::Hir.repetition(child, 1_u32, nil, greedy: repetition.greedy?).node
+        Regex::Syntax::Hir::Hir.repetition(child, 1_u32, nil, greedy: repetition.greedy? != @swap_greed).node
       when AST::RepetitionOp::Kind::Range
         Regex::Syntax::Hir::Hir.repetition(
           child,
           repetition.op.min || 0_u32,
           repetition.op.max,
-          greedy: repetition.greedy?
+          greedy: repetition.greedy? != @swap_greed
         ).node
       else
         child

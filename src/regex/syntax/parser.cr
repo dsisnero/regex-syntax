@@ -13,7 +13,7 @@ module Regex::Syntax
       @dot_matches_new_line = false
       @swap_greed = false
       @crlf = false
-      @nest_limit = nil.as(Int32?)
+      @nest_limit = 250.as(Int32?)
       @octal = false
       @empty_min_range = false
     end
@@ -67,7 +67,7 @@ module Regex::Syntax
       @swap_greed = false
       @ignore_whitespace = false
       @crlf = false
-      @nest_limit = nil.as(Int32?)
+      @nest_limit = 250.as(Int32?)
       @octal = false
       @utf8 = true
       @line_terminator = '\n'.ord.to_u8
@@ -168,7 +168,7 @@ module Regex::Syntax
                    swap_greed : Bool = false,
                    ignore_whitespace : Bool = false,
                    crlf : Bool = false,
-                   nest_limit : Int32? = nil,
+                   nest_limit : Int32? = 250,
                    octal : Bool = false,
                    utf8 : Bool = true,
                    line_terminator : UInt8 = '\n'.ord.to_u8)

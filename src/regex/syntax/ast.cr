@@ -162,11 +162,11 @@ module Regex::Syntax::AST
     getter span : Span
     getter items : Array(FlagsItem)
 
-    def initialize(@span : Span, @items : Array(FlagsItem))
+    def initialize(@span : Span, @items : Array(FlagsItem), @flags_span : Span? = nil)
     end
 
     def flags : Flags
-      Flags.new(@span, @items)
+      Flags.new(@flags_span || @span, @items)
     end
   end
 
@@ -239,6 +239,9 @@ module Regex::Syntax::AST
 
     def special_kind : SpecialLiteralKind?
       return nil unless @kind.escaped?
+      if prefix = @escape_prefix
+        return nil unless {'a', 'f', 't', 'n', 'r', 'v'}.includes?(prefix)
+      end
       case @c
       when '\a' then SpecialLiteralKind::Bell
       when '\f' then SpecialLiteralKind::FormFeed
@@ -246,7 +249,6 @@ module Regex::Syntax::AST
       when '\n' then SpecialLiteralKind::LineFeed
       when '\r' then SpecialLiteralKind::CarriageReturn
       when '\v' then SpecialLiteralKind::VerticalTab
-      when ' '  then SpecialLiteralKind::Space
       else           nil
       end
     end
@@ -340,15 +342,14 @@ module Regex::Syntax::AST
     getter? negated : Bool
     getter name : String
 
-    def initialize(@span : Span, negated : Bool, @name : String)
+    def initialize(@span : Span, negated : Bool, @name : String, @parsed_kind : ClassUnicodeKind? = nil)
       @negated = negated
     end
 
     def kind : ClassUnicodeKind
-      if @name.size == 1
-        return ClassUnicodeKind.one_letter(@name[0])
+      if parsed_kind = @parsed_kind
+        return parsed_kind
       end
-
       if index = @name.index("!=")
         return ClassUnicodeKind.named_value(
           ClassUnicodeOpKind::NotEqual,
@@ -372,6 +373,8 @@ module Regex::Syntax::AST
           @name[(index + 1)..]
         )
       end
+
+      return ClassUnicodeKind.one_letter(@name[0]) if @name.size == 1
 
       ClassUnicodeKind.named(@name)
     end
@@ -582,7 +585,7 @@ module Regex::Syntax::AST
 
     def self.union(ast : ClassSetUnion) : self
       span = ast.span
-      item = ast.into_item
+      item = ClassSetItem.new(span, ClassSetItem::Kind::Union, ast)
       new(span, Kind::Item, item: item)
     end
 
@@ -665,7 +668,9 @@ module Regex::Syntax::AST
     getter min : UInt32?
     getter max : UInt32?
 
-    def initialize(@kind : Kind, @min : UInt32? = nil, @max : UInt32? = nil)
+    getter span : Span?
+
+    def initialize(@kind : Kind, @min : UInt32? = nil, @max : UInt32? = nil, @span : Span? = nil, @parsed_range : RepetitionRange? = nil)
     end
 
     def valid? : Bool
@@ -683,6 +688,9 @@ module Regex::Syntax::AST
     # ameba:enable Naming/PredicateName
 
     def range : RepetitionRange?
+      if parsed_range = @parsed_range
+        return parsed_range
+      end
       return nil unless @kind.range?
       if min = @min
         case max = @max
@@ -824,7 +832,7 @@ module Regex::Syntax::AST
     getter flags : Flags?         # For non-capturing groups with flags
     getter? starts_with_p : Bool?
 
-    def initialize(@span : Span, @kind : Kind, @child : Node, @capture_index : Int32? = nil, @name : String? = nil, @flags : Flags? = nil, @starts_with_p : Bool? = nil)
+    def initialize(@span : Span, @kind : Kind, @child : Node, @capture_index : Int32? = nil, @name : String? = nil, @flags : Flags? = nil, @starts_with_p : Bool? = nil, @capture_name_span : Span? = nil)
     end
 
     def capturing? : Bool
@@ -841,7 +849,7 @@ module Regex::Syntax::AST
     def capture_name : CaptureName?
       return nil unless name = @name
       return nil unless index = @capture_index
-      CaptureName.new(Span.splat(@span.start), name, index.to_u32)
+      CaptureName.new(@capture_name_span || Span.splat(@span.start), name, index.to_u32)
     end
   end
 

@@ -495,7 +495,7 @@ describe Regex::Syntax::AstParser do
 
       err = expect_ast_error(
         Regex::Syntax::AST::ErrorKind::EscapeHexEmpty,
-        Regex::Syntax::AST::Span.new(3, 4)
+        Regex::Syntax::AST::Span.new(2, 4)
       ) do
         parser.parse(%q(\x{}))
       end
@@ -503,7 +503,7 @@ describe Regex::Syntax::AstParser do
 
       err = expect_ast_error(
         Regex::Syntax::AST::ErrorKind::EscapeHexInvalid,
-        Regex::Syntax::AST::Span.new(8, 8)
+        Regex::Syntax::AST::Span.new(3, 7)
       ) do
         parser.parse(%q(\x{D800}))
       end

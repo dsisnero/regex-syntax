@@ -72,20 +72,22 @@ Checklist rules:
   specs pass; formatting, lint, and all three inventory checks pass.
 - [ ] Full independent assertion-by-assertion audit of the remaining Rust test
   ports. Phase 1 below now verifies the complete default-feature translator
-  runtime and HIR constructor compositions. Parser/AST, Unicode/class algebra,
+  runtime and HIR constructor compositions. Phase 2 verifies Parser/AST.
+  Unicode/class algebra,
   extraction/UTF-8, and diagnostic/support-module assertion audits remain open
-  in phases 2–6. Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
+  in phases 3–6. Follow-up bead: `regex-syntax-u0w`. Existing mappings outside
   the verified slices must not be mistaken for a fresh exhaustive signoff.
 
 ## Current State
 
-- `rust_test_parity.tsv`: `139 ported`, `14 skipped`, `5 partial`
+- `rust_test_parity.tsv`: `144 ported`, `14 skipped`, `0 partial`
 - `rust_source_parity.tsv`: `869 ported`, `1 skipped`, `7 partial`
 
 Interpretation (inventory coverage, not independent assertion signoff):
 
-- The five test partials identify parser-helper coverage gaps. They do not
-  bound the possible semantic drift in rows currently labeled `ported`.
+- The five parser-helper test partials are now closed by exact helper-result
+  and cursor-position replays. Rows outside completed phases still require
+  independent assertion audits despite their `ported` labels.
 - The remaining source partials are still mostly API/model-shape mappings:
   Crystal class hierarchies, wrapper objects, builder-style APIs, and
   idiomatic replacements for Rust enums, traits, and free functions.
@@ -106,9 +108,9 @@ Interpretation (inventory coverage, not independent assertion signoff):
 ## Remaining Work in Feature-Sized Phases
 
 No unfixed runtime mismatch has been confirmed by the completed comparisons.
-The known remaining discrepancies are incomplete assertion coverage, five partial
-parser-test mappings, seven source/API model mappings, and the downstream
-installed shard still containing the older implementation. Suspected edge cases
+The known remaining discrepancies are incomplete assertion coverage in phases
+3–6, seven source/API model mappings, and the downstream installed shard still
+containing the older implementation. Suspected edge cases
 below are audit targets, not established bugs. Keep the upstream revision pinned
 while completing these phases; fix any newly reproduced mismatch in its phase.
 
@@ -157,16 +159,16 @@ can only be regenerated from the passing Rust run using `--write-fixture`.
 All 2,308 Crystal specs, 147 default-feature Rust unit tests, 316 display cases,
 465 property cases, and 22 downstream Thompson harness specs pass. Formatting,
 lint, no-codegen compilation, and all three inventory checks pass. No vendored
-files or installed downstream dependency were changed. Phase 2 is next; phases
-2–7 retain their open status.
+files or installed downstream dependency were changed. Phase 2 completion
+is recorded below; phases 3–7 retain their open status.
 
 ### Phase 2 — Parser and AST behavior
 
-- [ ] Audit `src/ast/parse.rs` and `src/ast/mod.rs` tests assertion by assertion.
+- [x] Audit `src/ast/parse.rs` and `src/ast/mod.rs` tests assertion by assertion.
   Compare exact AST kinds, nesting, flags, capture metadata, comments, byte
   offsets, line/column positions, and successful parse results. Include Unicode
   input, verbose mode, repetitions, escapes, and class-set operators.
-- [ ] Resolve the five partial test mappings as one parser feature:
+- [x] Resolve the five partial test mappings as one parser feature:
   `parse_decimal`, `parse_flag`, `parse_primitive_non_escape`, `parse_set_class`,
   and `parse_set_class_open`. Exercise equivalent public behavior where possible;
   document genuinely inaccessible internal-only assertions individually instead
@@ -176,6 +178,39 @@ files or installed downstream dependency were changed. Phase 2 is next; phases
 expectations; each partial row either fully covered or explicitly justified by
 its remaining unsupported helper contract. No blanket closure from passing
 representative patterns.
+
+**Completed evidence (2026-10-12):** ported the Rust-derived tests before
+implementation. The initial public corpus had 208 failures in 854 examples;
+the direct helper corpus then exposed 16 additional failures. Characterization
+cases and the default nesting-limit regression also failed before fixes.
+`python3 scripts/check_ast_parity.py` executes all 29 original parser tests with
+their assertions preserved and accounts for all 344 assertion locations in
+`plans/inventory/rust_ast_assertion_audit.tsv`. It replays 862 exact public AST
+results (851 original test inputs plus 11 characterization inputs) and 708
+helper results with final cursor positions, including nonzero starting offsets.
+The three generated fixed-hex loops retain all 127,232 upstream scalar cases,
+with exact character, escape kind/form, and span expectations. Fixtures can only
+be regenerated from a passing native Rust run via `--write-fixture`.
+
+Fixed AST operator/flags/capture-name spans, brace-vs-one-letter property kinds,
+bounded repetition identity, raw control escape metadata, class union structure,
+class prefix/verbose spans, nested class depth accounting, malformed escape and
+group diagnostics, repeated flag negation, and unmatched closing groups. AST
+greediness now records syntax; the translator applies `U`. The public parser and
+builder defaults now use Rust's nesting limit of 250. Corrected older specs that
+expected collapsed `ClassSet::union` constructors and incorrect hex-error spans.
+
+All five partial parser-test mappings are now ported. Test-only helper access
+keeps private parser APIs private in the library. The only two assertions in
+`src/ast/mod.rs` remain explicitly excluded Crystal contracts: Rust enum memory
+size and explicit destruction on a 16KiB thread stack; both original native tests
+still execute successfully. Crystal uses object allocation and garbage collection.
+
+Final gates: 3,882 Crystal examples, formatting, lint, no-codegen compilation,
+147 original default-feature Rust tests, 316 exact HIR display and 465 property
+comparisons, the Phase 1 translator/construction oracle, all three inventories,
+and 22 downstream Thompson harness specs pass. Phase 3 is next. The downstream
+installed shard and the downstream Thompson parity signoff remain unchanged.
 
 ### Phase 3 — Unicode and character-class algebra
 

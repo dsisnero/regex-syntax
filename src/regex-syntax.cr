@@ -135,7 +135,7 @@ module Regex::Syntax
     @swap_greed : Bool
     @crlf : Bool
 
-    def initialize(*, unicode : Bool = true, ignore_whitespace : Bool = false, ignore_case : Bool = false, multi_line : Bool = false, dot_matches_new_line : Bool = false, swap_greed : Bool = false, crlf : Bool = false, nest_limit : Int32? = nil, octal : Bool = false, empty_min_range : Bool = false)
+    def initialize(*, unicode : Bool = true, ignore_whitespace : Bool = false, ignore_case : Bool = false, multi_line : Bool = false, dot_matches_new_line : Bool = false, swap_greed : Bool = false, crlf : Bool = false, nest_limit : Int32? = 250, octal : Bool = false, empty_min_range : Bool = false)
       @initial_unicode = unicode
       @initial_ignore_whitespace = ignore_whitespace
       @initial_ignore_case = ignore_case
@@ -174,6 +174,7 @@ module Regex::Syntax
       reset(pattern)
 
       root = parse_alternation
+      raise ParseError.new("unopened group", :group_unopened, AST::Span.new(current_position, position_after(current_position, current_char))) unless eof?
       check_nest_limit(root) if @nest_limit
 
       AST::WithComments.new(AST::Ast.new(root), @comments.dup)
@@ -314,6 +315,8 @@ module Regex::Syntax
       when :flag_duplicate         then AST::ErrorKind::FlagDuplicate
       when :flag_repeated_negation then AST::ErrorKind::FlagRepeatedNegation
       when :flag_dangling_negation then AST::ErrorKind::FlagDanglingNegation
+      when :class_range_literal    then AST::ErrorKind::ClassRangeLiteral
+      when :group_unopened         then AST::ErrorKind::GroupUnopened
       when :group_name_duplicate   then AST::ErrorKind::GroupNameDuplicate
       when :nest_limit_exceeded    then AST::ErrorKind::NestLimitExceeded
       else
@@ -322,6 +325,7 @@ module Regex::Syntax
     end
 
     private def parse_alternation : AST::Node
+      start_pos = current_position
       terms = [] of AST::Node
       terms << parse_concatenation
 
@@ -333,11 +337,12 @@ module Regex::Syntax
       if terms.size == 1
         terms.first
       else
-        AST::Alternation.new(AST::Span.new(terms.first.span.start, terms.last.span.end), terms)
+        AST::Alternation.new(AST::Span.new(start_pos, current_position), terms)
       end
     end
 
     private def parse_concatenation : AST::Node
+      start_pos = current_position
       atoms = [] of AST::Node
 
       while !eof? && current_char != '|' && current_char != ')'
@@ -356,7 +361,7 @@ module Regex::Syntax
       when 1
         atoms.first
       else
-        AST::Concat.new(AST::Span.new(atoms.first.span.start, atoms.last.span.end), atoms)
+        AST::Concat.new(AST::Span.new(start_pos, current_position), atoms)
       end
     end
 
@@ -387,14 +392,6 @@ module Regex::Syntax
       return AST::Empty.new(AST::Span.splat(current_position)) if eof?
 
       case current_char
-      when '.'
-        parse_dot
-      when '^'
-        parse_assertion_start
-      when '$'
-        parse_assertion_end
-      when '\\'
-        parse_escape
       when '['
         parse_class_bracketed
       when '('
@@ -406,7 +403,7 @@ module Regex::Syntax
       when '|'
         AST::Empty.new(AST::Span.splat(current_position))
       else
-        parse_literal
+        parse_primitive
       end
     end
 
@@ -432,7 +429,7 @@ module Regex::Syntax
       start_pos = current_position
       advance # skip '\\'
       if eof?
-        raise ParseError.new("unexpected end of pattern after backslash")
+        raise ParseError.new("unexpected end of pattern after backslash", nil, AST::Span.new(start_pos, current_position))
       end
 
       case current_char
@@ -446,9 +443,11 @@ module Regex::Syntax
         parse_anchor(start_pos)
       when '0'..'7'
         return parse_octal_literal(start_pos) if @octal
-        raise ParseError.new("backreferences are not supported")
+        raise ParseError.new("backreferences are not supported", nil, AST::Span.new(start_pos, position_after(current_position, current_char)))
       when '8', '9'
-        raise ParseError.new(@octal ? "unrecognized escape sequence" : "backreferences are not supported")
+        finish = position_after(current_position, current_char)
+        advance if @octal
+        raise ParseError.new(@octal ? "unrecognized escape sequence" : "backreferences are not supported", nil, AST::Span.new(start_pos, finish))
       when 'x', 'u', 'U'
         parse_hex_literal(start_pos)
       when 'p', 'P'
@@ -506,7 +505,7 @@ module Regex::Syntax
 
         advance # skip '}'
 
-        AST::ClassUnicode.new(AST::Span.new(start_pos, current_position), negated, prop_name)
+        AST::ClassUnicode.new(AST::Span.new(start_pos, current_position), negated, prop_name, (prop_name.includes?('=') || prop_name.includes?(':')) ? nil : AST::ClassUnicode::ClassUnicodeKind.named(prop_name))
       else
         # Parse \pL form (single letter property)
         if eof?
@@ -522,7 +521,7 @@ module Regex::Syntax
 
         # Convert single character to property name
         prop_name = prop_char.to_s
-        AST::ClassUnicode.new(AST::Span.new(start_pos, current_position), negated, prop_name)
+        AST::ClassUnicode.new(AST::Span.new(start_pos, current_position), negated, prop_name, AST::ClassUnicode::ClassUnicodeKind.one_letter(prop_char))
       end
     end
 
@@ -630,14 +629,17 @@ module Regex::Syntax
                      when 't' then '\t'
                      when 'v' then '\v'
                      else
-                       # Any character can be escaped
+                       unless Regex::Syntax.escapeable_character?(c)
+                         raise ParseError.new("unrecognized escape sequence", nil, AST::Span.new(start_pos, current_position))
+                       end
                        c
                      end
 
       AST::Literal.new(
         AST::Span.new(start_pos, current_position),
         AST::Literal::Kind::Escaped,
-        c: escaped_char
+        c: escaped_char,
+        escape_prefix: c
       )
     end
 
@@ -679,6 +681,7 @@ module Regex::Syntax
 
     private def parse_fixed_hex_literal(start_pos : AST::Position, digits : Int32, prefix : Char, literal_kind : AST::Literal::Kind) : AST::Node
       value = 0_u32
+      digits_start = current_position
 
       digits.times do
         bump_space
@@ -689,11 +692,16 @@ module Regex::Syntax
         advance
       end
 
+      if value > 0x10FFFF || (0xD800..0xDFFF).includes?(value)
+        raise ParseError.new("invalid hex escape", nil, AST::Span.new(digits_start, current_position))
+      end
       build_hex_literal(start_pos, literal_kind, value, form: AST::Literal::Form::Fixed, fixed_digits: digits, escape_prefix: prefix)
     end
 
     private def parse_hex_brace_literal(start_pos : AST::Position, kind : Char) : AST::Node
+      brace = current_position
       advance # skip '{'
+      digits_start = current_position
       bump_space
       scratch = String.build do |io|
         while !eof? && current_char != '}'
@@ -703,16 +711,15 @@ module Regex::Syntax
           bump_space
         end
       end
-
-      raise ParseError.new("unexpected end of pattern in hex escape") if eof?
-      raise ParseError.new("empty hex escape") if scratch.empty?
-
-      value = scratch.to_u32(16)
-      advance # skip '}'
-
+      raise ParseError.new("unexpected end of pattern in hex escape", nil, AST::Span.new(brace, current_position)) if eof?
+      digits_end = current_position
+      advance
+      raise ParseError.new("empty hex escape", nil, AST::Span.new(brace, current_position)) if scratch.empty?
+      value = scratch.to_u32?(16)
+      if !value || value > 0x10FFFF || (0xD800..0xDFFF).includes?(value)
+        raise ParseError.new("invalid hex escape", nil, AST::Span.new(digits_start, digits_end))
+      end
       build_hex_literal(start_pos, kind == 'x' ? AST::Literal::Kind::Hex : AST::Literal::Kind::Unicode, value, form: AST::Literal::Form::Brace, escape_prefix: kind)
-    rescue ArgumentError
-      raise ParseError.new("invalid hex escape")
     end
 
     private def scalar_value_to_char(value : UInt32) : Char
@@ -745,10 +752,11 @@ module Regex::Syntax
     end
 
     private def build_hex_literal(start_pos : AST::Position, kind : AST::Literal::Kind, value : UInt32, form : AST::Literal::Form? = nil, fixed_digits : Int32? = nil, escape_prefix : Char? = nil) : AST::Literal
-      if kind.hex? && !@unicode
+      if kind.hex? && !@unicode && form.try(&.fixed?)
         AST::Literal.new(
           AST::Span.new(start_pos, current_position),
           kind,
+          c: scalar_value_to_char(value),
           bytes: Bytes[value.to_u8],
           form: form,
           fixed_digits: fixed_digits,
@@ -775,33 +783,51 @@ module Regex::Syntax
     end
 
     private def parse_class_bracketed : AST::Node
-      start_pos = current_position
-      advance # skip '['
-
-      negated = false
-      if current_char == '^'
-        negated = true
-        advance # skip '^'
+      opening, union = parse_class_open
+      class_set = begin
+        parse_class_set(union.items)
+      rescue ex : ParseError
+        if eof? && ex.raw_message == "invalid character class range"
+          raise ParseError.new("unclosed character class", nil, opening.span)
+        end
+        raise ex
       end
+      raise ParseError.new("unclosed character class", nil, opening.span) if eof? || current_char != ']'
+      advance
+      AST::ClassBracketed.new(AST::Span.new(opening.span.start, current_position), opening.negated?, class_set)
+    end
 
+    private def parse_class_open : Tuple(AST::ClassBracketed, AST::ClassSetUnion)
+      start = current_position
+      advance
       bump_space
-
-      prefix_items = [] of AST::ClassSetItem
-      if !eof? && (current_char == ']' || current_char == '-')
-        literal = parse_class_literal
-        prefix_items << AST::ClassSetItem.new(literal.span, AST::ClassSetItem::Kind::Literal, literal)
+      raise ParseError.new("unclosed character class", nil, AST::Span.new(start, current_position)) if eof?
+      negated = current_char == '^'
+      if negated
+        advance
+        bump_space
+        raise ParseError.new("unclosed character class", nil, AST::Span.new(start, current_position)) if eof?
       end
-
-      class_set = parse_class_set(prefix_items)
-
-      raise ParseError.new("unclosed character class") if eof? || current_char != ']'
-      advance # skip ']'
-
-      AST::ClassBracketed.new(AST::Span.new(start_pos, current_position), negated, class_set)
+      union = AST::ClassSetUnion.new(AST::Span.splat(current_position))
+      while current_char == '-'
+        literal = parse_class_literal.as(AST::Literal)
+        union.push(AST::ClassSetItem.new(literal.span, AST::ClassSetItem::Kind::Literal, literal))
+        bump_space
+        raise ParseError.new("unclosed character class", nil, AST::Span.splat(start)) if eof?
+      end
+      if union.empty? && current_char == ']'
+        literal = parse_class_literal.as(AST::Literal)
+        union.push(AST::ClassSetItem.new(literal.span, AST::ClassSetItem::Kind::Literal, literal))
+        bump_space
+        raise ParseError.new("unclosed character class", nil, AST::Span.new(start, current_position)) if eof?
+      end
+      empty = AST::ClassSetUnion.new(AST::Span.splat(union.span.start))
+      opening = AST::ClassBracketed.new(AST::Span.new(start, current_position), negated, AST::ClassSet.union(empty))
+      {opening, union}
     end
 
     private def parse_class_set(prefix_items : Array(AST::ClassSetItem) = [] of AST::ClassSetItem) : AST::ClassSet
-      start_pos = current_position
+      start_pos = prefix_items.first?.try(&.span.start) || current_position
       lhs = parse_class_set_operand(prefix_items)
 
       while op_kind = parse_class_set_binary_op_kind
@@ -839,7 +865,7 @@ module Regex::Syntax
       when 1
         AST::ClassSet.new(AST::Span.new(start_pos, current_position), AST::ClassSet::Kind::Item, item: items.first)
       else
-        union_span = AST::Span.new(start_pos, current_position)
+        union_span = AST::Span.new(items.first.span.start, items.last.span.end)
         union = AST::ClassSetUnion.new(union_span, items)
         AST::ClassSet.new(
           union_span,
@@ -859,11 +885,12 @@ module Regex::Syntax
       first_literal = first.item.as?(AST::Literal)
       second_literal = second.item.as?(AST::Literal)
       unless first.kind == AST::ClassSetItem::Kind::Literal && second.kind == AST::ClassSetItem::Kind::Literal && first_literal && second_literal
-        raise ParseError.new("invalid character class range")
+        invalid = first_literal ? second.span : first.span
+        raise ParseError.new("invalid character class range literal", :class_range_literal, invalid)
       end
       if first_char = first_literal.c
         if second_char = second_literal.c
-          raise ParseError.new("invalid character class range") if first_char > second_char
+          raise ParseError.new("invalid character class range", nil, AST::Span.new(first.span.start, second.span.end)) if first_char > second_char
         end
       end
 
@@ -1023,7 +1050,7 @@ module Regex::Syntax
                      when 'v' then '\v'
                      else
                        unless Regex::Syntax.escapeable_character?(c)
-                         raise ParseError.new("invalid escape sequence in character class")
+                         raise ParseError.new("invalid escape sequence in character class", nil, AST::Span.new(start_pos, current_position))
                        end
                        c
                      end
@@ -1031,7 +1058,8 @@ module Regex::Syntax
       AST::Literal.new(
         AST::Span.new(start_pos, current_position),
         AST::Literal::Kind::Escaped,
-        c: escaped_char
+        c: escaped_char,
+        escape_prefix: c
       )
     end
 
@@ -1055,6 +1083,7 @@ module Regex::Syntax
       if current_char == '?'
         advance # skip '?'
         bump_space
+        raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof?
 
         case current_char
         when 'P'
@@ -1063,35 +1092,37 @@ module Regex::Syntax
             advance # skip '<'
             parse_named_capture_group(start, starts_with_p: true)
           else
-            raise ParseError.new("unsupported group syntax")
+            raise ParseError.new("unrecognized flag")
           end
         when '<'
           case peek_char
           when '='
-            raise ParseError.new("look-behind groups not supported")
+            raise ParseError.new("look-behind groups not supported", nil, AST::Span.new(start, position_after(position_after(current_position, '<'), peek_char)))
           when '!'
-            raise ParseError.new("look-behind groups not supported")
+            raise ParseError.new("look-behind groups not supported", nil, AST::Span.new(start, position_after(position_after(current_position, '<'), peek_char)))
           else
             advance # skip '<'
             parse_named_capture_group(start, starts_with_p: false)
           end
         when ':'
+          flags_span = AST::Span.splat(current_position)
           # Non-capturing group: (?:...)
           advance # skip ':'
           child = parse_alternation
-          raise ParseError.new("unclosed group") if eof? || current_char != ')'
+          raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof? || current_char != ')'
           advance # skip ')'
 
           AST::Group.new(
             AST::Span.new(start, current_position),
             AST::Group::Kind::NonCapture,
             child,
-            flags: AST::Flags.new(AST::Span.new(start, current_position))
+            flags: AST::Flags.new(flags_span)
           )
         when 'i', 'm', 's', 'u', 'x', 'R', 'U', '-'
           # Parse flags for (?i...) or (?-i...)
           flags_start = current_position
           flags_items = parse_flags_items
+          flags_span = AST::Span.new(flags_start, current_position)
 
           if current_char == ':'
             # Flag group with scope: (?i:...)
@@ -1109,7 +1140,7 @@ module Regex::Syntax
 
             advance # skip ':'
             child = parse_alternation
-            raise ParseError.new("unclosed group") if eof? || current_char != ')'
+            raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof? || current_char != ')'
             advance # skip ')'
 
             # Restore flag state
@@ -1121,7 +1152,7 @@ module Regex::Syntax
             @unicode = old_unicode
             @crlf = old_crlf
 
-            flags = AST::Flags.new(AST::Span.new(flags_start, current_position), flags_items)
+            flags = AST::Flags.new(flags_span, flags_items)
             AST::Group.new(
               AST::Span.new(start, current_position),
               AST::Group::Kind::NonCapture,
@@ -1130,33 +1161,33 @@ module Regex::Syntax
             )
           else
             # Global flags: (?i)
-            raise ParseError.new("unclosed group") if eof? || current_char != ')'
+            raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof? || current_char != ')'
             advance # skip ')'
 
             # Apply flags to parser state
             apply_flags_from_items(flags_items)
 
             # Create SetFlags node for global flags
-            AST::SetFlags.new(AST::Span.new(start, current_position), flags_items)
+            AST::SetFlags.new(AST::Span.new(start, current_position), flags_items, flags_span)
           end
         when '='
           # Lookahead: (?=...) - not supported
-          raise ParseError.new("look-ahead groups not supported")
+          raise ParseError.new("look-ahead groups not supported", nil, AST::Span.new(start, position_after(current_position, current_char)))
         when '!'
           # Negative lookahead: (?!...) - not supported
-          raise ParseError.new("look-ahead groups not supported")
+          raise ParseError.new("look-ahead groups not supported", nil, AST::Span.new(start, position_after(current_position, current_char)))
         else
           if can_start_flag_set?(current_char)
             parse_unknown_flag_group(start)
           else
-            raise ParseError.new("unsupported group syntax")
+            raise ParseError.new("unrecognized flag")
           end
         end
       else
         # Regular capturing group
         capture_index = next_capture_index
         child = parse_alternation
-        raise ParseError.new("unclosed group") if eof? || current_char != ')'
+        raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof? || current_char != ')'
         advance # skip ')'
 
         AST::Group.new(
@@ -1192,7 +1223,7 @@ module Regex::Syntax
 
       capture_index = next_capture_index
       child = parse_alternation
-      raise ParseError.new("unclosed group") if eof? || current_char != ')'
+      raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof? || current_char != ')'
       advance # skip ')'
 
       AST::Group.new(
@@ -1201,7 +1232,8 @@ module Regex::Syntax
         child,
         capture_index: capture_index,
         name: name,
-        starts_with_p: starts_with_p
+        starts_with_p: starts_with_p,
+        capture_name_span: name_span
       )
     end
 
@@ -1226,6 +1258,7 @@ module Regex::Syntax
     private def parse_unknown_flag_group(start : AST::Position) : AST::Node
       flags_start = current_position
       flags_items = parse_flags_items
+      flags_span = AST::Span.new(flags_start, current_position)
       if flags_items.empty?
         raise ParseError.new("repetition operator not preceded by expression", nil, AST::Span.splat(position_after(start, '(')))
       end
@@ -1243,7 +1276,7 @@ module Regex::Syntax
 
         advance
         child = parse_alternation
-        raise ParseError.new("unclosed group") if eof? || current_char != ')'
+        raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof? || current_char != ')'
         advance
 
         @ignore_whitespace = old_ignore_whitespace
@@ -1254,7 +1287,7 @@ module Regex::Syntax
         @unicode = old_unicode
         @crlf = old_crlf
 
-        flags = AST::Flags.new(AST::Span.new(flags_start, current_position), flags_items)
+        flags = AST::Flags.new(flags_span, flags_items)
         AST::Group.new(
           AST::Span.new(start, current_position),
           AST::Group::Kind::NonCapture,
@@ -1262,16 +1295,26 @@ module Regex::Syntax
           flags: flags
         )
       else
-        raise ParseError.new("unclosed group") if eof? || current_char != ')'
+        raise ParseError.new("unclosed group", nil, AST::Span.new(start, position_after(start, '('))) if eof? || current_char != ')'
         advance
         apply_flags_from_items(flags_items)
-        AST::SetFlags.new(AST::Span.new(start, current_position), flags_items)
+        AST::SetFlags.new(AST::Span.new(start, current_position), flags_items, flags_span)
+      end
+    end
+
+    private def parse_primitive : AST::Node
+      case current_char
+      when '.'  then parse_dot
+      when '^'  then parse_assertion_start
+      when '$'  then parse_assertion_end
+      when '\\' then parse_escape
+      else           parse_literal
       end
     end
 
     private def parse_literal : AST::Node
       start_pos = current_position
-      if eof? || "|().*+?{[\\^$".includes?(current_char)
+      if eof?
         AST::Empty.new(AST::Span.splat(start_pos))
       else
         char = current_char
@@ -1300,21 +1343,22 @@ module Regex::Syntax
       return expr if eof?
 
       start_pos = expr.span.start
+      operator_start = current_position
       case current_char
       when '*'
         advance
         greedy = parse_repetition_greediness
-        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::ZeroOrMore)
+        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::ZeroOrMore, span: AST::Span.new(operator_start, current_position))
         AST::Repetition.new(AST::Span.new(start_pos, current_position), op, greedy, expr)
       when '+'
         advance
         greedy = parse_repetition_greediness
-        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::OneOrMore)
+        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::OneOrMore, span: AST::Span.new(operator_start, current_position))
         AST::Repetition.new(AST::Span.new(start_pos, current_position), op, greedy, expr)
       when '?'
         advance
         greedy = parse_repetition_greediness
-        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::ZeroOrOne)
+        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::ZeroOrOne, span: AST::Span.new(operator_start, current_position))
         AST::Repetition.new(AST::Span.new(start_pos, current_position), op, greedy, expr)
       when '{'
         parse_counted_repetition(expr, start_pos)
@@ -1352,7 +1396,7 @@ module Regex::Syntax
         # {n} form
         advance # skip '}'
         greedy = parse_repetition_greediness
-        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::Range, min: min, max: min)
+        op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::Range, min: min, max: min, span: AST::Span.new(repetition_start, current_position), parsed_range: AST::RepetitionRange.exactly(min))
         AST::Repetition.new(AST::Span.new(start_pos, current_position), op, greedy, expr)
       elsif current_char == ','
         advance # skip ','
@@ -1366,7 +1410,7 @@ module Regex::Syntax
           # {n,} form
           advance # skip '}'
           greedy = parse_repetition_greediness
-          op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::Range, min: min)
+          op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::Range, min: min, span: AST::Span.new(repetition_start, current_position), parsed_range: AST::RepetitionRange.at_least(min))
           AST::Repetition.new(AST::Span.new(start_pos, current_position), op, greedy, expr)
         else
           max = parse_repetition_decimal
@@ -1379,7 +1423,7 @@ module Regex::Syntax
           advance # skip '}'
           greedy = parse_repetition_greediness
           raise ParseError.new("invalid repetition range", nil, AST::Span.new(repetition_start, current_position)) if max < min
-          op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::Range, min: min, max: max)
+          op = AST::RepetitionOp.new(AST::RepetitionOp::Kind::Range, min: min, max: max, span: AST::Span.new(repetition_start, current_position), parsed_range: AST::RepetitionRange.bounded(min, max))
           AST::Repetition.new(AST::Span.new(start_pos, current_position), op, greedy, expr)
         end
       else
@@ -1389,7 +1433,7 @@ module Regex::Syntax
 
     private def parse_repetition_greediness : Bool
       bump_space if @ignore_whitespace
-      greedy = !@swap_greed
+      greedy = true
       if current_char == '?'
         advance
         greedy = !greedy
@@ -1458,6 +1502,7 @@ module Regex::Syntax
       items = [] of AST::FlagsItem
       seen_flags = {} of Char => AST::Span
       last_negation_span = nil.as(AST::Span?)
+      last_was_negation = false
 
       while !eof? && current_char != ':' && current_char != ')'
         bump_space
@@ -1477,6 +1522,7 @@ module Regex::Syntax
             AST::FlagsItem::Kind::Negation
           )
           last_negation_span = span
+          last_was_negation = true
         else
           # Flag character
           start_pos = current_position
@@ -1492,12 +1538,12 @@ module Regex::Syntax
             flag: flag_char
           )
           seen_flags[flag_char] = span
-          last_negation_span = nil
+          last_was_negation = false
         end
       end
 
       raise ParseError.new("unexpected end of flags") if eof?
-      if span = last_negation_span
+      if last_was_negation && (span = last_negation_span)
         raise ParseError.new("dangling flag negation", :flag_dangling_negation, span)
       end
 
@@ -1636,8 +1682,7 @@ module Regex::Syntax
            AST::ClassSetItem::Kind::Unicode,
            AST::ClassSetItem::Kind::Perl
       when AST::ClassSetItem::Kind::Bracketed
-        next_depth = increment_nest_depth(depth, item.span)
-        check_nest_limit(item.item.as(AST::ClassBracketed), next_depth)
+        check_nest_limit(item.item.as(AST::ClassBracketed), depth)
       when AST::ClassSetItem::Kind::Union
         next_depth = increment_nest_depth(depth, item.span)
         item.item.as(AST::ClassSetUnion).items.each do |union_item|
