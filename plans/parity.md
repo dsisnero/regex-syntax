@@ -61,6 +61,13 @@ Checklist rules:
   singleton classes now lower to literals, and empty property unions report an
   unknown static capture count as Rust does. Corrected singleton class node
   assertions in the existing ports. Dynamic fixtures remain outside this slice.
+- [x] Verify 64-bit length boundaries with eight additional Rust oracle cases.
+  HIR and Properties lengths use UInt64, minimum arithmetic saturates at
+  UInt64::MAX, and maximum arithmetic returns nil on overflow. Coverage includes
+  large bounded repetitions, nested multiplication, concatenation, alternation,
+  and optional repetitions. The property fixture now has 465 cases. Validation:
+  1,149 Crystal specs, 465/465 property comparisons, and 22 downstream Thompson
+  specs pass; formatting, lint, and all three inventory checks pass.
 - [ ] Full independent assertion-by-assertion audit of the remaining Rust test
   ports. The 316-case oracle covers literal translator calls, not dynamic
   patterns, every property assertion, diagnostics, or every support-module

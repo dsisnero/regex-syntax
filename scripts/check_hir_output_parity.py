@@ -52,6 +52,15 @@ for match in pattern.finditer(text):
     row = ("bytes" if match[1] in byte_helpers else "utf8") + "\t" + value.encode().hex()
     if row not in rows:
         rows.append(row)
+# Boundary cases for usize arithmetic are absent from literal upstream calls.
+if options.properties:
+    for value in ["a{4294967295}", "(?:aa){4294967295}",
+                  "(?:a{4294967295}){4294967295}",
+                  "(?:(?:a{4294967295}){4294967295}){2}",
+                  "(?:(?:a{4294967295}){4294967295}){2}b",
+                  "a{4294967295}|b", "(?:a{4294967295})?",
+                  "(?:a{4294967295}){4294967295}(?:a{4294967295}){4294967295}"]:
+        rows.append("utf8\t" + value.encode().hex())
 inputs = "\n".join(rows) + "\n"
 (TEMP / "patterns.tsv").write_text(inputs)
 features = ["std", "unicode", "unicode-age", "unicode-bool", "unicode-case",

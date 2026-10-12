@@ -223,9 +223,9 @@ src/hir/mod.rs::func::look_set_prefix	ported	src/regex/syntax/hir.cr;spec/regex-
 src/hir/mod.rs::func::look_set_prefix_any	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set_prefix_any through the public LookSet wrapper with direct coverage.
 src/hir/mod.rs::func::look_set_suffix	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set_suffix through the public LookSet wrapper with direct coverage.
 src/hir/mod.rs::func::look_set_suffix_any	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes look_set_suffix_any through the public LookSet wrapper with direct coverage.
-src/hir/mod.rs::func::maximum_len	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes maximum_len on the public wrapper with direct coverage.
+src/hir/mod.rs::func::maximum_len	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr;spec/hir_properties_parity_spec.cr	Hir::Hir exposes maximum_len on the public wrapper with direct coverage. Verified 64-bit lengths and overflow against pinned Rust snapshots.
 src/hir/mod.rs::func::memory_usage	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exposes memory_usage through the dedicated Crystal wrapper with direct coverage.
-src/hir/mod.rs::func::minimum_len	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir::Hir exposes minimum_len on the public wrapper with direct coverage.
+src/hir/mod.rs::func::minimum_len	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr;spec/hir_properties_parity_spec.cr	Hir::Hir exposes minimum_len on the public wrapper with direct coverage. Verified 64-bit lengths and overflow against pinned Rust snapshots.
 src/hir/mod.rs::func::negate	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassBytes and ClassUnicode now expose vendored in-place negate helpers directly through the public HIR API.
 src/hir/mod.rs::func::new	ported	src/regex/syntax/hir.cr;src/regex/syntax/error.cr;spec/regex-syntax_spec.cr	Public Crystal constructors now exist for Hir, HirKind aliases, ClassBytes, ClassUnicode, Properties, LookSet, Repetition, Capture, and structured Hir::Error.
 src/hir/mod.rs::func::pattern	ported	src/regex/syntax/error.cr;spec/error_spec.cr	Structured Hir::Error exposes the original pattern directly with translator error coverage.
@@ -261,7 +261,7 @@ src/hir/mod.rs::method::Hir.empty	ported	src/regex/syntax/hir.cr;spec/regex-synt
 src/hir/mod.rs::method::Hir.kind	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Hir.kind now exists with direct introspection coverage.
 src/hir/mod.rs::method::HirKind.subs	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	HirKind compatibility aliases now expose subs directly through the public Crystal HIR node hierarchy for capture, repetition, concat, and alternation.
 src/hir/mod.rs::method::LookSet.empty	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	LookSet.empty now exists with direct API coverage.
-src/hir/mod.rs::method::Properties.minimum_len	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Properties exposes minimum_len directly on the public Crystal wrapper.
+src/hir/mod.rs::method::Properties.minimum_len	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr;spec/hir_properties_parity_spec.cr	Properties exposes minimum_len directly on the public Crystal wrapper. Verified 64-bit lengths and overflow against pinned Rust snapshots.
 src/hir/mod.rs::method::Repetition.with	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Repetition.with now exists with direct API coverage.
 src/hir/mod.rs::struct::Capture	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	Capture exists as a concrete Crystal HIR node with direct constructor, name, and subs coverage.
 src/hir/mod.rs::struct::ClassBytes	ported	src/regex/syntax/hir.cr;spec/regex-syntax_spec.cr	ClassBytes now exists as an explicit compatibility alias over the Crystal byte-class node, with direct constructor and helper coverage.

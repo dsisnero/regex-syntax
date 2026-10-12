@@ -1665,8 +1665,8 @@ module Regex::Syntax::Hir
     @utf8 : Bool
     @explicit_captures_len : Int32
     @static_explicit_captures_len : Int32?
-    @minimum_len : Int32?
-    @maximum_len : Int32?
+    @minimum_len : UInt64?
+    @maximum_len : UInt64?
     @literal : Bool
     @alternation_literal : Bool
 
@@ -1692,8 +1692,8 @@ module Regex::Syntax::Hir
       array = props.to_a
       fix = array.empty? ? LookSet.empty : LookSet.full
       static_len = array.first?.try(&.static_explicit_captures_len)
-      minimum_len = nil.as(Int32?)
-      maximum_len = nil.as(Int32?)
+      minimum_len = nil.as(UInt64?)
+      maximum_len = nil.as(UInt64?)
       look_set = LookSet.empty
       look_set_prefix = fix
       look_set_suffix = fix
@@ -1760,8 +1760,8 @@ module Regex::Syntax::Hir
                            utf8 : Bool,
                            explicit_captures_len : Int32,
                            static_explicit_captures_len : Int32?,
-                           minimum_len : Int32?,
-                           maximum_len : Int32?,
+                           minimum_len : UInt64?,
+                           maximum_len : UInt64?,
                            literal : Bool,
                            alternation_literal : Bool)
       @hir = nil
@@ -1811,11 +1811,11 @@ module Regex::Syntax::Hir
       @static_explicit_captures_len
     end
 
-    def minimum_len : Int32?
+    def minimum_len : UInt64?
       @minimum_len
     end
 
-    def maximum_len : Int32?
+    def maximum_len : UInt64?
       @maximum_len
     end
 
@@ -2003,12 +2003,12 @@ module Regex::Syntax::Hir
       self.class.static_capture_count(node)
     end
 
-    def minimum_len : Int32?
+    def minimum_len : UInt64?
       lengths = self.class.lengths(node)
       lengths[:possible] ? lengths[:min] : nil
     end
 
-    def maximum_len : Int32?
+    def maximum_len : UInt64?
       lengths = self.class.lengths(node)
       return nil unless lengths[:possible]
 
@@ -2506,56 +2506,60 @@ module Regex::Syntax::Hir
       end
     end
 
-    def self.lengths(node : Node) : NamedTuple(possible: Bool, min: Int32, max: Int32?)
+    def self.lengths(node : Node) : NamedTuple(possible: Bool, min: UInt64, max: UInt64?)
       case node
       when Empty, Look
-        {possible: true, min: 0, max: 0}
+        {possible: true, min: 0_u64, max: 0_u64}
       when Literal
-        size = node.bytes.size.to_i32
+        size = node.bytes.size.to_u64
         {possible: true, min: size, max: size}
       when DotNode
         case node.kind
         when Dot::AnyChar, Dot::AnyCharExceptLF, Dot::AnyCharExceptCRLF
-          {possible: true, min: 1, max: 4}
+          {possible: true, min: 1_u64, max: 4_u64}
         else
-          {possible: true, min: 1, max: 1}
+          {possible: true, min: 1_u64, max: 1_u64}
         end
       when CharClass
         intervals = node.negated? ? IntervalOps.invert(node.intervals) : node.intervals
-        intervals.empty? ? {possible: false, min: 0, max: nil} : {possible: true, min: 1, max: 1}
+        intervals.empty? ? {possible: false, min: 0_u64, max: nil} : {possible: true, min: 1_u64, max: 1_u64}
       when UnicodeClass
         intervals = node.negated? ? IntervalOps.invert(node.intervals) : node.intervals
-        return {possible: false, min: 0, max: nil} if intervals.empty?
+        return {possible: false, min: 0_u64, max: nil} if intervals.empty?
 
-        min_len = 4
-        max_len = 1
+        min_len = 4_u64
+        max_len = 1_u64
         intervals.each do |range|
-          min_len = Math.min(min_len, utf8_len(range.begin))
-          max_len = Math.max(max_len, utf8_len(range.end))
+          min_len = Math.min(min_len, utf8_len(range.begin).to_u64)
+          max_len = Math.max(max_len, utf8_len(range.end).to_u64)
         end
         {possible: true, min: min_len, max: max_len}
       when Capture
         lengths(node.sub)
       when Concat
-        min = 0
-        max = 0
+        min = 0_u64
+        max = 0_u64
         max_unbounded = false
         node.children.each do |part|
           part_lengths = lengths(part)
-          return {possible: false, min: 0, max: nil} unless part_lengths[:possible]
+          return {possible: false, min: 0_u64, max: nil} unless part_lengths[:possible]
 
           min = saturating_add(min, part_lengths[:min])
           part_max = part_lengths[:max]
           if max_unbounded || part_max.nil?
             max_unbounded = true
           else
-            max = saturating_add(max, part_max)
+            if sum = checked_add(max, part_max)
+              max = sum
+            else
+              max_unbounded = true
+            end
           end
         end
         {possible: true, min: min, max: max_unbounded ? nil : max}
       when Alternation
-        alt_min : Int32? = nil
-        alt_max : Int32? = nil
+        alt_min : UInt64? = nil
+        alt_max : UInt64? = nil
         possible = false
         unbounded = false
         node.children.each do |branch|
@@ -2579,27 +2583,27 @@ module Regex::Syntax::Hir
             end
           end
         end
-        return {possible: false, min: 0, max: nil} unless possible
+        return {possible: false, min: 0_u64, max: nil} unless possible
 
-        {possible: true, min: alt_min || 0, max: unbounded ? nil : alt_max}
+        {possible: true, min: alt_min || 0_u64, max: unbounded ? nil : alt_max}
       when Repetition
         child_lengths = lengths(node.sub)
         if !child_lengths[:possible]
-          return node.min == 0_u32 ? {possible: true, min: 0, max: 0} : {possible: false, min: 0, max: nil}
+          return node.min == 0_u32 ? {possible: true, min: 0_u64, max: 0_u64} : {possible: false, min: 0_u64, max: nil}
         end
 
-        min = node.min == 0_u32 ? 0 : saturating_mul(child_lengths[:min], node.min)
+        min = node.min == 0_u32 ? 0_u64 : saturating_mul(child_lengths[:min], node.min)
         child_max = child_lengths[:max]
-        max = if child_max == 0
-                0
+        max = if child_max == 0_u64
+                0_u64
               elsif node.max.nil? || child_max.nil?
                 nil
               else
-                saturating_mul(child_max, node.max || 0_u32)
+                checked_mul(child_max, node.max || 0_u32)
               end
         {possible: true, min: min, max: max}
       else
-        {possible: false, min: 0, max: nil}
+        {possible: false, min: 0_u64, max: nil}
       end
     end
 
@@ -2629,14 +2633,24 @@ module Regex::Syntax::Hir
       end
     end
 
-    private def self.saturating_add(left : Int32, right : Int32) : Int32
-      sum = left.to_i64 + right.to_i64
-      sum > Int32::MAX ? Int32::MAX : sum.to_i32
+    # Match Rust's 64-bit usize arithmetic: minimum lengths saturate,
+    # while overflow makes a maximum length unknown.
+    private def self.saturating_add(left : UInt64, right : UInt64) : UInt64
+      Math.min(left.to_u128 + right.to_u128, UInt64::MAX.to_u128).to_u64
     end
 
-    private def self.saturating_mul(left : Int32, right : UInt32) : Int32
-      product = left.to_i64 * right.to_i64
-      product > Int32::MAX ? Int32::MAX : product.to_i32
+    private def self.saturating_mul(left : UInt64, right : UInt32) : UInt64
+      Math.min(left.to_u128 * right.to_u128, UInt64::MAX.to_u128).to_u64
+    end
+
+    private def self.checked_add(left : UInt64, right : UInt64) : UInt64?
+      sum = left.to_u128 + right.to_u128
+      sum <= UInt64::MAX ? sum.to_u64 : nil
+    end
+
+    private def self.checked_mul(left : UInt64, right : UInt32) : UInt64?
+      product = left.to_u128 * right.to_u128
+      product <= UInt64::MAX ? product.to_u64 : nil
     end
 
     private def self.utf8_len(codepoint : UInt32) : Int32
