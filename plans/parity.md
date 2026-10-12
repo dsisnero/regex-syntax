@@ -13,9 +13,11 @@ It follows the `cross-language-crystal-parity` workflow:
 
 Checklist rules:
 
-- `[x]` means the whole feature bucket is closed enough that it should no
-  longer drive active parity work.
-- `[]` means there is still verified remaining work in that bucket.
+- `[x]` in the verification audit or remaining phases means the stated scope
+  has reproducible evidence and no required work remains within that scope.
+- `[ ]` means implementation, verification, or integration work remains.
+- Checkboxes in the historical feature buckets record prior implementation
+  milestones; they do not provide independent exhaustive parity signoff.
 - Buckets here should stay branch-sized and user-visible. Detailed row-by-row
   drift belongs in the inventories.
 
@@ -80,10 +82,10 @@ Checklist rules:
 - `rust_test_parity.tsv`: `139 ported`, `14 skipped`, `5 partial`
 - `rust_source_parity.tsv`: `869 ported`, `1 skipped`, `7 partial`
 
-Interpretation:
+Interpretation (inventory coverage, not independent assertion signoff):
 
-- The remaining test partials are narrow `src/ast/parse.rs` helper-surface rows,
-  not broad semantic drift.
+- The five test partials identify parser-helper coverage gaps. They do not
+  bound the possible semantic drift in rows currently labeled `ported`.
 - The remaining source partials are still mostly API/model-shape mappings:
   Crystal class hierarchies, wrapper objects, builder-style APIs, and
   idiomatic replacements for Rust enums, traits, and free functions.
@@ -101,9 +103,139 @@ Interpretation:
   `missing` rows. The manifests are now mostly documentation of intentional
   cross-language shape differences.
 
-## Feature Buckets
+## Remaining Work in Feature-Sized Phases
 
-### Active Work
+No unfixed runtime mismatch has been confirmed by the completed comparisons.
+The known remaining discrepancies are incomplete assertion coverage, five partial
+parser-test mappings, seven source/API model mappings, and the downstream
+installed shard still containing the older implementation. Suspected edge cases
+below are audit targets, not established bugs. Keep the upstream revision pinned
+while completing these phases; fix any newly reproduced mismatch in its phase.
+
+Work in order. Each phase should produce a reviewable feature commit containing
+its tests, fixes, and evidence updates. Track the audit under `regex-syntax-u0w`.
+
+### Phase 1 — HIR construction and dynamic translator parity
+
+- [ ] Close the gap between parsed patterns and directly constructed HIR.
+  Compare Rust `src/hir/mod.rs` smart constructors and `Properties` with Crystal
+  direct constructors and wrappers. Cover empty/singleton classes and branches,
+  impossible branches, nested repetitions, capture counts, look sets, and length
+  overflow in compositions. In particular, check negated-class helper results
+  and static capture analysis when an alternation contains an impossible branch.
+- [ ] Port dynamic translator assertions that the literal-call extractor misses.
+  Review every test in `src/hir/translate.rs` against the existing specs, including
+  generated patterns, configuration changes, and expected errors. Record which
+  assertions the 316 output and 465 property fixtures cover and add exact
+  assertions for the remainder. Do not count a test-name mapping as coverage of
+  all its assertions.
+
+**Exit evidence:** an assertion mapping for the full translator test module,
+Rust-derived structural/property expectations for direct constructors, and no
+unexplained differences in the covered output or property fields. Retain the
+existing eight-case `smart_alternation` structural matrix.
+
+### Phase 2 — Parser and AST behavior
+
+- [ ] Audit `src/ast/parse.rs` and `src/ast/mod.rs` tests assertion by assertion.
+  Compare exact AST kinds, nesting, flags, capture metadata, comments, byte
+  offsets, line/column positions, and successful parse results. Include Unicode
+  input, verbose mode, repetitions, escapes, and class-set operators.
+- [ ] Resolve the five partial test mappings as one parser feature:
+  `parse_decimal`, `parse_flag`, `parse_primitive_non_escape`, `parse_set_class`,
+  and `parse_set_class_open`. Exercise equivalent public behavior where possible;
+  document genuinely inaccessible internal-only assertions individually instead
+  of treating representative public tests as a complete port.
+
+**Exit evidence:** complete parser/AST assertion mapping with exact independent
+expectations; each partial row either fully covered or explicitly justified by
+its remaining unsupported helper contract. No blanket closure from passing
+representative patterns.
+
+### Phase 3 — Unicode and character-class algebra
+
+- [ ] Independently verify `src/unicode.rs`, `src/unicode_tables/`,
+  `src/hir/interval.rs`, and class tests in `src/hir/mod.rs`.
+  Cover canonicalization, union/intersection/difference/symmetric difference,
+  complements, scalar boundaries and surrogates, byte conversion, case folding,
+  property aliases, and property queries. Compare complete intervals and errors,
+  including direct class helper calls as well as parsed classes.
+- [ ] Recheck skipped feature-disabled tests against Crystal's always-available
+  Unicode tables. Retain only skips justified by unavailable build modes;
+  validate the corresponding default-mode behavior and table version.
+
+**Exit evidence:** exact interval/table/query assertions for the pinned upstream
+and documented reasons for feature-mode exclusions. Existing large-range fold
+and surrogate fixes remain covered without sampling away boundary cases.
+
+### Phase 4 — Literal extraction, optimization, and UTF-8 helpers
+
+- [ ] Audit `src/hir/literal.rs` and `src/utf8.rs` against the Crystal support
+  modules. Port dynamic loops and edge cases, including empty/infinite literal
+  sequences, prefix/suffix extraction, exactness flags, ordering, deduplication,
+  extraction limits, and UTF-8 range boundaries.
+
+**Exit evidence:** full relevant upstream assertion mapping, exact ordered
+literal sequences with their metadata, and exact UTF-8 byte-range expectations.
+Rust ownership/destructor-only checks may stay skipped with explicit rationale.
+
+### Phase 5 — Diagnostics, printing, and visitor contracts
+
+- [ ] Compare parser/translator error kinds, primary and auxiliary spans,
+  multiline formatting, and public error text with Rust expectations. The
+  current output oracle only compares successful parses; add an error oracle or
+  Rust-derived diagnostic fixtures for this phase.
+- [ ] Audit AST/HIR printer and visitor tests, including escaping, round trips,
+  hook order, class-set traversal, and early failure propagation. Distinguish
+  language-specific exception mechanics from observable traversal behavior.
+
+**Exit evidence:** exact diagnostic fixtures, printer outputs and traversal
+traces, with any intentional presentation/API differences recorded explicitly.
+Do not infer diagnostic fidelity from successful HIR output comparisons.
+
+### Phase 6 — Public API reconciliation and audit completeness
+
+- [ ] Reconcile the seven source partials after behavioral phases 1–5:
+  AST `Ast`, `ClassSet`, and `ClassSetItem`; AST/HIR `Visitor`; interval `Bound`
+  and `Interval`. Verify public contracts, then classify each remaining shape
+  difference with a precise rationale and tests for the equivalent behavior.
+- [ ] Review all 14 skipped test rows and the skipped internal `Either` API.
+  Check that each exclusion concerns Rust runtime/build mechanics rather than
+  untested user-visible behavior. Reconcile the 158 test inventory rows with
+  the 147 executable default-feature Rust tests, including configuration and
+  exclusion reasons; the counts are not interchangeable.
+- [ ] Complete the assertion audit ledger across all modules. Keep the existing
+  regex-discovery backend explicit; if switching to tree-sitter discovery,
+  review manifest changes separately rather than silently regenerating them.
+
+**Exit evidence:** every upstream assertion has a test/fixture reference or a
+specific supported exclusion, all manifest checks pass, and no broad semantic
+claim rests solely on a `ported` label.
+
+### Phase 7 — Downstream adoption and parity signoff
+
+- [ ] Refresh the `regex-automata` installed dependency to the reviewed
+  `regex-syntax` revision through its normal dependency workflow. The 22 passing
+  Thompson specs used a temporary harness that selected this checkout; they
+  do not prove the older installed shard has been updated.
+- [ ] Run the downstream suite with normal dependency resolution and compare
+  exact Thompson graphs for alternation, captures, repetitions, Unicode, and
+  invalid-byte patterns against the pinned Rust implementation. Investigate any
+  remaining graph difference in the owning library.
+- [ ] Update the downstream parity plan with its own evidence, then reconcile
+  this plan's completion criteria. Keep Thompson parity open until that
+  downstream verification is complete.
+
+**Exit evidence:** recorded dependency revision, reproducible normal-resolution
+integration commands, exact Rust/Crystal graph comparisons, and passing upstream
+and downstream gates. An upstream syntax fix alone does not close Thompson parity.
+
+## Historical Feature Buckets
+
+These are prior implementation milestones. Their closure claims below are
+historical and are subject to the independent phases above.
+
+### Previously Completed Implementation Work
 
 - [x] Parser and AST span/position fidelity
   AST `Position` and `Span` now track vendored Rust byte offsets while
@@ -233,26 +365,30 @@ These do not justify separate helper-sized buckets by themselves:
   instead of free constructor functions, wrapper objects instead of sum types,
   and idiomatic predicates or builders instead of one-for-one method names.
 
-## If Parity Work Resumes
+## Execution and Verification
 
-Use the inventories to choose scope, then reopen only one broad bucket at a
-time:
+For each phase, reproduce differences against the pinned Rust checkout, add
+failing parity specs first, make the fixes, update the affected inventory rows
+and assertion evidence, and commit before starting the next phase.
 
-1. Source/API shape reconciliation
-   Only if we want to mirror more Rust surface area one-for-one instead of
-   keeping documented Crystal-native wrappers.
-2. New upstream refresh
-   If `vendor/regex-syntax` moves, regenerate manifests intentionally, update
-   the port inventory, and reopen the smallest closure-sized bucket affected by
-   that upstream delta.
-3. Adversarial verification pass
-   Use the existing inventories plus quality gates as the base for an
-   independent signoff pass after any future upstream refresh.
+Run the existing oracles where applicable:
+
+```bash
+python3 scripts/check_hir_output_parity.py --rust-tests
+python3 scripts/check_hir_output_parity.py --properties
+```
+
+Before each feature commit, run `make format`, `make lint`, `make test`, and the
+source/test/port inventory checks. Keep generated artifacts in `temp/`. Add
+phase-specific comparison commands to `docs/testing.md` so closure can be
+reproduced. A future upstream refresh is a separate scoped task: regenerate
+manifests intentionally, record the new revision, and reopen affected phases.
 
 ## Project-Level Done Criteria
 
 - [x] No generated parity manifest is still carrying baseline `missing` drift.
-- [ ] Broad semantic parity and AST fidelity have independent exhaustive signoff.
+- [ ] Phases 1–6 provide independent semantic, AST, and assertion-level signoff.
+- [ ] Phase 7 verifies downstream dependency adoption and Thompson graph parity.
 - [x] Remaining `partial` rows are documented and evidence-backed.
 - [x] Quality gates continue to pass:
   `make format`, `make lint`, `make test`
