@@ -153,8 +153,13 @@ expected values from Crystal. `make test` exercises every fixture. Independent
 structural expectations in `spec/hir_alternation_spec.cr` additionally verify
 the complete eight-case Rust `smart_alternation` matrix and byte/Unicode edges.
 
+Run `python3 scripts/check_hir_output_parity.py --properties` to compare 457
+literal translator and analysis-helper inputs across all twelve HIR property
+fields. `spec/fixtures/hir_properties.tsv` contains the Rust snapshots; regenerate
+with `--properties --write-fixture`. The property specs run with `make test`.
+
 This is evidence for the extracted cases, not a claim that dynamic fixtures,
-all HIR property assertions, or all support-module assertions were audited.
+all direct-constructor property assertions, or all support-module assertions were audited.
 The remaining audit is tracked in `plans/parity.md`.
 
 Inventory statuses are `ported`, `partial`, `missing`, `in_progress`, `skipped`,

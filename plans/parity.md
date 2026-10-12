@@ -55,6 +55,12 @@ Checklist rules:
 - Inventory checks now accept the canonical `ported`/`skipped` statuses. A
   duplicate source `repetition` row was removed; source/test/port checks pass
   with the recorded regex discovery backend (877 source items, 158 test items).
+- [x] Verify literal translator property calls, including local helper closures.
+  `--properties` compares 457 distinct pattern/configuration pairs across all
+  twelve HIR property fields against Rust-generated snapshots. Nested negated
+  singleton classes now lower to literals, and empty property unions report an
+  unknown static capture count as Rust does. Corrected singleton class node
+  assertions in the existing ports. Dynamic fixtures remain outside this slice.
 - [ ] Full independent assertion-by-assertion audit of the remaining Rust test
   ports. The 316-case oracle covers literal translator calls, not dynamic
   patterns, every property assertion, diagnostics, or every support-module

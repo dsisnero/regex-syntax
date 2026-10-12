@@ -1691,7 +1691,7 @@ module Regex::Syntax::Hir
     def self.union(props : Enumerable(Properties)) : self
       array = props.to_a
       fix = array.empty? ? LookSet.empty : LookSet.full
-      static_len = array.empty? ? 0 : array.first.static_explicit_captures_len
+      static_len = array.first?.try(&.static_explicit_captures_len)
       minimum_len = nil.as(Int32?)
       maximum_len = nil.as(Int32?)
       look_set = LookSet.empty

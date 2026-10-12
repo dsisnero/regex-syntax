@@ -151,21 +151,17 @@ describe "HIR semantic parity" do
       0x90_u8..0xFF_u8,
     ])
 
-    Regex::Syntax.parse(%q([\^&&^])).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
-      '^'.ord.to_u32..'^'.ord.to_u32,
-    ])
-    Regex::Syntax.parse(%q([]&&\]])).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
-      ']'.ord.to_u32..']'.ord.to_u32,
-    ])
-    Regex::Syntax.parse(%q([-&&-])).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
-      '-'.ord.to_u32..'-'.ord.to_u32,
-    ])
-    Regex::Syntax.parse(%q([\&&&&])).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
-      '&'.ord.to_u32..'&'.ord.to_u32,
-    ])
-    Regex::Syntax.parse(%q([\&&&\&])).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
-      '&'.ord.to_u32..'&'.ord.to_u32,
-    ])
+    {
+      %q([\^&&^])  => '^',
+      %q([]&&\]])  => ']',
+      %q([-&&-])   => '-',
+      %q([\&&&&])  => '&',
+      %q([\&&&\&]) => '&',
+    }.each do |pattern, character|
+      node = Regex::Syntax.parse(pattern).node
+      node.should be_a(Regex::Syntax::Hir::Literal)
+      node.as(Regex::Syntax::Hir::Literal).bytes.should eq(character.to_s.to_slice)
+    end
     Regex::Syntax.parse(%q([a-w&&[^c-g]z])).node.as(Regex::Syntax::Hir::UnicodeClass).intervals.should eq([
       'a'.ord.to_u32..'b'.ord.to_u32,
       'h'.ord.to_u32..'w'.ord.to_u32,

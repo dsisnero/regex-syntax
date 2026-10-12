@@ -107,34 +107,51 @@ module Regex::Syntax
 
     # Translate an AST node to HIR node
     def translate(ast : AST::Node) : Hir::Node
-      case ast
-      when AST::Literal
-        translate_literal(ast)
-      when AST::ClassPerl
-        translate_class_perl(ast)
-      when AST::ClassUnicode
-        translate_class_unicode(ast)
-      when AST::ClassBracketed
-        translate_class_bracketed(ast)
-      when AST::Dot
-        translate_dot(ast)
-      when AST::Repetition
-        translate_repetition(ast)
-      when AST::Group
-        translate_group(ast)
-      when AST::Alternation
-        translate_alternation(ast)
-      when AST::Concat
-        translate_concat(ast)
-      when AST::Assertion
-        translate_assertion(ast)
-      when AST::SetFlags
-        translate_set_flags(ast)
-      when AST::Empty
-        Hir::Empty.new
-      else
-        Hir::Empty.new
+      node = case ast
+             when AST::Literal
+               translate_literal(ast)
+             when AST::ClassPerl
+               translate_class_perl(ast)
+             when AST::ClassUnicode
+               translate_class_unicode(ast)
+             when AST::ClassBracketed
+               translate_class_bracketed(ast)
+             when AST::Dot
+               translate_dot(ast)
+             when AST::Repetition
+               translate_repetition(ast)
+             when AST::Group
+               translate_group(ast)
+             when AST::Alternation
+               translate_alternation(ast)
+             when AST::Concat
+               translate_concat(ast)
+             when AST::Assertion
+               translate_assertion(ast)
+             when AST::SetFlags
+               translate_set_flags(ast)
+             when AST::Empty
+               Hir::Empty.new
+             else
+               Hir::Empty.new
+             end
+      # Rust's HIR class constructor reduces singleton classes to literals.
+      # Materialize complements before testing, including nested negated sets.
+      case node
+      when Hir::UnicodeClass
+        ranges = node.negated? ? Hir::IntervalOps.invert(node.intervals) : node.intervals
+        normalized = Hir::UnicodeClass.new(false, ranges)
+        if literal = normalized.literal
+          return Hir::Literal.new(literal)
+        end
+      when Hir::CharClass
+        ranges = node.negated? ? Hir::IntervalOps.invert(node.intervals) : node.intervals
+        normalized = Hir::CharClass.new(false, ranges)
+        if literal = normalized.literal
+          return Hir::Literal.new(literal)
+        end
       end
+      node
     end
 
     private def translate_literal(literal : AST::Literal) : Hir::Node

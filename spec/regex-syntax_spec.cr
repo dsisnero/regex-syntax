@@ -1067,16 +1067,16 @@ describe Regex::Syntax do
 
     it "matches Rust's bracketed class behavior across Unicode and byte modes" do
       ascii = Regex::Syntax::Parser.new(unicode: false, utf8: false).parse("[a]")
-      ascii.node.should be_a(Regex::Syntax::Hir::CharClass)
-      ascii.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([0x61_u8..0x61_u8])
+      ascii.node.should be_a(Regex::Syntax::Hir::Literal)
+      ascii.node.as(Regex::Syntax::Hir::Literal).bytes.should eq(Bytes[0x61])
 
       nul = Regex::Syntax::Parser.new(unicode: false, utf8: false).parse(%q([\x00]))
-      nul.node.should be_a(Regex::Syntax::Hir::CharClass)
-      nul.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([0x00_u8..0x00_u8])
+      nul.node.should be_a(Regex::Syntax::Hir::Literal)
+      nul.node.as(Regex::Syntax::Hir::Literal).bytes.should eq(Bytes[0x00])
 
       ff = Regex::Syntax::Parser.new(unicode: false, utf8: false).parse(%q([\xFF]))
-      ff.node.should be_a(Regex::Syntax::Hir::CharClass)
-      ff.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([0xFF_u8..0xFF_u8])
+      ff.node.should be_a(Regex::Syntax::Hir::Literal)
+      ff.node.as(Regex::Syntax::Hir::Literal).bytes.should eq(Bytes[0xFF])
 
       fold_ascii = Regex::Syntax.parse(%q((?i)[a]))
       fold_ascii.node.should be_a(Regex::Syntax::Hir::UnicodeClass)
@@ -1165,8 +1165,8 @@ describe Regex::Syntax do
       end
 
       byte_class = Regex::Syntax::Parser.new(unicode: false, utf8: false).parse(%q([\xFF]))
-      byte_class.node.should be_a(Regex::Syntax::Hir::CharClass)
-      byte_class.node.as(Regex::Syntax::Hir::CharClass).intervals.should eq([0xFF_u8..0xFF_u8])
+      byte_class.node.should be_a(Regex::Syntax::Hir::Literal)
+      byte_class.node.as(Regex::Syntax::Hir::Literal).bytes.should eq(Bytes[0xFF])
     end
 
     it "raises on unsupported Unicode property namespaces" do
