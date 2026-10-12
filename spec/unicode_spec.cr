@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "./support/class_unicode_snapshot"
 
 describe Regex::Syntax::Unicode do
   describe Regex::Syntax::Unicode::SimpleCaseFolder do
@@ -31,8 +32,7 @@ describe Regex::Syntax::Unicode do
 
   it "canonicalizes one-letter general category queries like Rust regression 466" do
     klass = Regex::Syntax::Unicode.class(Regex::Syntax::Unicode::ClassQuery::OneLetter.new('C'))
-    expected = Regex::Syntax::Unicode.property_class("Other", false)
-    klass.intervals.should eq(expected.intervals)
+    ClassUnicodeSnapshot.render(klass.intervals).should eq(ClassUnicodeSnapshot.expected("query", "class", "C"))
   end
 
   it "supports binary and property-value Unicode class queries like Rust" do
@@ -52,14 +52,14 @@ describe Regex::Syntax::Unicode do
       'β'.ord.to_u32..'δ'.ord.to_u32,
     ])
 
-    Regex::Syntax::Unicode.perl_digit.intervals.should eq(
-      Regex::Syntax::Unicode.property_class("Decimal_Number", false).intervals
+    ClassUnicodeSnapshot.render(Regex::Syntax::Unicode.perl_digit.intervals).should eq(
+      ClassUnicodeSnapshot.expected("table", "general_category", "Decimal_Number")
     )
-    Regex::Syntax::Unicode.perl_space.intervals.should eq(
-      Regex::Syntax::Unicode.property_class("White_Space", false).intervals
+    ClassUnicodeSnapshot.render(Regex::Syntax::Unicode.perl_space.intervals).should eq(
+      ClassUnicodeSnapshot.expected("table", "property_bool", "White_Space")
     )
-    Regex::Syntax::Unicode.perl_word.intervals.should eq(
-      Regex::Syntax::UnicodeTables::PerlWord::PERL_WORD
+    ClassUnicodeSnapshot.render(Regex::Syntax::Unicode.perl_word.intervals).should eq(
+      ClassUnicodeSnapshot.expected("table", "perl_word", "PERL_WORD")
     )
   end
 

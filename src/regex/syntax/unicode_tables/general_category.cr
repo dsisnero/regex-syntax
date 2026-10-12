@@ -4253,6 +4253,7 @@ module Regex::Syntax::UnicodeTables::GeneralCategory
   # OTHER PUNCTUATION
   OTHER_PUNCTUATION = [
     0x21_u32..0x23_u32,
+    0x25_u32..0x27_u32,
     0x2A_u32..0x2A_u32,
     0x2C_u32..0x2C_u32,
     0x2E_u32..0x2F_u32,

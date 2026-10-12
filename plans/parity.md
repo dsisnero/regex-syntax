@@ -214,19 +214,59 @@ installed shard and the downstream Thompson parity signoff remain unchanged.
 
 ### Phase 3 — Unicode and character-class algebra
 
-- [ ] Independently verify `src/unicode.rs`, `src/unicode_tables/`,
+- [x] Independently verify `src/unicode.rs`, `src/unicode_tables/`,
   `src/hir/interval.rs`, and class tests in `src/hir/mod.rs`.
   Cover canonicalization, union/intersection/difference/symmetric difference,
   complements, scalar boundaries and surrogates, byte conversion, case folding,
   property aliases, and property queries. Compare complete intervals and errors,
   including direct class helper calls as well as parsed classes.
-- [ ] Recheck skipped feature-disabled tests against Crystal's always-available
+- [x] Recheck skipped feature-disabled tests against Crystal's always-available
   Unicode tables. Retain only skips justified by unavailable build modes;
   validate the corresponding default-mode behavior and table version.
 
 **Exit evidence:** exact interval/table/query assertions for the pinned upstream
 and documented reasons for feature-mode exclusions. Existing large-range fold
 and surrogate fixes remain covered without sampling away boundary cases.
+
+**Completed evidence (2026-10-12):** tests were added before fixes. The first
+replay had 20 failing comparisons; complemented-class folding then exposed five
+more, and two additional symmetric-difference state regressions failed before
+their fix. `python3 scripts/check_class_unicode_parity.py` runs all 16 enabled
+upstream class tests and six Unicode tests with their original assertions intact,
+plus three characterization tests. It accounts for 137 executed assertion
+locations and three feature-mode exclusions in
+`plans/inventory/rust_class_unicode_assertion_audit.tsv`.
+
+The Rust-generated fixture replays 8,986 exact results: 574 class operations and
+boundary/conversion cases, 18 folded-state sequences, 515 complete range tables,
+1,179 property-name/value aliases, 2,938 simple-fold mappings, and 1,881 queries
+both directly and through parsing (including complete error kinds and spans).
+The Crystal folder also traverses all 1,112,064 Unicode scalars against those
+independent mappings, checking unmapped scalars as well as mapped ones. Table key
+inventories are compared exactly, including absence of additional aliases. All
+14 generated table modules match the pinned Unicode 16.0.0 data or are verified
+aliases of those tables; native table headers also enforce the version.
+
+Fixed missing `%`–apostrophe entries in `Other_Punctuation`, missing apostrophes
+in `Case_Ignorable` and `Quotation_Mark`, property lookup bypassing canonical
+names (`incb` and `word`), case folding after class complementation, and cached
+folding-state preservation through clone, identical push, and symmetric
+difference. Perl `\w`/`\W` translation uses the dedicated word helper.
+`python3 scripts/sync_unicode_ranges.py` checks every range constant;
+`--write` repairs generated constants from the independently verified Rust
+fixture. No fixture expectations are generated from Crystal.
+
+The two disabled-case-fold assertions and the disabled-case-fold panic test
+require a Rust build without case tables. Crystal always includes those tables,
+so the exclusions remain explicit while default-mode behavior is exhaustively
+checked. The `Bound`/`Interval` trait representation rows remain partial for
+Phase 6 API reconciliation; the byte/scalar operation behavior is now verified.
+
+Final gates: 12,874 Crystal examples, formatting, lint, compilation, 147 original
+Rust unit tests, 316 HIR display comparisons, 465 property comparisons, the
+Phase 1 HIR and Phase 2 AST oracles, all three inventory checks, the full Unicode
+range sync check, and 22 downstream Thompson harness specs pass. Phase 4 is
+next; downstream dependency adoption and Thompson signoff remain in Phase 7.
 
 ### Phase 4 — Literal extraction, optimization, and UTF-8 helpers
 
@@ -412,12 +452,9 @@ historical and are subject to the independent phases above.
 
 These do not justify separate helper-sized buckets by themselves:
 
-- Narrow parser-helper rows in `rust_test_parity.tsv`
-  `parse_decimal`, `parse_flag`, `parse_primitive_non_escape`,
-  `parse_set_class`, and `parse_set_class_open` remain partial because Crystal
-  does not expose those helpers as separate entry points even though the
-  corresponding parser behavior is covered through the real public or AST parser
-  surfaces.
+- Test mappings now contain 144 ported tests and 14 explicit build-mode or
+  runtime-layout/destructor exclusions, with no partial test rows. Phase 2
+  closed the five parser-helper mappings using exact helper outputs and cursors.
 
 - Source-level API-shape rows in `rust_source_parity.tsv`
   Most remaining partial rows are deliberate language-model differences:

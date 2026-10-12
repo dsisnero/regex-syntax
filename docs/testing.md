@@ -204,3 +204,35 @@ concrete byte/Unicode classes or the `Hir::Class` wrapper. `Hir::Hir.new(Node)`
 remains a raw wrapper. Smart construction lowers singleton classes to literals
 and empty classes to the byte fail node; repetition simplification uses the
 child's maximum length, including captured empty expressions.
+
+### Unicode tables and character-class assertion audit
+
+```bash
+python3 scripts/check_class_unicode_parity.py
+python3 scripts/sync_unicode_ranges.py
+```
+
+The class/Unicode oracle copies the pinned Rust source under `temp/`, preserves
+and executes all enabled class and Unicode test assertions, and captures raw
+constructor inputs plus complete operation results. Additional native cases
+exercise scalar boundaries, byte conversion, complement folding, and internal
+folded-state sequences. The audit ledger records every native assertion and the
+three unavailable feature-mode contracts individually.
+
+The fixture contains every Unicode 16.0.0 range-table entry, property alias,
+property-value alias, and simple-case-fold mapping. Every alias query is checked
+through the direct Unicode helper and through parsing, comparing full intervals
+or exact error kinds and spans. Specs also verify table key inventories and
+walk every valid scalar through the stateful simple-case folder.
+
+To intentionally regenerate expectations from a passing native run:
+
+```bash
+python3 scripts/check_class_unicode_parity.py --write-fixture --rust-only
+python3 scripts/sync_unicode_ranges.py --write
+python3 scripts/check_class_unicode_parity.py
+```
+
+The sync script regenerates Crystal range constants from the Rust fixture;
+it never reads Crystal results to establish expected data. Changes to the
+pinned upstream revision require a separately reviewed inventory refresh.

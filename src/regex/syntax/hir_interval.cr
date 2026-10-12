@@ -3,6 +3,7 @@ module Regex::Syntax::Hir
     include Enumerable(Range(B, B))
 
     getter? folded
+    protected setter folded
 
     def initialize(intervals : Enumerable(Range(B, B)) = [] of Range(B, B))
       @ranges = canonicalize(intervals.to_a)
@@ -10,13 +11,18 @@ module Regex::Syntax::Hir
     end
 
     def push(interval : Range(B, B)) : self
-      @ranges = canonicalize(@ranges + [interval])
+      incoming = canonicalize([interval])
+      return self if incoming.size == 1 && @ranges.includes?(incoming.first)
+
+      @ranges = canonicalize(@ranges + incoming)
       @folded = false unless @ranges.empty?
       self
     end
 
     def clone : self
-      self.class.new(@ranges.dup)
+      copy = self.class.new(@ranges.dup)
+      copy.folded = @folded
+      copy
     end
 
     def each(& : Range(B, B) ->) : Nil
@@ -32,6 +38,8 @@ module Regex::Syntax::Hir
     end
 
     def case_fold_simple! : self
+      return self if @folded
+
       @ranges = case_fold_ranges(@ranges)
       @folded = true
       self
@@ -84,7 +92,7 @@ module Regex::Syntax::Hir
     end
 
     def symmetric_difference!(other : IntervalSet(B)) : self
-      intersection = IntervalSet(B).new(@ranges)
+      intersection = clone
       intersection.intersect!(other)
       union!(other)
       difference!(intersection)

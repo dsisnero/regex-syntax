@@ -900,8 +900,8 @@ module Regex::Syntax::Hir
     end
 
     def case_fold_simple : self
-      @intervals = IntervalOps.case_fold_ascii(@intervals)
-      normalize_full_domain_negation
+      @intervals = IntervalOps.case_fold_ascii(effective_intervals)
+      @negated = false
       self
     end
 
@@ -1051,8 +1051,8 @@ module Regex::Syntax::Hir
     end
 
     def case_fold_simple : self
-      @intervals = IntervalOps.case_fold_unicode(@intervals)
-      normalize_full_domain_negation
+      @intervals = IntervalOps.case_fold_unicode(effective_intervals)
+      @negated = false
       self
     end
 

@@ -898,6 +898,7 @@ module Regex::Syntax::UnicodeTables::PropertyBool
 
   # CASE IGNORABLE
   CASE_IGNORABLE = [
+    0x27_u32..0x27_u32,
     0x2E_u32..0x2E_u32,
     0x3A_u32..0x3A_u32,
     0x5E_u32..0x5E_u32,
@@ -9643,6 +9644,7 @@ module Regex::Syntax::UnicodeTables::PropertyBool
   # QUOTATION MARK
   QUOTATION_MARK = [
     0x22_u32..0x22_u32,
+    0x27_u32..0x27_u32,
     0xAB_u32..0xAB_u32,
     0xBB_u32..0xBB_u32,
     0x2018_u32..0x201F_u32,

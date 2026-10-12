@@ -178,14 +178,14 @@ module Regex::Syntax
         Unicode.property_class("White_Space", false)
       when AST::ClassPerl::Kind::Word
         # Use Unicode word property (Perl word)
-        Unicode.property_class("word", false)
+        Unicode.perl_word
       when AST::ClassPerl::Kind::DigitNeg
         Unicode.property_class("Decimal_Number", true)
       when AST::ClassPerl::Kind::SpaceNeg
         Unicode.property_class("White_Space", true)
       when AST::ClassPerl::Kind::WordNeg
         # Use Unicode word property (Perl word) negated
-        Unicode.property_class("word", true)
+        Hir::UnicodeClass.new(true, Unicode.perl_word.intervals)
       else
         Hir::CharClass.new
       end

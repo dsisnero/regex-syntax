@@ -251,10 +251,6 @@ module Regex::Syntax::Unicode
   private def self.binary_property_ranges(name : String) : Array(Range(UInt32, UInt32))
     normalized = normalize_symbolic_name(name)
 
-    if ranges = UnicodeTables.lookup_property_ranges(normalized)
-      return ranges
-    end
-
     unless {"cf", "sc", "lc"}.includes?(normalized)
       if canonical_name = canonical_property_name_from_normalized(normalized)
         return property_ranges_for_canonical_binary(canonical_name) || raise ParseError.new("invalid Unicode property: #{name}")
